@@ -6,6 +6,7 @@ import com.movie.cinema_booking_backend.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,28 +30,51 @@ public class Booking {
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    private Double totalAmount;
-
-    @Enumerated(EnumType.STRING)
-    private PaymentMethod paymentMethod;
+    private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BookingStatus status;
 
-    @Column(nullable = false)
-    private String transactionId;
-
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    private String transactionNo;
-    private String transactionDate;
-    private String responseCode;
-    private String requestId;
+    @OneToOne(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Payment payment;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Ticket> tickets = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<BookingExtra> bookingExtras = new ArrayList<>();
+
+    public void addTicket(Ticket ticket) {
+        this.tickets.add(ticket);
+        ticket.setBooking(this);
+    }
+
+    public void removeTicket(Ticket ticket) {
+        this.tickets.remove(ticket);
+        ticket.setBooking(null);
+    }
+
+    public void addBookingExtra(BookingExtra extra) {
+        this.bookingExtras.add(extra);
+        extra.setBooking(this);
+    }
+
+    public void removeBookingExtra(BookingExtra extra) {
+        this.bookingExtras.remove(extra);
+        extra.setBooking(null);
+    }
+    public void assignPayment(Payment payment) {
+        this.payment = payment;
+        if (payment != null) {
+            payment.setBooking(this);
+        }
+    }
 }

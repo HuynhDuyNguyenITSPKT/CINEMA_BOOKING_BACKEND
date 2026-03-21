@@ -5,12 +5,16 @@ import com.movie.cinema_booking_backend.enums.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "tickets")
+@Table(name = "tickets", uniqueConstraints = {
+        // Trong 1 suất chiếu (showtime_id), 1 cái ghế (seat_id) chỉ được phép tồn tại 1 lần duy nhất!
+        @UniqueConstraint(columnNames = {"showtime_id", "seat_id"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,10 +29,6 @@ public class Ticket {
     private Booking booking;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "showtime_id", nullable = false)
     private Showtime showtime;
 
@@ -37,11 +37,8 @@ public class Ticket {
     private Seat seat;
 
     @Column(nullable = false)
-    private LocalDateTime bookingDate;
-
-    @Column(nullable = false)
     @Builder.Default
-    private Double price = 0.0;
+    private BigDecimal price = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -50,12 +47,18 @@ public class Ticket {
     @Column(length = 500)
     private String qrCodeUrl;
 
-    @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<TicketExtra> ticketExtras = new ArrayList<>();
-
     @OneToMany(mappedBy = "ticket")
     @JsonIgnore
     @Builder.Default
     private List<TicketPromotion> promotions = new ArrayList<>();
+
+    public void addPromotion(TicketPromotion ticketPromotion) {
+        this.promotions.add(ticketPromotion);
+        ticketPromotion.setTicket(this);
+    }
+
+    public void removePromotion(TicketPromotion ticketPromotion) {
+        this.promotions.remove(ticketPromotion);
+        ticketPromotion.setTicket(null);
+    }
 }

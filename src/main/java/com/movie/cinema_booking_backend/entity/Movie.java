@@ -1,5 +1,6 @@
 package com.movie.cinema_booking_backend.entity;
 
+import com.movie.cinema_booking_backend.enums.MovieStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -35,10 +36,12 @@ public class Movie {
     @Column(length = 500)
     private String trailerUrl;
 
-    private int ageRestriction;
+    @Column(nullable = false)
+    private String ageRating;
 
-    @Column(length = 255)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MovieStatus status;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinTable(
@@ -47,4 +50,8 @@ public class Movie {
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     private List<Genre> genres = new ArrayList<>();
+    public void addGenre(Genre genre) {
+        this.genres.add(genre);
+        genre.getMovies().add(this);
+    }
 }

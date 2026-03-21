@@ -4,6 +4,8 @@ import com.movie.cinema_booking_backend.enums.ServiceCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "extra_services")
 @Getter
@@ -23,7 +25,7 @@ public class ExtraService {
     private String imageUrl;
 
     @Column(nullable = false)
-    private Double price;
+    private BigDecimal price;
 
     @Column(columnDefinition = "TEXT")
     private String description;

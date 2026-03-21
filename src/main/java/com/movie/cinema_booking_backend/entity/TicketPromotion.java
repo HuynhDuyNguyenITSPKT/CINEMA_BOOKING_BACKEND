@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ticket_promotions")
@@ -29,5 +30,11 @@ public class TicketPromotion {
     @JsonIgnore
     private Promotion promotion;
 
-    private LocalDate appliedDate;
+    @Column(nullable = false)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private LocalDateTime appliedDate = LocalDateTime.now();
 }

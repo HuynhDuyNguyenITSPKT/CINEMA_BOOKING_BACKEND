@@ -16,8 +16,14 @@ public class Seat {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(columnDefinition = "NVARCHAR(500)", nullable = false)
+    @Column(columnDefinition = "NVARCHAR(20)", nullable = false) //Giảm xuống NVARCHAR(500) -> 20 cho phù hợp với dữ liệu lưu trữ
     private String name;
+
+    @Column(nullable = false)
+    private Integer rowIndex;
+
+    @Column(nullable = false)
+    private Integer columnIndex;
 
     @ManyToOne
     @JoinColumn(name = "auditorium_id")

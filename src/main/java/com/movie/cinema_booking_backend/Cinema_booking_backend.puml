@@ -1,0 +1,159 @@
+@startuml
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam nodesep 80
+skinparam ranksep 110
+skinparam roundcorner 8
+skinparam shadowing false
+
+' Cấu hình màu sắc
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #34495E
+    HeaderBackgroundColor #EAF2F8
+}
+skinparam enum {
+    BackgroundColor #FDEDEC
+    BorderColor #E74C3C
+}
+
+title "Cinema Booking Backend - Optimized Domain Model"
+
+' ==========================================
+' 1. ENUMS & CLASSES
+' ==========================================
+enum Role {
+    ADMIN
+    USER
+}
+enum BookingStatus {
+    PENDING
+    SUCCESS
+    CANCELLED
+}
+enum PaymentMethod {
+    VNPAY
+    MOMO
+}
+enum ServiceCategory {
+    FOOD
+    DRINK
+    COMBO
+}
+enum TicketStatus {
+    PROCESSING
+    BOOKED
+    USED
+}
+
+class User {
+    - Long id
+    - String fullName
+    - String email
+    - String phone
+}
+class Account {
+    - String username
+    - String password
+    - boolean isActive
+}
+
+class Booking {
+    - String id
+    - LocalDateTime createdAt
+    - Double totalAmount
+    - String transactionId
+}
+class Ticket {
+    - String id
+    - LocalDateTime bookingDate
+    - Double price
+    - String qrCodeUrl
+}
+
+class ExtraService {
+    - String name
+    - Double price
+}
+class TicketExtra {
+    - Integer quantity
+    - Double totalPrice
+}
+class Promotion {
+    - String name
+    - Double discountValue
+}
+class TicketPromotion {
+    - LocalDate appliedDate
+}
+
+class Movie {
+    - String title
+    - int durationMinutes
+    - String status
+}
+class Genre {
+    - String name
+}
+class MovieReview {
+    - Double rating
+    - String comment
+}
+class Auditorium {
+    - String name
+    - int seatCount
+}
+class Seat {
+    - String name
+}
+class SeatType {
+    - String name
+    - float surcharge
+}
+class Showtime {
+    - int basePrice
+    - LocalDateTime startTime
+}
+
+' ==========================================
+' 2. RELATIONSHIPS (Đã ép hướng để chống dính nét)
+' ==========================================
+
+' --- Tầng User ---
+User "1" *-right- "1" Account
+Account "1" .down.> "1" Role
+
+' --- Tầng Booking & Ticket ---
+User "1" -down-> "*" Booking
+Booking "1" *-down- "*" Ticket
+
+' --- Tầng Services & Promotions (Đẩy sang 2 bên của Ticket) ---
+Ticket "1" *-left- "*" TicketExtra
+ExtraService "1" <-up- "*" TicketExtra
+ExtraService .left.> ServiceCategory
+
+Ticket "1" *-right- "*" TicketPromotion
+Promotion "1" <-up- "*" TicketPromotion
+
+' --- Mapping xuống Tầng rạp chiếu (Dòng chảy từ trên xuống) ---
+Ticket "*" -down-> "1" Showtime
+Ticket "*" -down-> "1" Seat
+
+' --- Tầng Cinema & Movie ---
+Movie "1" *-down- "*" Showtime
+Movie "*" -right- "*" Genre
+Movie "1" <-up- "*" MovieReview
+User "1" --> "*" MovieReview
+
+Auditorium "1" *-down- "*" Seat
+Auditorium "1" -right- "*" Showtime
+Seat "*" -down-> "1" SeatType
+
+' --- Enum Dependencies ---
+Booking .left.> BookingStatus
+Booking .left.> PaymentMethod
+Ticket .right.> TicketStatus
+
+@enduml
