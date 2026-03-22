@@ -14,4 +14,28 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
 
+payment:
+  vnpay:
+    pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    return-url: http://localhost:8080/api/payment/callback/vnpay
+    tmn-code: 4VQWM52N
+    secret-key: VVO7QRU44345Y78HMHE2PTP71FC287Q3
+    version: 2.1.0
+    command: pay
+  momo:
+    partner-code: MOMO
+    access-key: F8BBA842ECF85
+    secret-key: K951B6PE1waDMi640xX08PD3vg6EkVlz
+    endpoint: https://test-payment.momo.vn/v2/gateway/api
+    return-url: http://localhost:8080/api/payment/callback/momo
+    ipn-url: http://localhost:8080/api/payment/callback/momo
+    request-type: payWithMethod
+  sepay:
+    base-url: https://qr.sepay.vn/img
+    bank: Vietcombank
+    account-number: 1040681062
+    template: compact
+    default-description: Thanh toan ve xem phim
+    page-url: http://localhost:8080/payment/sepay/checkout.html
+
 
