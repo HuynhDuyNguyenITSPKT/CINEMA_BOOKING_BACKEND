@@ -3,13 +3,14 @@ package com.movie.cinema_booking_backend.service;
 import com.movie.cinema_booking_backend.request.payment.PaymentRequest;
 import com.movie.cinema_booking_backend.request.payment.PaymentResponse;
 import com.movie.cinema_booking_backend.request.payment.PaymentResult;
+import com.movie.cinema_booking_backend.service.payment.adapter.MoMoAdapter;
+import com.movie.cinema_booking_backend.service.payment.adapter.MoMoCallbackAdapter;
+import com.movie.cinema_booking_backend.service.payment.adapter.SepayAdapter;
+import com.movie.cinema_booking_backend.service.payment.adapter.VNPayAdapter;
+import com.movie.cinema_booking_backend.service.payment.adapter.VNPayCallbackAdapter;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
-import com.movie.cinema_booking_backend.service.payment.impl.MoMoAdapter;
-import com.movie.cinema_booking_backend.service.payment.impl.MoMoCallbackAdapter;
-import com.movie.cinema_booking_backend.service.payment.impl.SepayAdapter;
-import com.movie.cinema_booking_backend.service.payment.impl.VNPayAdapter;
-import com.movie.cinema_booking_backend.service.payment.impl.VNPayCallbackAdapter;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ public class PaymentService {
     @Autowired
     private MoMoCallbackAdapter moMoCallbackAdapter;
 
-
+    // vi phạm open/closed nhưng để trình bày không sử dụng factory pattern
     public PaymentResponse pay(String method, PaymentRequest request) {
         String normalizedMethod = normalizeMethod(method);
         switch (normalizedMethod) {
@@ -43,7 +44,7 @@ public class PaymentService {
                 return vnPayAdapter.createPayment(request);
             case "MOMO":
                 return moMoAdapter.createPayment(request);
-            case "SEPAY":
+            case "SEPAY": // Để trình bày không sử dụng
                 return sepayAdapter.createPayment(request);
             default:
                 throw new AppException(ErrorCode.INVALID_REQUEST);

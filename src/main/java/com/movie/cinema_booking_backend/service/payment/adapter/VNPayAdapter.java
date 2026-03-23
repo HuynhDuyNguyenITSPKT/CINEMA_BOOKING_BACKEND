@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service.payment.impl;
+package com.movie.cinema_booking_backend.service.payment.adapter;
 
 import com.movie.cinema_booking_backend.request.payment.PaymentRequest;
 import com.movie.cinema_booking_backend.request.payment.PaymentResponse;
