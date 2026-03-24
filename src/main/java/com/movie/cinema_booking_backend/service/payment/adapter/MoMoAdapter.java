@@ -2,13 +2,13 @@ package com.movie.cinema_booking_backend.service.payment.adapter;
 
 import com.movie.cinema_booking_backend.request.payment.PaymentRequest;
 import com.movie.cinema_booking_backend.request.payment.PaymentResponse;
-import com.movie.cinema_booking_backend.service.MoMoService;
+import com.movie.cinema_booking_backend.service.payment.MoMoService;
 import com.movie.cinema_booking_backend.service.payment.service.PaymentGateway;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class MoMoAdapter implements PaymentGateway {
@@ -27,6 +27,10 @@ public class MoMoAdapter implements PaymentGateway {
 
         String payUrl = moMoService.createPayment(params);
 
-        return new PaymentResponse(payUrl, "MOMO");
+        // return new PaymentResponse(payUrl, "MOMO");
+        return PaymentResponse.builder()
+                .payUrl(payUrl)
+                .provider("MOMO")
+                .build();
     }
 }

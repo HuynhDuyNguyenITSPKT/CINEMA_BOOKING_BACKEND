@@ -1,6 +1,5 @@
 package com.movie.cinema_booking_backend.controller;
 
-import com.movie.cinema_booking_backend.entity.Genre;
 import com.movie.cinema_booking_backend.request.GenreRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.response.GenreResponse;

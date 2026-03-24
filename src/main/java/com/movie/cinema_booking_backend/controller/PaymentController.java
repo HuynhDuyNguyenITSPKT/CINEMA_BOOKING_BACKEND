@@ -3,8 +3,10 @@ package com.movie.cinema_booking_backend.controller;
 import com.movie.cinema_booking_backend.request.payment.PaymentRequest;
 import com.movie.cinema_booking_backend.request.payment.PaymentResponse;
 import com.movie.cinema_booking_backend.request.payment.PaymentResult;
-import com.movie.cinema_booking_backend.service.PaymentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.movie.cinema_booking_backend.response.ApiResponse;
+import com.movie.cinema_booking_backend.service.IPaymentSevice;
+import com.movie.cinema_booking_backend.service.payment.proxy.PaymentProxy;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -13,22 +15,37 @@ import java.util.Map;
 @RequestMapping("/api/payment")
 public class PaymentController {
 
-    @Autowired
-    private PaymentService paymentService;
+    private final IPaymentSevice paymentService;
+
+    public PaymentController(PaymentProxy paymentService) {
+        this.paymentService = paymentService;
+    }
 
     @PostMapping
-    public PaymentResponse pay(@RequestParam String method,
+    public ApiResponse<PaymentResponse> pay(@RequestParam String method,
                                @RequestBody PaymentRequest request) {
-        return paymentService.pay(method, request);
+        return new ApiResponse.Builder<PaymentResponse>()
+                .success(true)
+                .message("Payment created successfully")
+                .data(paymentService.pay(method, request))
+                .build();
     }
 
     @GetMapping("/callback/vnpay")
-    public PaymentResult vnpayCallback(@RequestParam Map<String, String> params) {
-        return paymentService.handleCallback("VNPAY", params);
+    public ApiResponse<PaymentResult> vnpayCallback(@RequestParam Map<String, String> params) {
+        return new ApiResponse.Builder<PaymentResult>()
+                .success(true)
+                .message("VNPAY callback processed successfully")
+                .data(paymentService.handleCallback("VNPAY", params))
+                .build();
     }
 
     @GetMapping("/callback/momo")
-    public PaymentResult momoCallback(@RequestBody Map<String, String> body) {
-        return paymentService.handleCallback("MOMO", body);
+    public ApiResponse<PaymentResult> momoCallback(@RequestBody Map<String, String> body) {
+        return new ApiResponse.Builder<PaymentResult>()
+                .success(true)
+                .message("MOMO callback processed successfully")
+                .data(paymentService.handleCallback("MOMO", body))
+                .build();
     }
 }

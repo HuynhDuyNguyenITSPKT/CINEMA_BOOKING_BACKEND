@@ -30,12 +30,4 @@ payment:
     return-url: http://localhost:8080/api/payment/callback/momo
     ipn-url: http://localhost:8080/api/payment/callback/momo
     request-type: payWithMethod
-  sepay:
-    base-url: https://qr.sepay.vn/img
-    bank: Vietcombank
-    account-number: 1040681062
-    template: compact
-    default-description: Thanh toan ve xem phim
-    page-url: http://localhost:8080/payment/sepay/checkout.html
-
 

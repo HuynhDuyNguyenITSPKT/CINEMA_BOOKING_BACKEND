@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service;
+package com.movie.cinema_booking_backend.service.payment;
 
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;

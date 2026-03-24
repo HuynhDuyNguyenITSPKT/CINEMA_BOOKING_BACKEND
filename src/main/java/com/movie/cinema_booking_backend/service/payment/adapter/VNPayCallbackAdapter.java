@@ -1,7 +1,7 @@
 package com.movie.cinema_booking_backend.service.payment.adapter;
 
 import com.movie.cinema_booking_backend.request.payment.PaymentResult;
-import com.movie.cinema_booking_backend.service.VNPayService;
+import com.movie.cinema_booking_backend.service.payment.VNPayService;
 import com.movie.cinema_booking_backend.service.payment.service.PaymentCallbackAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
