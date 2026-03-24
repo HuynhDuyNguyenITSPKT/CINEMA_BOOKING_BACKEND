@@ -11,7 +11,6 @@ import com.movie.cinema_booking_backend.service.payment.adapter.VNPayCallbackAda
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 
-import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +34,7 @@ public class PaymentService implements IPaymentSevice{
     // vi phạm open/closed nhưng để trình bày không sử dụng factory pattern
     @Override
     public PaymentResponse pay(String method, PaymentRequest request) {
-        String normalizedMethod = normalizeMethod(method);
+        String normalizedMethod = method;
         switch (normalizedMethod) {
             case "VNPAY":
                 return vnPayAdapter.createPayment(request);
@@ -48,7 +47,7 @@ public class PaymentService implements IPaymentSevice{
 
     @Override
     public PaymentResult handleCallback(String method, Map<String, String> data) {
-        String normalizedMethod = normalizeMethod(method);
+        String normalizedMethod = method;
         switch (normalizedMethod) {
             case "VNPAY":
                 return vnPayCallbackAdapter.handleCallback(data);
@@ -57,12 +56,5 @@ public class PaymentService implements IPaymentSevice{
             default:
                 throw new AppException(ErrorCode.INVALID_REQUEST);
         }
-    }
-
-    private String normalizeMethod(String method) {
-        if (method == null || method.trim().isEmpty()) {
-            throw new AppException(ErrorCode.INVALID_REQUEST);
-        }
-        return method.trim().toUpperCase(Locale.ROOT);
     }
 }

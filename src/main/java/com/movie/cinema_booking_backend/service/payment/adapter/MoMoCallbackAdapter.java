@@ -25,9 +25,12 @@ public class MoMoCallbackAdapter implements PaymentCallbackAdapter {
 
         boolean success = "0".equals(data.get("resultCode"));
 
-        return new PaymentResult(
-                data.get("orderId"),
-                success
-        );
+        return PaymentResult.builder()
+            .orderId(data.get("orderId"))
+            .success(success)
+            .provider("MOMO")
+            .resultCode(data.getOrDefault("resultCode", ""))
+            .message(data.getOrDefault("message", ""))
+            .build();
     }
 }

@@ -25,9 +25,12 @@ public class VNPayCallbackAdapter implements PaymentCallbackAdapter {
 
         boolean success = "00".equals(data.get("vnp_ResponseCode"));
 
-        return new PaymentResult(
-                data.get("vnp_TxnRef"),
-                success
-        );
+        return PaymentResult.builder()
+            .orderId(data.get("vnp_TxnRef"))
+            .success(success)
+            .provider("VNPAY")
+            .resultCode(data.getOrDefault("vnp_ResponseCode", ""))
+            .message(data.getOrDefault("vnp_OrderInfo", ""))
+            .build();
     }
 }

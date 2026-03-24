@@ -15,4 +15,7 @@ import lombok.Setter;
 public class PaymentResult {
     private String orderId;
     private boolean success;
+    private String provider;
+    private String resultCode;
+    private String message;
 }

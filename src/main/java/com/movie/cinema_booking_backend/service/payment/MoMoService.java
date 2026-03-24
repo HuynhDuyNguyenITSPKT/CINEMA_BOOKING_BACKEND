@@ -55,6 +55,7 @@ public class MoMoService {
 
         Map<String, Object> requestData = new HashMap<>();
         requestData.put("partnerCode", partnerCode);
+        requestData.put("accessKey", accessKey);
         requestData.put("requestType", requestType);
         requestData.put("ipnUrl", notifyUrl);
         requestData.put("redirectUrl", returnUrl);
