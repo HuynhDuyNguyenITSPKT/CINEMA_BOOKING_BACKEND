@@ -28,7 +28,16 @@ public enum ErrorCode {
     INCORRECT_PASSWORD(3000, "Incorrect password", HttpStatus.UNAUTHORIZED),
     EMAIL_EXISTED(3001, "Email already existed", HttpStatus.BAD_REQUEST),
     USERNAME_EXISTED(3002, "Username already existed", HttpStatus.BAD_REQUEST),
-    ACCOUNT_LOCKED(403, "Tài khoản của bạn đã bị khoá.", HttpStatus.FORBIDDEN);
+    ACCOUNT_LOCKED(403, "Tài khoản của bạn đã bị khoá.", HttpStatus.FORBIDDEN), 
+    PENDING_REGISTRATION_NOT_FOUND(1015, "Pending registration not found", HttpStatus.NOT_FOUND), 
+    INVALID_OTP(1016, "Invalid OTP", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(1017, "OTP has expired", HttpStatus.BAD_REQUEST), 
+    INVALID_PASSWORD(1018, "Invalid password", HttpStatus.BAD_REQUEST), 
+    UNAUTHENTICATED(1019, "User is not authenticated", HttpStatus.UNAUTHORIZED), 
+    PHONE_EXISTS(1020, "Phone number already exists", HttpStatus.BAD_REQUEST),
+    INVALID_DATE_OF_BIRTH(1021, "Invalid date of birth", HttpStatus.BAD_REQUEST), 
+    ACCESS_DENIED(403, "Access Denied", HttpStatus.FORBIDDEN), 
+    TOKEN_REVOKED(1022, "Token has been revoked", HttpStatus.BAD_REQUEST);
 
 
     private int code;
