@@ -37,7 +37,10 @@ public enum ErrorCode {
     PHONE_EXISTS(1020, "Phone number already exists", HttpStatus.BAD_REQUEST),
     INVALID_DATE_OF_BIRTH(1021, "Invalid date of birth", HttpStatus.BAD_REQUEST), 
     ACCESS_DENIED(403, "Access Denied", HttpStatus.FORBIDDEN), 
-    TOKEN_REVOKED(1022, "Token has been revoked", HttpStatus.BAD_REQUEST);
+    TOKEN_REVOKED(1022, "Token has been revoked", HttpStatus.BAD_REQUEST),
+    PROMOTION_NOT_FOUND(1023, "Promotion not found", HttpStatus.NOT_FOUND),
+    PROMOTION_CODE_EXISTS(1024, "Promotion code already exists", HttpStatus.BAD_REQUEST),
+    INVALID_PROMOTION_DATE_RANGE(1025, "Promotion end date must be after start date", HttpStatus.BAD_REQUEST);
 
 
     private int code;
