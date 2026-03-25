@@ -36,7 +36,8 @@ public enum ErrorCode {
     UNAUTHENTICATED(1019, "User is not authenticated", HttpStatus.UNAUTHORIZED), 
     PHONE_EXISTS(1020, "Phone number already exists", HttpStatus.BAD_REQUEST),
     INVALID_DATE_OF_BIRTH(1021, "Invalid date of birth", HttpStatus.BAD_REQUEST), 
-    ACCESS_DENIED(403, "Access Denied", HttpStatus.FORBIDDEN);
+    ACCESS_DENIED(403, "Access Denied", HttpStatus.FORBIDDEN), 
+    TOKEN_REVOKED(1022, "Token has been revoked", HttpStatus.BAD_REQUEST);
 
 
     private int code;

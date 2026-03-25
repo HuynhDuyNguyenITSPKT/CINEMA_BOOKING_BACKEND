@@ -1,7 +1,10 @@
 package com.movie.cinema_booking_backend.controller;
 
 import java.text.ParseException;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +16,7 @@ import com.movie.cinema_booking_backend.request.RegistrationRequest;
 import com.movie.cinema_booking_backend.request.TokenRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.response.AuthResponse;
+import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IAuthService;
 
 import jakarta.validation.Valid;
@@ -79,6 +83,15 @@ public class AuthController {
         return new ApiResponse.Builder<Void>()
                 .success(true)
                 .message("Đăng xuất thành công.")
+                .build();
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<UserResponse> getCurrentUser(Authentication authentication) {
+        UserResponse result = authService.getCurrentUser(authentication);
+        return new ApiResponse.Builder<UserResponse>()
+                .success(true)
+                .data(result)
                 .build();
     }
 

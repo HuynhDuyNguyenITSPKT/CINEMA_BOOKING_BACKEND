@@ -4,35 +4,26 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
-import com.movie.cinema_booking_backend.repository.InvalidatedTokenRepository;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.crypto.MACVerifier;
+import com.movie.cinema_booking_backend.service.auth.JwtTokenService;
 import com.nimbusds.jwt.SignedJWT;
 
 @Component
 public class CustomJwtDecoder implements JwtDecoder {
 
-    @Value("${security.jwt.signerKey}")
-    private String signerKey;
+    private final JwtTokenService jwtTokenService;
 
-    @Autowired
-    private InvalidatedTokenRepository invalidatedTokenRepository;
+    public CustomJwtDecoder(JwtTokenService jwtTokenService) {
+        this.jwtTokenService = jwtTokenService;
+    }
 
     @Override
     public Jwt decode(String token) throws JwtException {
         try {
-            SignedJWT signedJWT = SignedJWT.parse(token);
-
-            MACVerifier verifier = new MACVerifier(signerKey.getBytes());
-            if (!signedJWT.verify(verifier)) {
-                throw new JwtException("Invalid token signature");
-            }
+            SignedJWT signedJWT = jwtTokenService.verifyToken(token);
 
             String type = (String) signedJWT.getJWTClaimsSet().getClaim("type");
             if (!"ACCESS".equals(type)) {
@@ -40,14 +31,6 @@ public class CustomJwtDecoder implements JwtDecoder {
             }
 
             Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-            if (expiryTime == null || expiryTime.before(new Date())) {
-                throw new JwtException("Token has expired or is invalid");
-            }
-
-            String jit = signedJWT.getJWTClaimsSet().getJWTID();
-            if (jit != null && invalidatedTokenRepository.existsById(jit)) {
-                throw new JwtException("Token has been invalidated");
-            }
 
             Instant issueTime = signedJWT.getJWTClaimsSet().getIssueTime() != null
                     ? signedJWT.getJWTClaimsSet().getIssueTime().toInstant()
@@ -60,7 +43,7 @@ public class CustomJwtDecoder implements JwtDecoder {
                     signedJWT.getHeader().toJSONObject(),
                     signedJWT.getJWTClaimsSet().getClaims());
 
-        } catch (ParseException | JOSEException e) {
+        } catch (ParseException e) {
             throw new JwtException("Invalid token format");
         } catch (Exception e) {
             throw new JwtException("Error decoding token: " + e.getMessage());

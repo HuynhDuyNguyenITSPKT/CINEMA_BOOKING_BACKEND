@@ -2,11 +2,8 @@ package com.movie.cinema_booking_backend.service.impl;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.Random;
-import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,16 +21,11 @@ import com.movie.cinema_booking_backend.repository.UserRepository;
 import com.movie.cinema_booking_backend.request.AuthRequest;
 import com.movie.cinema_booking_backend.request.RegistrationRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
+import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IAuthService;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.JWTClaimsSet;
+import com.movie.cinema_booking_backend.service.auth.JwtTokenService;
+import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptorDirector;
+import com.movie.cinema_booking_backend.service.auth.singleton.OtpGeneratorSingleton;
 import com.nimbusds.jwt.SignedJWT;
 
 import jakarta.transaction.Transactional;
@@ -45,17 +37,26 @@ public class AuthService implements IAuthService {
     private final PendingRegistrationRepository pendingRepo;
     private final InvalidatedTokenRepository invalidatedRepo;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenService jwtTokenService;
+    private final TokenDescriptorDirector tokenDescriptorDirector;
 
-    public AuthService(AccountRepository accountRepository, UserRepository userRepository, PendingRegistrationRepository pendingRepo, InvalidatedTokenRepository invalidatedRepo, PasswordEncoder passwordEncoder) {
+    public AuthService(
+            AccountRepository accountRepository,
+            UserRepository userRepository,
+            PendingRegistrationRepository pendingRepo,
+            InvalidatedTokenRepository invalidatedRepo,
+            PasswordEncoder passwordEncoder,
+            JwtTokenService jwtTokenService,
+            TokenDescriptorDirector tokenDescriptorDirector
+    ) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.pendingRepo = pendingRepo;
         this.invalidatedRepo = invalidatedRepo;
         this.passwordEncoder = passwordEncoder;
+        this.jwtTokenService = jwtTokenService;
+        this.tokenDescriptorDirector = tokenDescriptorDirector;
     }
-
-    @Value("${security.jwt.signerKey}")
-    private String signerKey;
 
     @Override
     @Transactional
@@ -80,15 +81,18 @@ public class AuthService implements IAuthService {
         pendingRepo.deleteByEmail(request.getEmail());
         pendingRepo.deleteByUsername(request.getUsername());
 
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        String otp =  OtpGeneratorSingleton.getInstance().generateSixDigits();
+        LocalDateTime now = LocalDateTime.now();
         PendingRegistration pending = PendingRegistration.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail()).fullName(request.getFullName())
-                .phone(request.getPhone()).dateOfBirth(request.getDateOfBirth())
+                .email(request.getEmail())
+                .fullName(request.getFullName())
+                .phone(request.getPhone())
+                .dateOfBirth(request.getDateOfBirth())
                 .otp(otp)
-                .expiryDate(LocalDateTime.now().plusMinutes(5))
-                .otpGeneratedTime(LocalDateTime.now())
+                .expiryDate(now.plusMinutes(5))
+                .otpGeneratedTime(now)
                 .build();
         pendingRepo.save(pending);
 
@@ -114,20 +118,20 @@ public class AuthService implements IAuthService {
         }
 
         User user = User.builder()
-                .fullName(pending.getFullName())
-                .email(pending.getEmail())
-                .phone(pending.getPhone())
-                .dateOfBirth(pending.getDateOfBirth())
-                .build();
+            .fullName(pending.getFullName())
+            .email(pending.getEmail())
+            .phone(pending.getPhone())
+            .dateOfBirth(pending.getDateOfBirth())
+            .build();
         User savedUser = userRepository.save(user);
 
         Account account = Account.builder()
-                .username(pending.getUsername())
-                .password(pending.getPassword()) 
-                .role(Role.USER) 
-                .user(savedUser)
-                .isActive(true)
-                .build();
+            .username(pending.getUsername())
+            .password(pending.getPassword())
+            .role(Role.USER)
+            .user(savedUser)
+            .isActive(true)
+            .build();
         accountRepository.save(account);
 
         pendingRepo.delete(pending);
@@ -140,7 +144,7 @@ public class AuthService implements IAuthService {
         if (pending == null) {
             throw new AppException(ErrorCode.PENDING_REGISTRATION_NOT_FOUND);
         }
-        String newOtp = String.format("%06d", new Random().nextInt(999999));
+        String newOtp = OtpGeneratorSingleton.getInstance().generateSixDigits();
         pending.setOtp(newOtp);
         pending.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         pending.setOtpGeneratedTime(LocalDateTime.now());
@@ -162,10 +166,10 @@ public class AuthService implements IAuthService {
     @Override
     public void logout(String token) throws ParseException {
         var signedJWT = SignedJWT.parse(token);
-        invalidatedRepo.save(new InvalidatedToken(
-                signedJWT.getJWTClaimsSet().getJWTID(), 
-                signedJWT.getJWTClaimsSet().getExpirationTime()
-        ));
+        invalidatedRepo.save(InvalidatedToken.builder()
+                .id(signedJWT.getJWTClaimsSet().getJWTID())
+                .expiryDate(signedJWT.getJWTClaimsSet().getExpirationTime())
+                .build());
     }
 
     @Override
@@ -180,36 +184,30 @@ public class AuthService implements IAuthService {
         return buildAuthResponse(acc);
     }
 
-    private AuthResponse buildAuthResponse(Account acc) {
-        return AuthResponse.builder()
-                .accessToken(generateToken(acc, 3600, "ACCESS"))
-                .refreshToken(generateToken(acc, 604800, "REFRESH"))
+    @Override
+    public UserResponse getCurrentUser(Authentication authentication) {
+        String username = authentication.getName();
+        Account acc = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        User user = acc.getUser();
+        return UserResponse.builder()
+                .id(user.getId().toString())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .phone(user.getPhone())
+                .dateOfBirth(user.getDateOfBirth())
+                .role(acc.getRole())
                 .build();
     }
 
-    private String generateToken(Account acc, long duration,String type) {
-        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
-        JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                .subject(acc.getUsername())
-                .expirationTime(new Date(System.currentTimeMillis() + duration * 1000))
-                .jwtID(UUID.randomUUID().toString())
-                .claim("scope", acc.getRole().name())
-                .claim("type", type)
+    private AuthResponse buildAuthResponse(Account acc) {
+        return AuthResponse.builder()
+                .accessToken(jwtTokenService.generateToken(acc, tokenDescriptorDirector.buildAccessDescriptor()))
+                .refreshToken(jwtTokenService.generateToken(acc, tokenDescriptorDirector.buildRefreshDescriptor()))
                 .build();
-        JWSObject jws = new JWSObject(header, new Payload(claims.toJSONObject()));
-        try {
-            jws.sign(new MACSigner(signerKey.getBytes()));
-            return jws.serialize();
-        } catch (JOSEException e) { throw new RuntimeException(e); }
     }
 
     public SignedJWT verifyToken(String token) throws Exception {
-        SignedJWT signedJWT = SignedJWT.parse(token);
-        JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
-        if (!signedJWT.verify(verifier) || signedJWT.getJWTClaimsSet().getExpirationTime().before(new Date()))
-            throw new RuntimeException("Invalid or expired token");
-        if (invalidatedRepo.existsById(signedJWT.getJWTClaimsSet().getJWTID()))
-            throw new RuntimeException("Token revoked");
-        return signedJWT;
+        return jwtTokenService.verifyToken(token);
     }
 }
