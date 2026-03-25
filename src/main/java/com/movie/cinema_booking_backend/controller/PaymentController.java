@@ -40,21 +40,12 @@ public class PaymentController {
                 .build();
     }
 
-    @GetMapping("/callback/momo")
-    public ApiResponse<PaymentResult> momoCallback(@RequestParam Map<String, String> params) {
+    @GetMapping("/callback")
+    public ApiResponse<PaymentResult> momoCallback(@RequestParam String method, @RequestParam Map<String, String> params) {
         return new ApiResponse.Builder<PaymentResult>()
                 .success(true)
                 .message("MOMO callback processed successfully")
                 .data(paymentService.handleCallback("MOMO", params))
-                .build();
-    }
-
-    @PostMapping("/callback/momo")
-    public ApiResponse<PaymentResult> momoIpn(@RequestBody Map<String, String> body) {
-        return new ApiResponse.Builder<PaymentResult>()
-                .success(true)
-                .message("MOMO IPN processed successfully")
-                .data(paymentService.handleCallback("MOMO", body))
                 .build();
     }
 }

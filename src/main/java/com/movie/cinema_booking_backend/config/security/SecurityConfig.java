@@ -26,6 +26,10 @@ public class SecurityConfig {
         "/api/auth/**"
     };
 
+    private final String[] USER_ENDPOINTS = {
+        "/api/payments/**",
+    };
+
     private final CustomJwtDecoder customJwtDecoder;
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -47,6 +51,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
+                .requestMatchers(USER_ENDPOINTS).hasAnyRole("USER", "ADMIN")
                 .anyRequest().authenticated()
             )
             .cors(Customizer.withDefaults())
