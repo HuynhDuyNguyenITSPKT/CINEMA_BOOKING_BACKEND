@@ -31,7 +31,7 @@ public class PaymentService implements IPaymentSevice{
     @Autowired
     private MoMoCallbackAdapter moMoCallbackAdapter;
 
-    // vi phạm open/closed nhưng để trình bày không sử dụng factory pattern
+    // vi phạm open/closed nhưng để trình bày không sử dụng strategy pattern
     @Override
     public PaymentResponse pay(String method, PaymentRequest request) {
         String normalizedMethod = method;

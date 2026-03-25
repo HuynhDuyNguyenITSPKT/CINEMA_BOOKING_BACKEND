@@ -9,6 +9,7 @@ import com.movie.cinema_booking_backend.service.payment.proxy.PaymentProxy;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -40,8 +41,8 @@ public class PaymentController {
                 .build();
     }
 
-    @GetMapping("/callback")
-    public ApiResponse<PaymentResult> momoCallback(@RequestParam String method, @RequestParam Map<String, String> params) {
+    @GetMapping("/callback/momo")
+    public ApiResponse<PaymentResult> momoCallbackGet(@RequestParam Map<String, String> params) {
         return new ApiResponse.Builder<PaymentResult>()
                 .success(true)
                 .message("MOMO callback processed successfully")
