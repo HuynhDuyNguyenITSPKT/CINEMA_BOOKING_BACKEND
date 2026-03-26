@@ -21,6 +21,13 @@ public class PromotionService implements IPromotionService {
     public PromotionService(PromotionRepository promotionRepository) {
         this.promotionRepository = promotionRepository;
     }
+    
+    @Override
+    public PromotionResponse getPromotionByCode(String code) {
+        Promotion promotion = promotionRepository.getPromotionByCode(code)
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+        return toResponse(promotion);
+    }
 
     @Override
     public Page<PromotionResponse> getAllPromotions(int page, int size, Boolean isActive) {

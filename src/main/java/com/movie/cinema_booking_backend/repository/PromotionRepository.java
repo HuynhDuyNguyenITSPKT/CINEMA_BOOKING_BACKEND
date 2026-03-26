@@ -1,6 +1,9 @@
 package com.movie.cinema_booking_backend.repository;
 
 import com.movie.cinema_booking_backend.entity.Promotion;
+
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +16,6 @@ public interface PromotionRepository extends JpaRepository<Promotion, String> {
     boolean existsByCode(String code);
 
     boolean existsByCodeAndIdNot(String code, String id);
+
+    Optional<Promotion> getPromotionByCode(String code);
 }
