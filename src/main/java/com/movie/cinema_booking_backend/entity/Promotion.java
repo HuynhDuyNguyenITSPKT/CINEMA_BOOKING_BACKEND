@@ -87,4 +87,9 @@ public class Promotion {
         }
         return true;
     }
+
+    public Promotion orElseThrow(Object object) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
+    }
 }

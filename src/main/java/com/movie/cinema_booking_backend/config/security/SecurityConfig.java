@@ -18,12 +18,16 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     // Define admin-only endpoints
     private static final String[] ADMIN_ENDPOINTS = {
-        "/api/users"
+        "/api/users",
+        "/api/admin/promotions",
+        "/api/admin/promotions/**",
+        "/api/admin/extra-services",
+        "/api/admin/extra-services/**"
     };
 
     // Define public endpoints that don't require authentication
     private final String[] PUBLIC_ENDPOINTS = {
-        "/api/auth/**"
+        "/api/auth/**","/api/extra-services/**"
     };
 
     private final String[] USER_ENDPOINTS = {
