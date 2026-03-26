@@ -3,8 +3,8 @@ spring:
     name: CINEMA_BOOKING_BACKEND
   datasource:
     url: jdbc:mysql://localhost:3306/movie
-    username: root
-    password: 1234
+    username: duyphan42
+    password: 40938813dD#
   jpa:
     hibernate:
       ddl-auto: update

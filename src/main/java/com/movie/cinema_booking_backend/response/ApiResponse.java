@@ -1,7 +1,6 @@
 package com.movie.cinema_booking_backend.response;
 
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 public class ApiResponse<T> {

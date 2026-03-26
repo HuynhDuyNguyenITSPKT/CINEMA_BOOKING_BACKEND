@@ -1,7 +1,9 @@
 package com.movie.cinema_booking_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.movie.cinema_booking_backend.enums.MovieStatus;
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -9,6 +11,11 @@ import java.util.List;
 
 @Entity
 @Table(name = "movies")
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class Movie {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -49,7 +56,10 @@ public class Movie {
             joinColumns = @JoinColumn(name = "movie_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
+    @Builder.Default
+    @JsonIgnore
     private List<Genre> genres = new ArrayList<>();
+
     public void addGenre(Genre genre) {
         this.genres.add(genre);
         genre.getMovies().add(this);

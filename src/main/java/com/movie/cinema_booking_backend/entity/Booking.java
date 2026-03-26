@@ -2,7 +2,6 @@ package com.movie.cinema_booking_backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.movie.cinema_booking_backend.enums.BookingStatus;
-import com.movie.cinema_booking_backend.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 

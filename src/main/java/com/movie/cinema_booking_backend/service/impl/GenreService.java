@@ -24,7 +24,10 @@ public class GenreService implements IGenreService {
     @Override
     public Page<GenreResponse> getAllGenres(int page, int size) {
         var genres = genreRepository.findAll(PageRequest.of(page, size));
-        return genres;
+        return genres.map(genre -> GenreResponse.builder()
+                .id(genre.getId())
+                .name(genre.getName())
+                .build());
     }
     @Override
     public List<GenreResponse> getAllGenres() {

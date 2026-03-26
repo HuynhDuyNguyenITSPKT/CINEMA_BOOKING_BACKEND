@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface GenreRepository extends JpaRepository<Genre, String> {
-    Page findAll(Pageable pageable);
+    Page<Genre> findAll(Pageable pageable);
 
     boolean existsByName(String name);
 }
