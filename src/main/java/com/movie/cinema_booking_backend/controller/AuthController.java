@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.movie.cinema_booking_backend.request.AuthRequest;
+import com.movie.cinema_booking_backend.request.ChangePasswordRequest;
+import com.movie.cinema_booking_backend.request.ForgotPasswordRequest;
 import com.movie.cinema_booking_backend.request.OtpRequest;
 import com.movie.cinema_booking_backend.request.RegistrationRequest;
+import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.request.TokenRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.response.AuthResponse;
@@ -65,6 +68,36 @@ public class AuthController {
                 .success(true)
                 .message("Đăng nhập thành công.")
                 .data(result)
+                .build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ApiResponse<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
+        authService.forgotPassword(req);
+        return new ApiResponse.Builder<String>()
+                .success(true)
+                .message("OTP đặt lại mật khẩu đã được gửi.")
+                .data(req.getEmail())
+                .build();
+    }
+
+    @PostMapping("/reset-password")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        authService.resetPassword(req);
+        return new ApiResponse.Builder<Void>()
+                .success(true)
+                .message("Đặt lại mật khẩu thành công.")
+                .build();
+    }
+
+    @PostMapping("/change-password")
+    public ApiResponse<Void> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequest req) {
+        authService.changePassword(authentication, req);
+        return new ApiResponse.Builder<Void>()
+                .success(true)
+                .message("Đổi mật khẩu thành công.")
                 .build();
     }
 

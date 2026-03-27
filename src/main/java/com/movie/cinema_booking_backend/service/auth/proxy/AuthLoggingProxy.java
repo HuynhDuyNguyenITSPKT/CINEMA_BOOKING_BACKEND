@@ -7,7 +7,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.movie.cinema_booking_backend.request.AuthRequest;
+import com.movie.cinema_booking_backend.request.ChangePasswordRequest;
+import com.movie.cinema_booking_backend.request.ForgotPasswordRequest;
 import com.movie.cinema_booking_backend.request.RegistrationRequest;
+import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 
@@ -59,5 +62,23 @@ public class AuthLoggingProxy extends AbstractAuthProxy {
     public UserResponse getCurrentUser(Authentication authentication) {
         System.out.println("[Proxy GhiLog] Đang lấy thông tin người dùng hiện tại: " + authentication.getName());
         return next.getCurrentUser(authentication);
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        System.out.println("[Proxy GhiLog] Đang xử lý quên mật khẩu cho email: " + request.getEmail());
+        next.forgotPassword(request);
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        System.out.println("[Proxy GhiLog] Đang đặt lại mật khẩu cho email: " + request.getEmail());
+        next.resetPassword(request);
+    }
+
+    @Override
+    public void changePassword(Authentication authentication, ChangePasswordRequest request) {
+        System.out.println("[Proxy GhiLog] Đang đổi mật khẩu cho user: " + authentication.getName());
+        next.changePassword(authentication, request);
     }
 }

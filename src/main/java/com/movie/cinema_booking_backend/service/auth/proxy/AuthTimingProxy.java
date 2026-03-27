@@ -7,7 +7,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.movie.cinema_booking_backend.request.AuthRequest;
+import com.movie.cinema_booking_backend.request.ChangePasswordRequest;
+import com.movie.cinema_booking_backend.request.ForgotPasswordRequest;
 import com.movie.cinema_booking_backend.request.RegistrationRequest;
+import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 
@@ -85,6 +88,36 @@ public class AuthTimingProxy extends AbstractAuthProxy {
             return next.getCurrentUser(authentication);
         } finally {
             System.out.println("[Proxy Thời Gian] getCurrentUser mất " + (System.nanoTime() - start) + " ns");
+        }
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        long start = System.nanoTime();
+        try {
+            next.forgotPassword(request);
+        } finally {
+            System.out.println("[Proxy Thời Gian] forgotPassword mất " + (System.nanoTime() - start) + " ns");
+        }
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        long start = System.nanoTime();
+        try {
+            next.resetPassword(request);
+        } finally {
+            System.out.println("[Proxy Thời Gian] resetPassword mất " + (System.nanoTime() - start) + " ns");
+        }
+    }
+
+    @Override
+    public void changePassword(Authentication authentication, ChangePasswordRequest request) {
+        long start = System.nanoTime();
+        try {
+            next.changePassword(authentication, request);
+        } finally {
+            System.out.println("[Proxy Thời Gian] changePassword mất " + (System.nanoTime() - start) + " ns");
         }
     }
 }

@@ -37,7 +37,8 @@ public enum ErrorCode {
     PHONE_EXISTS(1020, "Phone number already exists", HttpStatus.BAD_REQUEST),
     INVALID_DATE_OF_BIRTH(1021, "Invalid date of birth", HttpStatus.BAD_REQUEST), 
     ACCESS_DENIED(403, "Access Denied", HttpStatus.FORBIDDEN), 
-    TOKEN_REVOKED(1022, "Token has been revoked", HttpStatus.BAD_REQUEST);
+    TOKEN_REVOKED(1022, "Token has been revoked", HttpStatus.BAD_REQUEST),
+    PENDING_RESET_PASSWORD_NOT_FOUND(1023, "Pending reset password not found", HttpStatus.NOT_FOUND);
 
 
     private int code;
