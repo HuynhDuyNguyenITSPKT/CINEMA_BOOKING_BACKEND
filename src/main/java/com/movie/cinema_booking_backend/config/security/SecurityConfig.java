@@ -27,11 +27,11 @@ public class SecurityConfig {
 
     // Define public endpoints that don't require authentication
     private final String[] PUBLIC_ENDPOINTS = {
-        "/api/auth/**","/api/extra-services/**"
+        "/api/auth/**", "/api/extra-services/**", "/api/payment/callback/**"
     };
 
     private final String[] USER_ENDPOINTS = {
-        "/api/payments/**",
+        "/api/payment/**",
     };
 
     private final CustomJwtDecoder customJwtDecoder;

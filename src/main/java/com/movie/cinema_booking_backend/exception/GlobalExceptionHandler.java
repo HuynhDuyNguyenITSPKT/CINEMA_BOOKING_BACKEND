@@ -14,7 +14,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .message(ex.getMessage())
                 .build();
-        return ResponseEntity.badRequest().body(apiResponse);
+        return ResponseEntity.status(ex.getErrorCode().getStatus()).body(apiResponse);
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, IllegalArgumentException.class})

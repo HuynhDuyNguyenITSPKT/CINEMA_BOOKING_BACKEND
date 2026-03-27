@@ -1,6 +1,5 @@
 package com.movie.cinema_booking_backend.service.payment.adapter;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.movie.cinema_booking_backend.request.payment.PaymentRequest;
@@ -11,8 +10,16 @@ import com.movie.cinema_booking_backend.service.payment.service.PaymentGateway;
 @Component
 public class VNPayAdapter implements PaymentGateway {
 
-    @Autowired
-    private VNPayService vnPayService = new VNPayService();
+    private final VNPayService vnPayService;
+
+    public VNPayAdapter(VNPayService vnPayService) {
+        this.vnPayService = vnPayService;
+    }
+
+    @Override
+    public String method() {
+        return "VNPAY";
+    }
 
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {

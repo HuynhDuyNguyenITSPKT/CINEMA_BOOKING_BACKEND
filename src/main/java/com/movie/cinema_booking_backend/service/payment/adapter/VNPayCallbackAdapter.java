@@ -1,36 +1,46 @@
 package com.movie.cinema_booking_backend.service.payment.adapter;
 
-import com.movie.cinema_booking_backend.request.payment.PaymentResult;
 import com.movie.cinema_booking_backend.service.payment.VNPayService;
-import com.movie.cinema_booking_backend.service.payment.service.PaymentCallbackAdapter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 @Component
-public class VNPayCallbackAdapter implements PaymentCallbackAdapter {
+public class VNPayCallbackAdapter extends AbstractPaymentCallbackTemplate {
 
-    @Autowired
-    private VNPayService vnPayService;
+    private final VNPayService vnPayService;
+
+    public VNPayCallbackAdapter(VNPayService vnPayService) {
+        this.vnPayService = vnPayService;
+    }
 
     @Override
-    public PaymentResult handleCallback(Map<String, String> data) {
+    protected boolean verifySignature(Map<String, String> data) {
+        return vnPayService.verify(data);
+    }
 
-        boolean valid = vnPayService.verify(data);
+    @Override
+    protected boolean isSuccess(Map<String, String> data) {
+        return "00".equals(data.get("vnp_ResponseCode"));
+    }
 
-        if (!valid) {
-            throw new RuntimeException("Invalid VNPay signature");
-        }
+    @Override
+    protected String provider() {
+        return "VNPAY";
+    }
 
-        boolean success = "00".equals(data.get("vnp_ResponseCode"));
+    @Override
+    protected String extractOrderId(Map<String, String> data) {
+        return data.get("vnp_TxnRef");
+    }
 
-        return PaymentResult.builder()
-            .orderId(data.get("vnp_TxnRef"))
-            .success(success)
-            .provider("VNPAY")
-            .resultCode(data.getOrDefault("vnp_ResponseCode", ""))
-            .message(data.getOrDefault("vnp_OrderInfo", ""))
-            .build();
+    @Override
+    protected String extractResultCode(Map<String, String> data) {
+        return data.getOrDefault("vnp_ResponseCode", "");
+    }
+
+    @Override
+    protected String extractMessage(Map<String, String> data) {
+        return data.getOrDefault("vnp_OrderInfo", "");
     }
 }

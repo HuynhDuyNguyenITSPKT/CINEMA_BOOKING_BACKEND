@@ -4,5 +4,7 @@ import com.movie.cinema_booking_backend.request.payment.PaymentRequest;
 import com.movie.cinema_booking_backend.request.payment.PaymentResponse;
 
 public interface PaymentGateway {
+    String method();
+
     PaymentResponse createPayment(PaymentRequest request);
 }

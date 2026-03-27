@@ -4,57 +4,30 @@ import com.movie.cinema_booking_backend.request.payment.PaymentRequest;
 import com.movie.cinema_booking_backend.request.payment.PaymentResponse;
 import com.movie.cinema_booking_backend.request.payment.PaymentResult;
 import com.movie.cinema_booking_backend.service.IPaymentSevice;
-import com.movie.cinema_booking_backend.service.payment.adapter.MoMoAdapter;
-import com.movie.cinema_booking_backend.service.payment.adapter.MoMoCallbackAdapter;
-import com.movie.cinema_booking_backend.service.payment.adapter.VNPayAdapter;
-import com.movie.cinema_booking_backend.service.payment.adapter.VNPayCallbackAdapter;
-import com.movie.cinema_booking_backend.exception.AppException;
-import com.movie.cinema_booking_backend.exception.ErrorCode;
+import com.movie.cinema_booking_backend.service.payment.registry.PaymentCallbackRegistry;
+import com.movie.cinema_booking_backend.service.payment.registry.PaymentGatewayRegistry;
+import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 @Service
-public class PaymentService implements IPaymentSevice{
+public class PaymentService implements IPaymentSevice {
 
-    @Autowired
-    private VNPayAdapter vnPayAdapter;
-    
-    @Autowired
-    private MoMoAdapter moMoAdapter;
+    private final PaymentGatewayRegistry gatewayRegistry;
+    private final PaymentCallbackRegistry callbackRegistry;
 
-    @Autowired
-    private VNPayCallbackAdapter vnPayCallbackAdapter;
+    public PaymentService(PaymentGatewayRegistry gatewayRegistry, PaymentCallbackRegistry callbackRegistry) {
+        this.gatewayRegistry = gatewayRegistry;
+        this.callbackRegistry = callbackRegistry;
+    }
 
-    @Autowired
-    private MoMoCallbackAdapter moMoCallbackAdapter;
-
-    // vi phạm open/closed nhưng để trình bày không sử dụng strategy pattern
     @Override
     public PaymentResponse pay(String method, PaymentRequest request) {
-        String normalizedMethod = method;
-        switch (normalizedMethod) {
-            case "VNPAY":
-                return vnPayAdapter.createPayment(request);
-            case "MOMO":
-                return moMoAdapter.createPayment(request);
-            default:
-                throw new AppException(ErrorCode.INVALID_REQUEST);
-        }
+        return gatewayRegistry.getByMethod(method).createPayment(request);
     }
 
     @Override
     public PaymentResult handleCallback(String method, Map<String, String> data) {
-        String normalizedMethod = method;
-        switch (normalizedMethod) {
-            case "VNPAY":
-                return vnPayCallbackAdapter.handleCallback(data);
-            case "MOMO":
-                return moMoCallbackAdapter.handleCallback(data);
-            default:
-                throw new AppException(ErrorCode.INVALID_REQUEST);
-        }
+        return callbackRegistry.getByMethod(method).handleCallback(data);
     }
 }

@@ -63,17 +63,17 @@ public class VNPayService {
 
     private void validateRequest(PaymentRequest request) {
         if (request == null || request.getAmount() == null || request.getAmount() <= 0) {
-            throw new AppException(ErrorCode.INVALID_REQUEST);
+            throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
         }
         if (request.getBookingId() == null || request.getBookingId().trim().isEmpty()) {
-            throw new AppException(ErrorCode.INVALID_REQUEST);
+            throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
         }
     }
 
     private String sanitizeTxnRef(String bookingId) {
         String normalized = bookingId.trim().replaceAll("[^A-Za-z0-9]", "");
         if (normalized.isEmpty()) {
-            throw new AppException(ErrorCode.INVALID_REQUEST);
+            throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
         }
         return normalized.length() > 40 ? normalized.substring(0, 40) : normalized;
     }
@@ -114,7 +114,7 @@ public class VNPayService {
 
             return baseUrl + "?" + queryString;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
     }
 
@@ -142,7 +142,7 @@ public class VNPayService {
 
             return hmacSHA512(secretKey, data);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
     }
 
@@ -171,7 +171,7 @@ public class VNPayService {
 
             return hash.toString();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
     }
 }

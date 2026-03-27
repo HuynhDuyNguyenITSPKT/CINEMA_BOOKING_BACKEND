@@ -42,7 +42,11 @@ public enum ErrorCode {
     PROMOTION_CODE_EXISTS(1024, "Mã khuyến mãi đã tồn tại", HttpStatus.BAD_REQUEST),
     INVALID_PROMOTION_DATE_RANGE(1025, "Ngày kết thúc khuyến mãi phải sau ngày bắt đầu", HttpStatus.BAD_REQUEST),
     EXTRA_SERVICE_NOT_FOUND(1026, "Dịch vụ thêm không tồn tại", HttpStatus.NOT_FOUND),
-    EXTRA_SERVICE_NAME_EXISTS(1027, "Tên dịch vụ thêm đã tồn tại", HttpStatus.BAD_REQUEST);
+    EXTRA_SERVICE_NAME_EXISTS(1027, "Tên dịch vụ thêm đã tồn tại", HttpStatus.BAD_REQUEST),
+    PAYMENT_INVALID_REQUEST(2004, "Yêu cầu thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
+    PAYMENT_METHOD_NOT_SUPPORTED(2005, "Phương thức thanh toán không được hỗ trợ", HttpStatus.BAD_REQUEST),
+    PAYMENT_SIGNATURE_INVALID(2006, "Chữ ký thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
+    PAYMENT_GATEWAY_ERROR(2007, "Có lỗi từ cổng thanh toán", HttpStatus.BAD_GATEWAY);
 
 
     private int code;

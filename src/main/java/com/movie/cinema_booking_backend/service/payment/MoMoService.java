@@ -90,18 +90,17 @@ public class MoMoService {
 
         Map<String, Object> body = response.getBody();
         if (body == null) {
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
+            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
 
         String resultCode = String.valueOf(body.getOrDefault("resultCode", ""));
         if (!"0".equals(resultCode)) {
-            String message = String.valueOf(body.getOrDefault("message", "MoMo payment create failed"));
-            throw new RuntimeException("MoMo error " + resultCode + ": " + message);
+            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
 
         Object payUrl = body.get("payUrl");
         if (payUrl == null || payUrl.toString().isBlank()) {
-            throw new RuntimeException("MoMo create response missing payUrl");
+            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
 
         return payUrl.toString();
@@ -128,26 +127,26 @@ public class MoMoService {
 
     private String normalizeAmount(String amount) {
         if (amount == null || amount.isBlank()) {
-            throw new AppException(ErrorCode.INVALID_REQUEST);
+            throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
         }
         try {
             long parsed = Long.parseLong(amount);
             if (parsed <= 0) {
-                throw new AppException(ErrorCode.INVALID_REQUEST);
+                throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
             }
             return String.valueOf(parsed);
         } catch (NumberFormatException e) {
-            throw new AppException(ErrorCode.INVALID_REQUEST);
+            throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
         }
     }
 
     private String normalizeOrderId(String orderId) {
         if (orderId == null || orderId.isBlank()) {
-            throw new AppException(ErrorCode.INVALID_REQUEST);
+            throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
         }
         String normalized = orderId.trim().replaceAll("[^A-Za-z0-9_-]", "");
         if (normalized.isBlank()) {
-            throw new AppException(ErrorCode.INVALID_REQUEST);
+            throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
         }
         return normalized.length() > 50 ? normalized.substring(0, 50) : normalized;
     }
@@ -217,7 +216,7 @@ public class MoMoService {
             return hash.toString();
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
     }
 }

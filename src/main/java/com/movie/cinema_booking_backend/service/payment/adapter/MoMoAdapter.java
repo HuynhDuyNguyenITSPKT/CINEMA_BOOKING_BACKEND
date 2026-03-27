@@ -7,14 +7,21 @@ import com.movie.cinema_booking_backend.service.payment.service.PaymentGateway;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MoMoAdapter implements PaymentGateway {
 
-    @Autowired
-    private MoMoService moMoService;
+    private final MoMoService moMoService;
+
+    public MoMoAdapter(MoMoService moMoService) {
+        this.moMoService = moMoService;
+    }
+
+    @Override
+    public String method() {
+        return "MOMO";
+    }
 
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
