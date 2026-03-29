@@ -60,6 +60,9 @@ public enum ErrorCode {
     TICKET_ALREADY_USED(1037, "Vé đã được sử dụng", HttpStatus.CONFLICT),
     TICKET_CANCELLED(1038, "Vé đã bị huỷ", HttpStatus.CONFLICT),
     TICKET_NOT_PAID(1039, "Vé chưa được thanh toán, không thể check-in", HttpStatus.BAD_REQUEST),
+    SHOWTIME_NOT_FOUND(1040, "Suất chiếu không tồn tại", HttpStatus.NOT_FOUND),
+    BOOKING_MIN_SEATS_REQUIRED(1041, "Đặt vé nhóm cần ít nhất 5 ghế", HttpStatus.BAD_REQUEST),
+    BOOKING_ALREADY_CANCELLED(1042, "Đơn đặt vé đã bị huỷ", HttpStatus.CONFLICT),
 
 
     PAYMENT_GATEWAY_ERROR(1028, "Sai chữ ký , lỗi có thể do hash sai", HttpStatus.BAD_REQUEST),

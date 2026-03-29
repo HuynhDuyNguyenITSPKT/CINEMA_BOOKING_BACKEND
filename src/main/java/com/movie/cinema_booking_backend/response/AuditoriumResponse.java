@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 public class AuditoriumResponse {
     private String id;
     private String name;
-    private int seatCount;
+    /** Số ghế thực tế đã generate (computed, không nhập tay). */
+    private int totalSeats;
     private AuditoriumStatus status;
 }
+

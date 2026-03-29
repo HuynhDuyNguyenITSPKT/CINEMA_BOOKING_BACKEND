@@ -11,4 +11,6 @@ public interface IAuditoriumService {
     AuditoriumResponse createAuditorium(AuditoriumRequest request);
     AuditoriumResponse updateAuditorium(String id, AuditoriumRequest request);
     void deleteAuditorium(String id);
+    /** Xoá toàn bộ ghế cũ và generate lại theo layout mới (khi sửa phòng vật lý). */
+    AuditoriumResponse regenerateSeats(String id, AuditoriumRequest request);
 }

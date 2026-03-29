@@ -2,6 +2,7 @@ package com.movie.cinema_booking_backend.entity;
 
 import com.movie.cinema_booking_backend.enums.MovieStatus;
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "movies")
+@Getter
 public class Movie {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
