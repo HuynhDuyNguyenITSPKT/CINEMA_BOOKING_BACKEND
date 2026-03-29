@@ -168,6 +168,7 @@ public class AuthService implements IAuthService {
         return buildAuthResponse(acc);
     }
 
+    
     @Override
     public void logout(String token) throws ParseException {
         var signedJWT = SignedJWT.parse(token);

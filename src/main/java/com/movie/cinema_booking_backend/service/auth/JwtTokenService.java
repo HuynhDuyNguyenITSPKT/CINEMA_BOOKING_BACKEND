@@ -26,7 +26,7 @@ public class JwtTokenService {
 
     private final InvalidatedTokenRepository invalidatedTokenRepository;
 
-    @Value("${security.jwt.signerKey}")
+    @Value("${spring.security.jwt.signerKey}")
     private String signerKey;
 
     public JwtTokenService(InvalidatedTokenRepository invalidatedTokenRepository) {

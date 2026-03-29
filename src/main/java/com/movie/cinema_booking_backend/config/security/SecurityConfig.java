@@ -27,7 +27,7 @@ public class SecurityConfig {
 
     // Define public endpoints that don't require authentication
     private final String[] PUBLIC_ENDPOINTS = {
-        "/api/auth/**","/api/extra-services/**"
+        "/api/auth/**","/oauth2/**","/api/extra-services/**"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -36,12 +36,15 @@ public class SecurityConfig {
 
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
+    private final OAuth2AuthenticationSuccessHandler oauth2SuccessHandler;
+
     public SecurityConfig(CustomJwtDecoder customJwtDecoder, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            CustomAccessDeniedHandler customAccessDeniedHandler
+            CustomAccessDeniedHandler customAccessDeniedHandler, OAuth2AuthenticationSuccessHandler oauth2SuccessHandler
     ) {
         this.customJwtDecoder = customJwtDecoder;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
+        this.oauth2SuccessHandler = oauth2SuccessHandler;
     }
 
     @Bean
@@ -54,6 +57,9 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .cors(Customizer.withDefaults())
+            .oauth2Login(oauth2 ->
+                oauth2.successHandler(oauth2SuccessHandler)
+            )
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt
                     .decoder(customJwtDecoder)
