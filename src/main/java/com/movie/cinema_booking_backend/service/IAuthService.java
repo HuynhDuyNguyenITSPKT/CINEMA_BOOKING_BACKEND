@@ -5,7 +5,10 @@ import java.text.ParseException;
 import org.springframework.security.core.Authentication;
 
 import com.movie.cinema_booking_backend.request.AuthRequest;
+import com.movie.cinema_booking_backend.request.ChangePasswordRequest;
+import com.movie.cinema_booking_backend.request.ForgotPasswordRequest;
 import com.movie.cinema_booking_backend.request.RegistrationRequest;
+import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 
@@ -17,4 +20,7 @@ public interface IAuthService {
     void logout(String token) throws ParseException;
     AuthResponse refreshToken(String token) throws Exception;
     UserResponse getCurrentUser(Authentication authentication);
+    void forgotPassword(ForgotPasswordRequest request);
+    void resetPassword(ResetPasswordRequest request);
+    void changePassword(Authentication authentication, ChangePasswordRequest request);
 }

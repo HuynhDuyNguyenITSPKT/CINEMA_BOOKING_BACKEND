@@ -1,5 +1,8 @@
 package com.movie.cinema_booking_backend.entity;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.movie.cinema_booking_backend.enums.PaymentMethod;
 import jakarta.persistence.*;
@@ -27,16 +30,7 @@ public class Payment {
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
 
-    @Column(nullable = false)
-    private String transactionId; // Mã giao dịch của hệ thống mình sinh ra (ví dụ: GD12345)
+    private String message;
 
-    // --- CÁC TRƯỜNG CỦA ĐỐI TÁC TRẢ VỀ ---
-    private String transactionNo; // Mã giao dịch của VNPAY/MOMO
-    private String transactionDate;
-    private String responseCode;
-    private String requestId;
-
-    // json phản hồi gốc
-    @Column(columnDefinition = "TEXT")
-    private String rawResponse;
+    private LocalDateTime paytime;
 }

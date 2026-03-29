@@ -10,16 +10,21 @@ import org.springframework.stereotype.Service;
 import com.movie.cinema_booking_backend.entity.Account;
 import com.movie.cinema_booking_backend.entity.InvalidatedToken;
 import com.movie.cinema_booking_backend.entity.PendingRegistration;
+import com.movie.cinema_booking_backend.entity.PendingPasswordReset;
 import com.movie.cinema_booking_backend.entity.User;
 import com.movie.cinema_booking_backend.enums.Role;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.AccountRepository;
 import com.movie.cinema_booking_backend.repository.InvalidatedTokenRepository;
+import com.movie.cinema_booking_backend.repository.PendingPasswordResetRepository;
 import com.movie.cinema_booking_backend.repository.PendingRegistrationRepository;
 import com.movie.cinema_booking_backend.repository.UserRepository;
 import com.movie.cinema_booking_backend.request.AuthRequest;
+import com.movie.cinema_booking_backend.request.ChangePasswordRequest;
+import com.movie.cinema_booking_backend.request.ForgotPasswordRequest;
 import com.movie.cinema_booking_backend.request.RegistrationRequest;
+import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IAuthService;
@@ -35,6 +40,7 @@ public class AuthService implements IAuthService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final PendingRegistrationRepository pendingRepo;
+    private final PendingPasswordResetRepository pendingPasswordResetRepository;
     private final InvalidatedTokenRepository invalidatedRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
@@ -44,6 +50,7 @@ public class AuthService implements IAuthService {
             AccountRepository accountRepository,
             UserRepository userRepository,
             PendingRegistrationRepository pendingRepo,
+            PendingPasswordResetRepository pendingPasswordResetRepository,
             InvalidatedTokenRepository invalidatedRepo,
             PasswordEncoder passwordEncoder,
             JwtTokenService jwtTokenService,
@@ -52,6 +59,7 @@ public class AuthService implements IAuthService {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.pendingRepo = pendingRepo;
+        this.pendingPasswordResetRepository = pendingPasswordResetRepository;
         this.invalidatedRepo = invalidatedRepo;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenService = jwtTokenService;
@@ -157,6 +165,9 @@ public class AuthService implements IAuthService {
     public AuthResponse login(AuthRequest req) {
         Account acc = accountRepository.findByUsername(req.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (!acc.isActive()) {
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED);
+        }
         if (!passwordEncoder.matches(req.getPassword(), acc.getPassword()))
             throw new AppException(ErrorCode.INVALID_PASSWORD);
 
@@ -198,6 +209,75 @@ public class AuthService implements IAuthService {
                 .dateOfBirth(user.getDateOfBirth())
                 .role(acc.getRole())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        pendingPasswordResetRepository.deleteByEmail(user.getEmail());
+
+        String otp = OtpGeneratorSingleton.getInstance().generateSixDigits();
+        LocalDateTime now = LocalDateTime.now();
+
+        PendingPasswordReset pending = PendingPasswordReset.builder()
+                .email(user.getEmail())
+                .otp(otp)
+                .expiryDate(now.plusMinutes(5))
+                .otpGeneratedTime(now)
+                .build();
+
+        pendingPasswordResetRepository.save(pending);
+        System.out.println("Reset password OTP for " + user.getEmail() + ": " + otp);
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        PendingPasswordReset pending = pendingPasswordResetRepository.findByEmail(request.getEmail());
+        if (pending == null) {
+            throw new AppException(ErrorCode.PENDING_RESET_PASSWORD_NOT_FOUND);
+        }
+
+        if (!pending.getOtp().equals(request.getOtp())) {
+            throw new AppException(ErrorCode.INVALID_OTP);
+        }
+
+        if (pending.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.OTP_EXPIRED);
+        }
+
+        Account account = userRepository.findByEmail(request.getEmail())
+                .map(User::getAccount)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (request.getNewPassword().length() < 6) {
+            throw new AppException(ErrorCode.PASSWORD_INVALID);
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
+        pendingPasswordResetRepository.delete(pending);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(Authentication authentication, ChangePasswordRequest request) {
+        Account account = accountRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        if (request.getNewPassword().length() < 6) {
+            throw new AppException(ErrorCode.PASSWORD_INVALID);
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
     }
 
     private AuthResponse buildAuthResponse(Account acc) {

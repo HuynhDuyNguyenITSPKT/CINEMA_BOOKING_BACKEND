@@ -38,6 +38,7 @@ public enum ErrorCode {
     INVALID_DATE_OF_BIRTH(1021, "Invalid date of birth", HttpStatus.BAD_REQUEST), 
     ACCESS_DENIED(403, "Access Denied", HttpStatus.FORBIDDEN), 
     TOKEN_REVOKED(1022, "Token has been revoked", HttpStatus.BAD_REQUEST),
+    PENDING_RESET_PASSWORD_NOT_FOUND(1023, "Pending reset password not found", HttpStatus.NOT_FOUND),
     PROMOTION_NOT_FOUND(1023, "Khuyến mãi không tồn tại", HttpStatus.NOT_FOUND),
     PROMOTION_CODE_EXISTS(1024, "Mã khuyến mãi đã tồn tại", HttpStatus.BAD_REQUEST),
     INVALID_PROMOTION_DATE_RANGE(1025, "Ngày kết thúc khuyến mãi phải sau ngày bắt đầu", HttpStatus.BAD_REQUEST),
@@ -58,9 +59,12 @@ public enum ErrorCode {
     TICKET_NOT_FOUND(1036, "Vé không tồn tại", HttpStatus.NOT_FOUND),
     TICKET_ALREADY_USED(1037, "Vé đã được sử dụng", HttpStatus.CONFLICT),
     TICKET_CANCELLED(1038, "Vé đã bị huỷ", HttpStatus.CONFLICT),
-    TICKET_NOT_PAID(1039, "Vé chưa được thanh toán, không thể check-in", HttpStatus.BAD_REQUEST);
+    TICKET_NOT_PAID(1039, "Vé chưa được thanh toán, không thể check-in", HttpStatus.BAD_REQUEST),
 
 
+    PAYMENT_GATEWAY_ERROR(1028, "Sai chữ ký , lỗi có thể do hash sai", HttpStatus.BAD_REQUEST),
+    PAYMENT_INVALID_REQUEST(1029, "Dữ liệu thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
+    PAYMENTSUCCESS(1030, "Thanh đã toán thành công rùi", HttpStatus.OK);
     private int code;
     private String message;
     private HttpStatus status;
