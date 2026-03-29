@@ -1,0 +1,353 @@
+{
+  "info": {
+    "name": "Cinema Booking Backend — Phase 1",
+    "description": "Test collection cho Phase 1 Foundation CRUD: Auditorium, SeatType, Seat Map.\n\nBase URL: http://localhost:8080\n\nThứ tự test khuyên dùng:\n1. SeatType: tạo loại ghế trước\n2. Auditorium: tạo phòng chiếu\n3. Seat Map: xem ghế (cần data từ DB hoặc Flyway seed)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "auditoriumId",
+      "value": "",
+      "type": "string",
+      "description": "Tự động set sau khi tạo Auditorium"
+    },
+    {
+      "key": "seatTypeId",
+      "value": "",
+      "type": "string",
+      "description": "Tự động set sau khi tạo SeatType"
+    }
+  ],
+  "item": [
+    {
+      "name": "🎫 SeatType CRUD",
+      "item": [
+        {
+          "name": "GET All SeatTypes",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/seat-types",
+            "description": "Lấy danh sách tất cả loại ghế"
+          },
+          "event": [],
+          "response": []
+        },
+        {
+          "name": "GET SeatType By ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/seat-types/{{seatTypeId}}",
+            "description": "Lấy chi tiết loại ghế theo ID"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create SeatType (Standard)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/seat-types",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "description": "Admin JWT token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"STANDARD\",\n  \"surcharge\": 0\n}"
+            },
+            "description": "Tạo loại ghế Standard (giá cơ bản, không phụ phí)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('seatTypeId', json.data.id);",
+                  "    console.log('SeatType ID saved:', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST Create SeatType (VIP)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/seat-types",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"VIP\",\n  \"surcharge\": 50000\n}"
+            },
+            "description": "Tạo loại ghế VIP với phụ phí 50,000 VND"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create SeatType (COUPLE)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/seat-types",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"COUPLE\",\n  \"surcharge\": 80000\n}"
+            },
+            "description": "Tạo loại ghế COUPLE với phụ phí 80,000 VND"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update SeatType",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/seat-types/{{seatTypeId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"STANDARD\",\n  \"surcharge\": 10000\n}"
+            },
+            "description": "Cập nhật phụ phí loại ghế"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE SeatType",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/seat-types/{{seatTypeId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "description": "Xoá loại ghế (cẩn thận nếu ghế đang dùng loại này)"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ POST Create SeatType (duplicate name test)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/seat-types",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"STANDARD\",\n  \"surcharge\": 0\n}"
+            },
+            "description": "Test case: tạo trùng tên → expected HTTP 400, ErrorCode 1032 SEAT_TYPE_NAME_EXISTS"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎭 Auditorium CRUD",
+      "item": [
+        {
+          "name": "GET All Auditoriums",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auditoriums",
+            "description": "Lấy danh sách tất cả phòng chiếu (public)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Auditorium By ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auditoriums/{{auditoriumId}}",
+            "description": "Lấy chi tiết phòng chiếu theo ID"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Auditorium (ACTIVE)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/auditoriums",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phòng 1\",\n  \"seatCount\": 120,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "description": "Tạo phòng chiếu mới với trạng thái ACTIVE"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('auditoriumId', json.data.id);",
+                  "    console.log('Auditorium ID saved:', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST Create Auditorium (UNDER_MAINTENANCE)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/auditoriums",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phòng Bảo Trì\",\n  \"seatCount\": 80,\n  \"status\": \"UNDER_MAINTENANCE\"\n}"
+            },
+            "description": "Tạo phòng chiếu đang bảo trì (Phase 4 State Pattern sẽ guard tạo Showtime)"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update Auditorium",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/auditoriums/{{auditoriumId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phòng 1 (Updated)\",\n  \"seatCount\": 150,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "description": "Cập nhật thông tin phòng chiếu"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Change Auditorium to INACTIVE",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/auditoriums/{{auditoriumId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phòng 1\",\n  \"seatCount\": 120,\n  \"status\": \"INACTIVE\"\n}"
+            },
+            "description": "Test thay đổi trạng thái sang INACTIVE"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Auditorium",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/auditoriums/{{auditoriumId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "description": "Xoá phòng chiếu"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ POST Create Auditorium (duplicate name)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/auditoriums",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phòng 1\",\n  \"seatCount\": 50,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "description": "Test case: tên trùng → expected HTTP 400, ErrorCode 1029 AUDITORIUM_NAME_EXISTS"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ GET Auditorium Not Found",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auditoriums/non-existent-id-12345",
+            "description": "Test case: ID không tồn tại → expected HTTP 404, ErrorCode 1028 AUDITORIUM_NOT_FOUND"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ POST Create Auditorium (invalid body — seatCount = 0)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/auditoriums",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phòng Test\",\n  \"seatCount\": 0,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "description": "Test case: seatCount = 0 vi phạm @Min(1) → expected HTTP 400 validation error"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💺 Seat Map",
+      "item": [
+        {
+          "name": "GET Seat Map By Auditorium",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auditoriums/{{auditoriumId}}/seats",
+            "description": "Lấy sơ đồ ghế của phòng chiếu.\n\nPhase 1: status = null (chưa có lock data).\nPhase 2: SeatValidationProxy sẽ enrich status = AVAILABLE / LOCKED / BOOKED."
+          },
+          "response": []
+        },
+        {
+          "name": "❌ GET Seat Map (Auditorium Not Found)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auditoriums/non-existent-id/seats",
+            "description": "Test case: auditoriumId không tồn tại → expected HTTP 404, ErrorCode 1028 AUDITORIUM_NOT_FOUND"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

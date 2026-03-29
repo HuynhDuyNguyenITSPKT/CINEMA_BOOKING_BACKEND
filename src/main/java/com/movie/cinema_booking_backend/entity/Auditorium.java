@@ -1,6 +1,7 @@
 package com.movie.cinema_booking_backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.movie.cinema_booking_backend.enums.AuditoriumStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,6 +24,16 @@ public class Auditorium {
     private String name;
 
     private int seatCount;
+
+    /**
+     * Trạng thái phòng chiếu.
+     * Mặc định là ACTIVE khi tạo mới.
+     * Dùng bởi AuditoriumState (Phase 4 - State Pattern) để guard tạo Showtime.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private AuditoriumStatus status = AuditoriumStatus.ACTIVE;
 
     @OneToMany(mappedBy = "auditorium")
     @Builder.Default

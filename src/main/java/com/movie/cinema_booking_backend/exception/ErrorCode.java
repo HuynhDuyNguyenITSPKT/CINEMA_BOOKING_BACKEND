@@ -42,7 +42,23 @@ public enum ErrorCode {
     PROMOTION_CODE_EXISTS(1024, "Mã khuyến mãi đã tồn tại", HttpStatus.BAD_REQUEST),
     INVALID_PROMOTION_DATE_RANGE(1025, "Ngày kết thúc khuyến mãi phải sau ngày bắt đầu", HttpStatus.BAD_REQUEST),
     EXTRA_SERVICE_NOT_FOUND(1026, "Dịch vụ thêm không tồn tại", HttpStatus.NOT_FOUND),
-    EXTRA_SERVICE_NAME_EXISTS(1027, "Tên dịch vụ thêm đã tồn tại", HttpStatus.BAD_REQUEST);
+    EXTRA_SERVICE_NAME_EXISTS(1027, "Tên dịch vụ thêm đã tồn tại", HttpStatus.BAD_REQUEST),
+
+    // ─── Phase 1: Auditorium & SeatType ───────────────────────────────────────
+    AUDITORIUM_NOT_FOUND(1028, "Phòng chiếu không tồn tại", HttpStatus.NOT_FOUND),
+    AUDITORIUM_NAME_EXISTS(1029, "Tên phòng chiếu đã tồn tại", HttpStatus.BAD_REQUEST),
+    AUDITORIUM_NOT_ACTIVE(1030, "Phòng chiếu không ở trạng thái hoạt động", HttpStatus.BAD_REQUEST),
+    SEAT_TYPE_NOT_FOUND(1031, "Loại ghế không tồn tại", HttpStatus.NOT_FOUND),
+    SEAT_TYPE_NAME_EXISTS(1032, "Tên loại ghế đã tồn tại", HttpStatus.BAD_REQUEST),
+
+    // ─── Phase 2-4: Seat Lock, Booking, Ticket ────────────────────────────────
+    SEAT_NOT_FOUND(1033, "Ghế không tồn tại", HttpStatus.NOT_FOUND),
+    SEAT_ALREADY_TAKEN(1034, "Ghế đã được đặt hoặc đang bị khoá bởi người dùng khác", HttpStatus.CONFLICT),
+    BOOKING_NOT_FOUND(1035, "Đơn đặt vé không tồn tại", HttpStatus.NOT_FOUND),
+    TICKET_NOT_FOUND(1036, "Vé không tồn tại", HttpStatus.NOT_FOUND),
+    TICKET_ALREADY_USED(1037, "Vé đã được sử dụng", HttpStatus.CONFLICT),
+    TICKET_CANCELLED(1038, "Vé đã bị huỷ", HttpStatus.CONFLICT),
+    TICKET_NOT_PAID(1039, "Vé chưa được thanh toán, không thể check-in", HttpStatus.BAD_REQUEST);
 
 
     private int code;
