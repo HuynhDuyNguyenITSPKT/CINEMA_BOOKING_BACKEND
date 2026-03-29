@@ -12,7 +12,6 @@ import com.movie.cinema_booking_backend.entity.InvalidatedToken;
 import com.movie.cinema_booking_backend.entity.PendingRegistration;
 import com.movie.cinema_booking_backend.entity.PendingPasswordReset;
 import com.movie.cinema_booking_backend.entity.User;
-import com.movie.cinema_booking_backend.enums.Role;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.AccountRepository;
@@ -29,6 +28,15 @@ import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IAuthService;
 import com.movie.cinema_booking_backend.service.auth.JwtTokenService;
+import com.movie.cinema_booking_backend.service.auth.factory.AuthEntityFactory;
+import com.movie.cinema_booking_backend.service.auth.factory.concrete.AccountFactory;
+import com.movie.cinema_booking_backend.service.auth.factory.concrete.PendingPasswordResetFactory;
+import com.movie.cinema_booking_backend.service.auth.factory.concrete.PendingRegistrationFactory;
+import com.movie.cinema_booking_backend.service.auth.factory.concrete.UserFactory;
+import com.movie.cinema_booking_backend.service.auth.builder.AccessTokenDescriptorBuilder;
+import com.movie.cinema_booking_backend.service.auth.builder.RefreshTokenDescriptorBuilder;
+import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptor;
+import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptorBuilder;
 import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptorDirector;
 import com.movie.cinema_booking_backend.service.auth.singleton.OtpGeneratorSingleton;
 import com.nimbusds.jwt.SignedJWT;
@@ -91,17 +99,14 @@ public class AuthService implements IAuthService {
 
         String otp =  OtpGeneratorSingleton.getInstance().generateSixDigits();
         LocalDateTime now = LocalDateTime.now();
-        PendingRegistration pending = PendingRegistration.builder()
-                .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail())
-                .fullName(request.getFullName())
-                .phone(request.getPhone())
-                .dateOfBirth(request.getDateOfBirth())
-                .otp(otp)
-                .expiryDate(now.plusMinutes(5))
-                .otpGeneratedTime(now)
-                .build();
+        PendingRegistration pending = AuthEntityFactory.getEntity(
+            new PendingRegistrationFactory(
+                request,
+                passwordEncoder.encode(request.getPassword()),
+                otp,
+                now
+            )
+        );
         pendingRepo.save(pending);
 
         System.out.println("OTP for " + request.getUsername() + ": " + otp);
@@ -125,21 +130,10 @@ public class AuthService implements IAuthService {
             throw new AppException(ErrorCode.OTP_EXPIRED);
         }
 
-        User user = User.builder()
-            .fullName(pending.getFullName())
-            .email(pending.getEmail())
-            .phone(pending.getPhone())
-            .dateOfBirth(pending.getDateOfBirth())
-            .build();
+        User user = AuthEntityFactory.getEntity(new UserFactory(pending));
         User savedUser = userRepository.save(user);
 
-        Account account = Account.builder()
-            .username(pending.getUsername())
-            .password(pending.getPassword())
-            .role(Role.USER)
-            .user(savedUser)
-            .isActive(true)
-            .build();
+        Account account = AuthEntityFactory.getEntity(new AccountFactory(pending, savedUser));
         accountRepository.save(account);
 
         pendingRepo.delete(pending);
@@ -222,12 +216,9 @@ public class AuthService implements IAuthService {
         String otp = OtpGeneratorSingleton.getInstance().generateSixDigits();
         LocalDateTime now = LocalDateTime.now();
 
-        PendingPasswordReset pending = PendingPasswordReset.builder()
-                .email(user.getEmail())
-                .otp(otp)
-                .expiryDate(now.plusMinutes(5))
-                .otpGeneratedTime(now)
-                .build();
+        PendingPasswordReset pending = AuthEntityFactory.getEntity(
+            new PendingPasswordResetFactory(user.getEmail(), otp, now)
+        );
 
         pendingPasswordResetRepository.save(pending);
         System.out.println("Reset password OTP for " + user.getEmail() + ": " + otp);
@@ -281,9 +272,18 @@ public class AuthService implements IAuthService {
     }
 
     private AuthResponse buildAuthResponse(Account acc) {
+        TokenDescriptorBuilder accessBuilder = new AccessTokenDescriptorBuilder(jwtTokenService);
+        TokenDescriptorBuilder refreshBuilder = new RefreshTokenDescriptorBuilder(jwtTokenService);
+
+        tokenDescriptorDirector.makeAccessToken(accessBuilder, acc.getUsername(), acc.getRole().name());
+        tokenDescriptorDirector.makeRefreshToken(refreshBuilder, acc.getUsername(), acc.getRole().name());
+
+        TokenDescriptor accessDescriptor = accessBuilder.getResult();
+        TokenDescriptor refreshDescriptor = refreshBuilder.getResult();
+
         return AuthResponse.builder()
-                .accessToken(jwtTokenService.generateToken(acc, tokenDescriptorDirector.buildAccessDescriptor()))
-                .refreshToken(jwtTokenService.generateToken(acc, tokenDescriptorDirector.buildRefreshDescriptor()))
+            .accessToken(accessDescriptor.getToken())
+            .refreshToken(refreshDescriptor.getToken())
                 .build();
     }
 

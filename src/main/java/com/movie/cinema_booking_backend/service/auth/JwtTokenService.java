@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.movie.cinema_booking_backend.entity.Account;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.InvalidatedTokenRepository;
@@ -34,13 +33,13 @@ public class JwtTokenService {
         this.invalidatedTokenRepository = invalidatedTokenRepository;
     }
 
-    public String generateToken(Account account, TokenDescriptor descriptor) {
+    public String generateToken(TokenDescriptor descriptor) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                .subject(account.getUsername())
+                .subject(descriptor.getUsername())
                 .expirationTime(new Date(System.currentTimeMillis() + descriptor.getDurationSeconds() * 1000))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("scope", account.getRole().name())
+                .claim("scope", descriptor.getScope())
                 .claim("type", descriptor.getType())
                 .build();
         JWSObject jws = new JWSObject(header, new Payload(claims.toJSONObject()));

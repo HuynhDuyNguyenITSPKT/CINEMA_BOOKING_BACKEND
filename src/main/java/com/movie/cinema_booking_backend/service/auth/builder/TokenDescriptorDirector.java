@@ -5,32 +5,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class TokenDescriptorDirector {
 
-    private static final String ACCESS = "ACCESS";
-    private static final String REFRESH = "REFRESH";
-
-    public TokenDescriptorBuilder changeBuilder(String type) {
-        if (ACCESS.equals(type)) {
-            return new AccessTokenDescriptorBuilder();
-        }
-        if (REFRESH.equals(type)) {
-            return new RefreshTokenDescriptorBuilder();
-        }
-        throw new IllegalArgumentException("Unsupported token type: " + type);
-    }
-
-    public TokenDescriptor make(String type) {
-        TokenDescriptorBuilder builder = changeBuilder(type);
-        builder.reset();
+    private void build(TokenDescriptorBuilder builder, String username, String scope) {
+        builder.reset(username, scope);
         builder.buildDurationSeconds();
         builder.buildType();
-        return builder.getResult();
+        builder.buildToken();
     }
 
-    public TokenDescriptor buildAccessDescriptor() {
-        return make(ACCESS);
+    public void makeAccessToken(TokenDescriptorBuilder builder, String username, String scope) {
+        build(builder, username, scope);
     }
 
-    public TokenDescriptor buildRefreshDescriptor() {
-        return make(REFRESH);
+    public void makeRefreshToken(TokenDescriptorBuilder builder, String username, String scope) {
+        build(builder, username, scope);
     }
 }
