@@ -22,12 +22,13 @@ public class SecurityConfig {
         "/api/admin/promotions",
         "/api/admin/promotions/**",
         "/api/admin/extra-services",
-        "/api/admin/extra-services/**"
+        "/api/admin/extra-services/**",
+        "/api/admin/payment/**"
     };
 
     // Define public endpoints that don't require authentication
     private final String[] PUBLIC_ENDPOINTS = {
-        "/api/auth/**","/api/extra-services/**"
+        "/api/auth/**","/api/extra-services/**","/api/payment/**"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
