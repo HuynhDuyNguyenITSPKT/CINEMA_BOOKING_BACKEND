@@ -40,16 +40,22 @@ public class Booking {
     private String note;
 
     @OneToOne(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Payment payment;
 
     @JsonIgnore
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<Ticket> tickets = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<BookingExtra> bookingExtras = new ArrayList<>();
 
     public void addTicket(Ticket ticket) {

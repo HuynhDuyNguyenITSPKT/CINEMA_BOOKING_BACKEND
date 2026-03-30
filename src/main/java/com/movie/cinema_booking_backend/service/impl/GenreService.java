@@ -15,34 +15,35 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * GenreService - Triển khai business logic cho Genre module.
+ * GenreService - Triển khai business logic cho Genre (thể loại phim).
  *
- * Factory (IGenreFactory) chịu trách nhiệm tạo/map objects.
- * Service chỉ điều phối: validate → factory → repository → return.
+ * SOLID — Single Responsibility: Service chỉ điều phối, Factory handle mapping.
+ * SOLID — Dependency Inversion: Phụ thuộc vào IGenreFactory, IGenreService.
  *
- * SOLID — Single Responsibility: Chỉ chứa business logic, không build entity thủ công.
- * SOLID — Dependency Inversion: Phụ thuộc vào IGenreFactory và IGenreService (interfaces).
+ * Design Patterns:
+ * - Factory (IGenreFactory): tạo/map Genre entity và DTO
  */
 @Service
 @RequiredArgsConstructor
 public class GenreService implements IGenreService {
-
     private final GenreRepository genreRepository;
     private final IGenreFactory genreFactory;
 
     @Override
     public Page<GenreResponse> getAllGenres(int page, int size) {
-        return genreRepository.findAll(PageRequest.of(page, size))
-                .map(genreFactory::createGenreResponse);
+        Page<Genre> genres = genreRepository.findAll(PageRequest.of(page, size));
+        return genres.map(genreFactory::createGenreResponse);
     }
 
     @Override
     public List<GenreResponse> getAllGenres() {
-        return genreRepository.findAll().stream()
+        List<Genre> genres = genreRepository.findAll();
+        return genres.stream()
                 .map(genreFactory::createGenreResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -54,12 +55,11 @@ public class GenreService implements IGenreService {
 
     @Override
     @Transactional
-    public void createGenre(GenreRequest request) {
-        if (genreRepository.existsByNameIgnoreCase(request.getName().trim())) {
+    public void createGenre(GenreRequest genreRequest) {
+        if(genreRepository.existsByNameIgnoreCase(genreRequest.getName().trim())) {
             throw new AppException(ErrorCode.GENRE_EXISTS);
         }
-        // Factory chịu trách nhiệm build entity — Service chỉ điều phối (SRP)
-        Genre genre = genreFactory.createGenreEntity(request);
+        Genre genre = genreFactory.createGenreEntity(genreRequest);
         genreRepository.save(genre);
     }
 
@@ -71,14 +71,16 @@ public class GenreService implements IGenreService {
 
         // Chỉ kiểm tra trùng tên nếu tên thực sự thay đổi
         String newName = request.getName().trim();
-        if (!genre.getName().equalsIgnoreCase(newName) && genreRepository.existsByNameIgnoreCase(newName)) {
+        if (!genre.getName().equalsIgnoreCase(newName)
+                && genreRepository.existsByNameIgnoreCase(newName)) {
             throw new AppException(ErrorCode.GENRE_EXISTS);
         }
 
-        // Factory chịu trách nhiệm update fields — không set thủ công từng field ở Service (SRP)
+        // Factory chịu trách nhiệm update fields
         genreFactory.updateGenreEntity(genre, request);
-        Genre saved = genreRepository.save(genre);
-        return genreFactory.createGenreResponse(saved);
+        genre = genreRepository.save(genre);
+
+        return genreFactory.createGenreResponse(genre);
     }
 
     @Override

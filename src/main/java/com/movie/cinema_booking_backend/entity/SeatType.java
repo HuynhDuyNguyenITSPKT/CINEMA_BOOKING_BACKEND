@@ -25,5 +25,7 @@ public class SeatType {
 
     @OneToMany(mappedBy = "seatType")
     @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<Seat> seats = new ArrayList<>();
 }

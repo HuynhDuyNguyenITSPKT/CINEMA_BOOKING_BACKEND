@@ -34,5 +34,7 @@ public class User {
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Account account;
 }

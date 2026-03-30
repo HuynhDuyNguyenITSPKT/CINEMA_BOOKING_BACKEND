@@ -1,13 +1,6 @@
 package com.movie.cinema_booking_backend.repository;
 
 import com.movie.cinema_booking_backend.entity.Auditorium;
-<<<<<<< HEAD
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface AuditoriumRepository extends JpaRepository<Auditorium, String> {
-=======
 import com.movie.cinema_booking_backend.enums.AuditoriumStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -31,5 +24,4 @@ public interface AuditoriumRepository extends JpaRepository<Auditorium, String> 
      * Lọc phòng chiếu theo trạng thái (dùng cho admin filter hoặc Phase 4 guard).
      */
     List<Auditorium> findAllByStatus(AuditoriumStatus status);
->>>>>>> c9612b78620e7daf8fbeb938968fe7dbb583d807
 }

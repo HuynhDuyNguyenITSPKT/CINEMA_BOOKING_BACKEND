@@ -2,7 +2,6 @@ package com.movie.cinema_booking_backend.repository;
 
 import com.movie.cinema_booking_backend.entity.Showtime;
 import org.springframework.data.jpa.repository.JpaRepository;
-<<<<<<< HEAD
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,10 +25,4 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, String> {
             @Param("movieId") String movieId, 
             @Param("startOfDay") LocalDateTime startOfDay, 
             @Param("endOfDay") LocalDateTime endOfDay);
-=======
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface ShowtimeRepository extends JpaRepository<Showtime, String> {
->>>>>>> c9612b78620e7daf8fbeb938968fe7dbb583d807
 }

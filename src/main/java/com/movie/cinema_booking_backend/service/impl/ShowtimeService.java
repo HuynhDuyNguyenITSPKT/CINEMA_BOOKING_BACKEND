@@ -20,12 +20,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * ShowtimeService - Triển khai business logic cho chức năng Lịch chiếu.
+ * ShowtimeService - Triển khai business logic cho Showtime (lịch chiếu).
  *
- * Chịu trách nhiệm khởi tạo (có Validate và Strategy Pattern tính vé),
- * cũng như trực tiếp hỗ trợ truy vấn danh sách Phục vụ Lớp Facade bên trên.
+ * SOLID — Single Responsibility: Service điều phối, Factory build, Strategy tính giá.
+ * SOLID — Open/Closed: Thêm chiến lược giá mới không cần sửa service.
+ * SOLID — Dependency Inversion: Phụ thuộc vào PricingStrategyContext, IShowtimeFactory.
+ *
+ * Design Patterns:
+ * - Strategy (PricingStrategyContext): tính giá theo giờ cao điểm/thấp điểm
+ * - Factory (IShowtimeFactory): tạo/map Showtime entity và DTO
  */
 @Service
 @RequiredArgsConstructor
@@ -66,10 +72,6 @@ public class ShowtimeService implements IShowtimeService {
         return showtimeFactory.createResponse(showtime);
     }
 
-    /**
-     * Lấy các danh sách lịch chiếu từ Repository để Facade sử dụng ở Layer cao hơn.
-     * Trả về Stream List chuẩn mực Java Immutable Collections.
-     */
     @Override
     @Transactional(readOnly = true)
     public List<ShowtimeResponse> getShowtimesByMovieAndDate(String movieId, LocalDate date) {
@@ -80,6 +82,6 @@ public class ShowtimeService implements IShowtimeService {
 
         return showtimes.stream()
                 .map(showtimeFactory::createResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 }
