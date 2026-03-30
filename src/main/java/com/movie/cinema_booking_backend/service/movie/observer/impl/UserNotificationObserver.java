@@ -16,19 +16,21 @@ public class UserNotificationObserver implements IMovieObserver {
 
     @Override
     public void onMovieAdded(MovieResponse movie) {
-        log.info("[UserNotificationObserver] PHÁT HIỆN SIÊU PHẨM MỚI TẠI RẠP: {}", movie.getTitle());
-        log.info("[UserNotificationObserver] Cỗ máy tự động đang lên lịch gửi Email / Push Notification tới toàn bộ khách hàng thân thiết!");
+        log.info("[UserNotificationObserver] Phim mới: {} — chuẩn bị gửi thông báo tới users.", movie.getTitle());
+        log.debug("[UserNotificationObserver] Đang lên lịch gửi Email / Push Notification tới khách hàng thân thiết.");
+        // TODO: Tích hợp Firebase/Email service — gửi push notification "Phim mới ra mắt!"
     }
 
     @Override
     public void onMovieUpdated(MovieResponse movie) {
-        // Có thể áp dụng chiến lược if(movie.getStatus() == NOW_SHOWING) -> Báo Push thông báo "Mở bán!"
-        log.info("[UserNotificationObserver] Tin vui: Phim '{}' vừa có tin tức cập nhật cực hot! Hãy đón xem!", movie.getTitle());
+        log.info("[UserNotificationObserver] Phim được cập nhật: {}", movie.getTitle());
+        // TODO: Nếu movie.getStatus() == NOW_SHOWING → gửi push "Mở bán vé!" tới users đã bookmark phim này
     }
 
     @Override
     public void onMovieDeleted(String movieId) {
-        log.info("[UserNotificationObserver] Tín hiệu xóa phim ID: {}", movieId);
-        log.info("[UserNotificationObserver] Gửi thông báo đến tất cả người dùng về phim bị gỡ khỏi lịch chiếu...");
+        log.info("[UserNotificationObserver] Phim bị xóa — ID: {}", movieId);
+        log.debug("[UserNotificationObserver] Đang gửi thông báo tới users về phim bị gỡ khỏi lịch chiếu.");
+        // TODO: Gửi notification tới users đã đặt vé/bookmark phim này
     }
 }

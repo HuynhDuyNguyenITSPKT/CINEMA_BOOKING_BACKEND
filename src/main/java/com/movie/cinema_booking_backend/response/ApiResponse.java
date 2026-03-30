@@ -1,18 +1,27 @@
 package com.movie.cinema_booking_backend.response;
 
 import lombok.Getter;
-import lombok.Setter;
 
+/**
+ * ApiResponse — Wrapper chuẩn cho mọi API response.
+ *
+ * Design Pattern — Builder: constructor private, khởi tạo qua Builder.
+ * OOP — Immutable: fields final, không có setter.
+ */
 @Getter
 public class ApiResponse<T> {
-    private boolean success;
-    private String message;
-    private T data;
+    private final boolean success;
+    private final String message;
+    private final T data;
 
     private ApiResponse(Builder<T> builder) {
         this.success = builder.success;
         this.message = builder.message;
         this.data = builder.data;
+    }
+
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
     }
 
     public static class Builder<T> {

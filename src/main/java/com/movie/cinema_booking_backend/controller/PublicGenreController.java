@@ -36,7 +36,7 @@ public class PublicGenreController {
      */
     @GetMapping
     public ApiResponse<List<GenreResponse>> getAllGenres() {
-        return new ApiResponse.Builder<List<GenreResponse>>()
+        return ApiResponse.<List<GenreResponse>>builder()
                 .success(true)
                 .message("Lấy danh sách thể loại thành công")
                 .data(genreService.getAllGenres())

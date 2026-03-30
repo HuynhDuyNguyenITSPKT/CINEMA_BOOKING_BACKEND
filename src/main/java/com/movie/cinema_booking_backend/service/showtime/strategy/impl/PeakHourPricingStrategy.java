@@ -1,6 +1,7 @@
 package com.movie.cinema_booking_backend.service.showtime.strategy.impl;
 
 import com.movie.cinema_booking_backend.service.showtime.strategy.IPricingStrategy;
+import com.movie.cinema_booking_backend.service.showtime.strategy.PricingConstants;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -23,12 +24,6 @@ import java.time.LocalDateTime;
 @Order(1)
 public class PeakHourPricingStrategy implements IPricingStrategy {
 
-    /** Hệ số nhân giá cho giờ cao điểm: giá tăng thêm 20%. */
-    private static final double PEAK_PRICE_MULTIPLIER = 1.2;
-
-    /** Mốc giờ bắt đầu tính là giờ cao điểm trong ngày thường (17:00). */
-    private static final int PEAK_HOUR_START = 17;
-
     /**
      * Kiểm tra xem thời điểm chiếu có thuộc giờ cao điểm không.
      *
@@ -45,7 +40,7 @@ public class PeakHourPricingStrategy implements IPricingStrategy {
             return true;
         }
         // Ngày thường: áp dụng từ 17:00 trở đi (giờ cao điểm buổi tối)
-        return hour >= PEAK_HOUR_START;
+        return hour >= PricingConstants.PEAK_HOUR_START;
     }
 
     /**
@@ -57,6 +52,7 @@ public class PeakHourPricingStrategy implements IPricingStrategy {
      */
     @Override
     public int calculatePrice(int standardPrice, LocalDateTime startTime) {
-        return (int) (standardPrice * PEAK_PRICE_MULTIPLIER);
+        return (int) (standardPrice * PricingConstants.PEAK_PRICE_MULTIPLIER);
     }
 }
+

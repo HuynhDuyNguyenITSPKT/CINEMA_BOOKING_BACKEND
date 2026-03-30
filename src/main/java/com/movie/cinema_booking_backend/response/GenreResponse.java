@@ -2,16 +2,16 @@ package com.movie.cinema_booking_backend.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * GenreResponse - DTO trả về cho client.
+ * GenreResponse — DTO trả về client cho Genre (thể loại phim).
  *
- * Dùng đầy đủ Lombok annotations để hỗ trợ cả Builder pattern
- * và Jackson deserialization (cần no-args constructor).
+ * OOP — Immutable: chỉ @Getter, không có setter.
+ * Builder: khởi tạo qua Lombok @Builder trong GenreFactory.
  */
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

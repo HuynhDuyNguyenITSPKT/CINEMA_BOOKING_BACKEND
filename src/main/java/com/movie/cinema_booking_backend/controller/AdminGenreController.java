@@ -33,7 +33,7 @@ public class AdminGenreController {
      */
     @GetMapping("/{id}")
     public ApiResponse<GenreResponse> getGenreById(@PathVariable String id) {
-        return new ApiResponse.Builder<GenreResponse>()
+        return ApiResponse.<GenreResponse>builder()
                 .success(true)
                 .message("Lấy thông tin thể loại thành công")
                 .data(genreService.getGenreById(id))
@@ -54,14 +54,14 @@ public class AdminGenreController {
 
         Page<GenreResponse> pageResult = genreService.getAllGenres(page, size);
 
-        PaginationResponse<GenreResponse> pagination = new PaginationResponse.Builder<GenreResponse>()
+        PaginationResponse<GenreResponse> pagination = PaginationResponse.<GenreResponse>builder()
                 .currentItems(pageResult.getContent())
                 .totalItems(pageResult.getTotalElements())
                 .totalPages(pageResult.getTotalPages())
                 .currentPage(pageResult.getNumber())
                 .build();
 
-        return new ApiResponse.Builder<PaginationResponse<GenreResponse>>()
+        return ApiResponse.<PaginationResponse<GenreResponse>>builder()
                 .success(true)
                 .message("Lấy danh sách thể loại thành công")
                 .data(pagination)
@@ -79,7 +79,7 @@ public class AdminGenreController {
     @PostMapping
     public ApiResponse<Void> createGenre(@Valid @RequestBody GenreRequest request) {
         genreService.createGenre(request);
-        return new ApiResponse.Builder<Void>()
+        return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Thêm thể loại thành công")
                 .build();
@@ -99,7 +99,7 @@ public class AdminGenreController {
             @PathVariable String id,
             @Valid @RequestBody GenreRequest request) {
 
-        return new ApiResponse.Builder<GenreResponse>()
+        return ApiResponse.<GenreResponse>builder()
                 .success(true)
                 .message("Cập nhật thể loại thành công")
                 .data(genreService.updateGenre(id, request))
@@ -117,7 +117,7 @@ public class AdminGenreController {
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteGenre(@PathVariable String id) {
         genreService.deleteGenre(id);
-        return new ApiResponse.Builder<Void>()
+        return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Xóa thể loại thành công")
                 .build();

@@ -36,7 +36,7 @@ public class PublicCinemaController {
             
         PaginationResponse<MovieResponse> response = publicCinemaFacade.searchAndFilterMovies(keyword, genreId, page, size);
         
-        return new ApiResponse.Builder<PaginationResponse<MovieResponse>>()
+        return ApiResponse.<PaginationResponse<MovieResponse>>builder()
                 .success(true)
                 .message("Lấy danh sách phim thành công")
                 .data(response)
@@ -50,7 +50,7 @@ public class PublicCinemaController {
             
         List<ShowtimeResponse> response = publicCinemaFacade.getShowtimesByMovieAndDate(movieId, date);
         
-        return new ApiResponse.Builder<List<ShowtimeResponse>>()
+        return ApiResponse.<List<ShowtimeResponse>>builder()
                 .success(true)
                 .message("Lấy danh sách lịch chiếu thành công")
                 .data(response)
