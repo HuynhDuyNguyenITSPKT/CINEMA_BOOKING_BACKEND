@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
  */
 @Getter
 public enum ErrorCode {
+<<<<<<< HEAD
 
     // ── Authentication & Authorization ──────────────────────────────
     UNAUTHENTICATED(1001,  "Người dùng chưa xác thực",                  HttpStatus.UNAUTHORIZED),
@@ -88,6 +89,74 @@ public enum ErrorCode {
     private final int code;
     private final String message;
     private final HttpStatus status;
+=======
+    INVALID_KEY(1001, "Invalid Key", HttpStatus.BAD_REQUEST),
+    USER_EXISTS(1002, "User exists", HttpStatus.BAD_REQUEST),
+    GENRE_EXISTS (1003, "Genre exists", HttpStatus.BAD_REQUEST),
+    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.INTERNAL_SERVER_ERROR),
+    USERNAME_INVALID(1003,"Username must be at {min} characters", HttpStatus.BAD_REQUEST),
+    PASSWORD_INVALID(1004, "Password must be at least 6 characters", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST(2002, "Invalid request", HttpStatus.BAD_REQUEST),
+    USER_NOT_FOUND(1005, "Username not found", HttpStatus.NOT_FOUND),
+    UNTHENTICATED(1006, "User is not authenticated", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED(1007, "User do not have permisson", HttpStatus.FORBIDDEN),
+    PERMISSION_ALREADY_EXISTS(1008, "Permission already exists", HttpStatus.BAD_REQUEST),
+    ROLE_ALREADY_EXISTS(1009, "Role already exists", HttpStatus.BAD_REQUEST),
+    ROLE_NOT_FOUND(1010, "Role not found", HttpStatus.NOT_FOUND),
+    EMAIL_EXISTS(1011, "Email already exists", HttpStatus.BAD_REQUEST),
+    PERMISSION_NOT_FOUND(1011, "Permission not found", HttpStatus.NOT_FOUND),
+    DOB_INVALID(1012, "User must be at least {min} years old", HttpStatus.BAD_REQUEST),
+    INTERNAL_SERVER_ERROR(2003, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_TOKEN(1013, "Invalid token", HttpStatus.BAD_REQUEST),
+    TOKEN_EXPIRED(1014, "Token has expired", HttpStatus.BAD_REQUEST),
+    VALIDATION_ERROR(4000, "Input validation error", HttpStatus.BAD_REQUEST),
+    INCORRECT_PASSWORD(3000, "Incorrect password", HttpStatus.UNAUTHORIZED),
+    EMAIL_EXISTED(3001, "Email already existed", HttpStatus.BAD_REQUEST),
+    USERNAME_EXISTED(3002, "Username already existed", HttpStatus.BAD_REQUEST),
+    ACCOUNT_LOCKED(403, "Tài khoản của bạn đã bị khoá.", HttpStatus.FORBIDDEN), 
+    PENDING_REGISTRATION_NOT_FOUND(1015, "Pending registration not found", HttpStatus.NOT_FOUND), 
+    INVALID_OTP(1016, "Invalid OTP", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(1017, "OTP has expired", HttpStatus.BAD_REQUEST), 
+    INVALID_PASSWORD(1018, "Invalid password", HttpStatus.BAD_REQUEST), 
+    UNAUTHENTICATED(1019, "User is not authenticated", HttpStatus.UNAUTHORIZED), 
+    PHONE_EXISTS(1020, "Phone number already exists", HttpStatus.BAD_REQUEST),
+    INVALID_DATE_OF_BIRTH(1021, "Invalid date of birth", HttpStatus.BAD_REQUEST), 
+    ACCESS_DENIED(403, "Access Denied", HttpStatus.FORBIDDEN), 
+    TOKEN_REVOKED(1022, "Token has been revoked", HttpStatus.BAD_REQUEST),
+    PENDING_RESET_PASSWORD_NOT_FOUND(1023, "Pending reset password not found", HttpStatus.NOT_FOUND),
+    PROMOTION_NOT_FOUND(1023, "Khuyến mãi không tồn tại", HttpStatus.NOT_FOUND),
+    PROMOTION_CODE_EXISTS(1024, "Mã khuyến mãi đã tồn tại", HttpStatus.BAD_REQUEST),
+    INVALID_PROMOTION_DATE_RANGE(1025, "Ngày kết thúc khuyến mãi phải sau ngày bắt đầu", HttpStatus.BAD_REQUEST),
+    EXTRA_SERVICE_NOT_FOUND(1026, "Dịch vụ thêm không tồn tại", HttpStatus.NOT_FOUND),
+    EXTRA_SERVICE_NAME_EXISTS(1027, "Tên dịch vụ thêm đã tồn tại", HttpStatus.BAD_REQUEST),
+
+    // ─── Phase 1: Auditorium & SeatType ───────────────────────────────────────
+    AUDITORIUM_NOT_FOUND(1028, "Phòng chiếu không tồn tại", HttpStatus.NOT_FOUND),
+    AUDITORIUM_NAME_EXISTS(1029, "Tên phòng chiếu đã tồn tại", HttpStatus.BAD_REQUEST),
+    AUDITORIUM_NOT_ACTIVE(1030, "Phòng chiếu không ở trạng thái hoạt động", HttpStatus.BAD_REQUEST),
+    SEAT_TYPE_NOT_FOUND(1031, "Loại ghế không tồn tại", HttpStatus.NOT_FOUND),
+    SEAT_TYPE_NAME_EXISTS(1032, "Tên loại ghế đã tồn tại", HttpStatus.BAD_REQUEST),
+
+    // ─── Phase 2-4: Seat Lock, Booking, Ticket ────────────────────────────────
+    SEAT_NOT_FOUND(1033, "Ghế không tồn tại", HttpStatus.NOT_FOUND),
+    SEAT_ALREADY_TAKEN(1034, "Ghế đã được đặt hoặc đang bị khoá bởi người dùng khác", HttpStatus.CONFLICT),
+    BOOKING_NOT_FOUND(1035, "Đơn đặt vé không tồn tại", HttpStatus.NOT_FOUND),
+    TICKET_NOT_FOUND(1036, "Vé không tồn tại", HttpStatus.NOT_FOUND),
+    TICKET_ALREADY_USED(1037, "Vé đã được sử dụng", HttpStatus.CONFLICT),
+    TICKET_CANCELLED(1038, "Vé đã bị huỷ", HttpStatus.CONFLICT),
+    TICKET_NOT_PAID(1039, "Vé chưa được thanh toán, không thể check-in", HttpStatus.BAD_REQUEST),
+    SHOWTIME_NOT_FOUND(1040, "Suất chiếu không tồn tại", HttpStatus.NOT_FOUND),
+    BOOKING_MIN_SEATS_REQUIRED(1041, "Đặt vé nhóm cần ít nhất 5 ghế", HttpStatus.BAD_REQUEST),
+    BOOKING_ALREADY_CANCELLED(1042, "Đơn đặt vé đã bị huỷ", HttpStatus.CONFLICT),
+
+
+    PAYMENT_GATEWAY_ERROR(1028, "Sai chữ ký , lỗi có thể do hash sai", HttpStatus.BAD_REQUEST),
+    PAYMENT_INVALID_REQUEST(1029, "Dữ liệu thanh toán không hợp lệ", HttpStatus.BAD_REQUEST),
+    PAYMENTSUCCESS(1030, "Thanh đã toán thành công rùi", HttpStatus.OK);
+    private int code;
+    private String message;
+    private HttpStatus status;
+>>>>>>> c9612b78620e7daf8fbeb938968fe7dbb583d807
 
     ErrorCode(int code, String message, HttpStatus status) {
         this.code = code;
