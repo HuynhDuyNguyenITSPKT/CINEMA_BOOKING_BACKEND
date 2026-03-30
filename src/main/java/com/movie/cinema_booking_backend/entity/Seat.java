@@ -40,9 +40,13 @@ public class Seat {
     @ManyToOne
     @JoinColumn(name = "auditorium_id")
     @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Auditorium auditorium;
 
     @ManyToOne
     @JoinColumn(name = "seat_type_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private SeatType seatType;
 }

@@ -1,0 +1,59 @@
+package com.movie.cinema_booking_backend.controller;
+
+import com.movie.cinema_booking_backend.service.public_cinema.facade.IPublicCinemaFacade;
+import com.movie.cinema_booking_backend.response.ApiResponse;
+import com.movie.cinema_booking_backend.response.MovieResponse;
+import com.movie.cinema_booking_backend.response.PaginationResponse;
+import com.movie.cinema_booking_backend.response.ShowtimeResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+
+/**
+ * PublicCinemaController — API công khai cho màn hình người dùng (không cần đăng nhập).
+ *
+ * <p>Tất cả endpoints được khai báo public trong SecurityConfig.PUBLIC_ENDPOINTS.
+ * Controller chỉ delegate sang {@link IPublicCinemaFacade} — không chứa business logic.
+ *
+ * <p>Base path: {@code /api/public/cinema}
+ */
+@RestController
+@RequestMapping("/api/public/cinema")
+@RequiredArgsConstructor
+public class PublicCinemaController {
+
+    private final IPublicCinemaFacade publicCinemaFacade;
+
+    @GetMapping("/movies")
+    public ApiResponse<PaginationResponse<MovieResponse>> searchMovies(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String genreId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+            
+        PaginationResponse<MovieResponse> response = publicCinemaFacade.searchAndFilterMovies(keyword, genreId, page, size);
+        
+        return new ApiResponse.Builder<PaginationResponse<MovieResponse>>()
+                .success(true)
+                .message("Lấy danh sách phim thành công")
+                .data(response)
+                .build();
+    }
+
+    @GetMapping("/movies/{movieId}/showtimes")
+    public ApiResponse<List<ShowtimeResponse>> getShowtimes(
+            @PathVariable String movieId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            
+        List<ShowtimeResponse> response = publicCinemaFacade.getShowtimesByMovieAndDate(movieId, date);
+        
+        return new ApiResponse.Builder<List<ShowtimeResponse>>()
+                .success(true)
+                .message("Lấy danh sách lịch chiếu thành công")
+                .data(response)
+                .build();
+    }
+}

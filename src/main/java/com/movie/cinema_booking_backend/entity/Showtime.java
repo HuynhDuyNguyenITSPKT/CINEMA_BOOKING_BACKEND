@@ -26,9 +26,13 @@ public class Showtime {
 
     @ManyToOne
     @JoinColumn(name = "movie_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Movie movie;
 
     @ManyToOne
     @JoinColumn(name = "auditorium_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Auditorium auditorium;
 }

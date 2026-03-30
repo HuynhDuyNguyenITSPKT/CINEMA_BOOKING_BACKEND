@@ -37,10 +37,14 @@ public class Auditorium {
 
     @OneToMany(mappedBy = "auditorium")
     @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<Seat> seats = new ArrayList<>();
 
     @OneToMany(mappedBy = "auditorium")
     @JsonIgnore
     @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<Showtime> showtimes = new ArrayList<>();
 }
