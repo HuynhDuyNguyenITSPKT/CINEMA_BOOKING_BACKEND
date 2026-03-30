@@ -1,7 +1,6 @@
 package com.movie.cinema_booking_backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 

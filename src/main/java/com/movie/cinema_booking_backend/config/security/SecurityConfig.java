@@ -16,25 +16,37 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    // Define admin-only endpoints
+
+    /**
+     * Endpoints chỉ dành cho ADMIN — tài khoản user bình thường không có quyền truy cập.
+     */
     private static final String[] ADMIN_ENDPOINTS = {
         "/api/users",
         "/api/admin/promotions",
         "/api/admin/promotions/**",
         "/api/admin/extra-services",
-        "/api/admin/extra-services/**"
+        "/api/admin/extra-services/**",
+        "/api/admin/payment/**",
+        "/api/admin/movies",
+        "/api/admin/movies/**",
+        "/api/admin/genres",
+        "/api/admin/genres/**",
+        "/api/admin/showtimes",
+        "/api/admin/showtimes/**"
     };
 
-    // Define public endpoints that don't require authentication
-    private final String[] PUBLIC_ENDPOINTS = {
-        "/api/auth/**","/oauth2/**","/api/extra-services/**"
+    /**
+     * Endpoints công khai — không yêu cầu xác thực (permit all).
+     */
+    private static final String[] PUBLIC_ENDPOINTS = {
+        "/api/auth/**", "/api/extra-services/**", "/api/payment/**", "/api/public/cinema/**",
+        "/api/genres", "/oauth2/**"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
-
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
+
 
     private final OAuth2AuthenticationSuccessHandler oauth2SuccessHandler;
 

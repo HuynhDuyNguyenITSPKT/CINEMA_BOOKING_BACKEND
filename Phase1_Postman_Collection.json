@@ -1,0 +1,286 @@
+{
+  "info": {
+    "name": "Cinema Booking Backend — Phase 0, 1, 2 & 3",
+    "description": "Test collection cho Phase 0 (Seat Generation), Phase 1 (Foundation CRUD), Phase 2 (Singleton+Proxy) và Phase 3 (Builder+Template Method).\n\nBase URL: http://localhost:8080\n\nThứ tự test:\n1. SeatType CRUD\n2. Auditorium CRUD + auto-gen seats\n3. Seat Map (Phase 1)\n4. Seat Map live + Lock/Unlock (Phase 2)\n5. Booking CRUD (Phase 3)\n\nBiến cần set: adminToken, userToken, user2Token, baseUrl, showtimeId",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",      "value": "http://localhost:8080", "type": "string" },
+    { "key": "adminToken",   "value": "", "type": "string" },
+    { "key": "userToken",    "value": "", "type": "string" },
+    { "key": "user2Token",   "value": "", "type": "string", "description": "JWT User 2 — test double-lock" },
+    { "key": "auditoriumId", "value": "", "type": "string" },
+    { "key": "seatTypeId",   "value": "", "type": "string" },
+    { "key": "showtimeId",   "value": "", "type": "string", "description": "Insert tay vào DB" },
+    { "key": "lockedSeatId", "value": "", "type": "string", "description": "Copy từ GET seat-map response" },
+    { "key": "bookingId",    "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🎫 SeatType CRUD",
+      "item": [
+        {
+          "name": "POST Create SeatType — STANDARD",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var j = pm.response.json();",
+            "if (j.success && j.data) pm.collectionVariables.set('seatTypeId', j.data.id);"
+          ]}}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/admin/seat-types",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"STANDARD\",\n  \"surcharge\": 0\n}"}
+          }
+        },
+        {
+          "name": "POST Create SeatType — VIP",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/admin/seat-types",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"VIP\",\n  \"surcharge\": 50000\n}"}
+          }
+        },
+        {
+          "name": "POST Create SeatType — PREMIUM",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/admin/seat-types",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"PREMIUM\",\n  \"surcharge\": 30000\n}"}
+          }
+        },
+        {
+          "name": "GET All SeatTypes",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/seat-types" }
+        },
+        {
+          "name": "PUT Update SeatType",
+          "request": {
+            "method": "PUT", "url": "{{baseUrl}}/api/admin/seat-types/{{seatTypeId}}",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"STANDARD\",\n  \"surcharge\": 5000\n}"}
+          }
+        },
+        {
+          "name": "❌ POST — duplicate name → 400",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/admin/seat-types",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"STANDARD\",\n  \"surcharge\": 0\n}"},
+            "description": "Expected: 400 SEAT_TYPE_NAME_EXISTS"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎭 Auditorium CRUD + Seat Generation [Phase 0]",
+      "item": [
+        {
+          "name": "POST Create Auditorium (auto-generate seats)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var j = pm.response.json();",
+            "if (j.success && j.data) pm.collectionVariables.set('auditoriumId', j.data.id);",
+            "console.log('totalSeats generated:', j.data && j.data.totalSeats);"
+          ]}}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/admin/auditoriums",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Phòng 1\",\n  \"status\": \"ACTIVE\",\n  \"seatLayout\": {\n    \"totalRows\": 10,\n    \"totalColumns\": 20,\n    \"vipRows\": [9, 10],\n    \"premiumRows\": [7, 8],\n    \"disabledSeats\": [\"A1\", \"J20\"]\n  }\n}"},
+            "description": "Phase 0: auto-generate 198 ghế (200 - 2 disabled)"
+          }
+        },
+        {
+          "name": "GET All Auditoriums",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auditoriums" }
+        },
+        {
+          "name": "GET Auditorium By ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auditoriums/{{auditoriumId}}" }
+        },
+        {
+          "name": "PUT Update Auditorium",
+          "request": {
+            "method": "PUT", "url": "{{baseUrl}}/api/admin/auditoriums/{{auditoriumId}}",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Phòng 1 Updated\",\n  \"status\": \"ACTIVE\",\n  \"seatLayout\": { \"totalRows\": 10, \"totalColumns\": 20 }\n}"}
+          }
+        },
+        {
+          "name": "PUT Regenerate Seats [Phase 0]",
+          "request": {
+            "method": "PUT", "url": "{{baseUrl}}/api/admin/auditoriums/{{auditoriumId}}/regenerate-seats",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Phòng 1\",\n  \"status\": \"ACTIVE\",\n  \"seatLayout\": {\n    \"totalRows\": 12,\n    \"totalColumns\": 20,\n    \"vipRows\": [11, 12],\n    \"premiumRows\": [9, 10],\n    \"disabledSeats\": []\n  }\n}"},
+            "description": "Xoá 198 ghế cũ, generate 240 ghế mới"
+          }
+        },
+        {
+          "name": "❌ POST — missing seatLayout → 400",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/admin/auditoriums",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{adminToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Test\",\n  \"status\": \"ACTIVE\"\n}"},
+            "description": "Expected: 400 validation error"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💺 Seat Map by Auditorium [Phase 1]",
+      "item": [
+        {
+          "name": "GET Seats by Auditorium",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/auditoriums/{{auditoriumId}}/seats",
+            "description": "Tất cả ghế, status = AVAILABLE (Phase 1 — không có showtimeId)"
+          }
+        },
+        {
+          "name": "❌ GET Seats — Auditorium not found",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auditoriums/non-exist/seats" }
+        }
+      ]
+    },
+    {
+      "name": "🗺️ Seat Map Live + Lock/Unlock [Phase 2]",
+      "description": "Set showtimeId trong Collection Variables (insert tay vào DB)",
+      "item": [
+        {
+          "name": "GET Seat Map by Showtime (User A)",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/showtimes/{{showtimeId}}/seat-map",
+            "header": [{"key":"Authorization","value":"Bearer {{userToken}}"}]
+          }
+        },
+        {
+          "name": "POST Lock Seats (User A)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/showtimes/{{showtimeId}}/seats/lock",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{userToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"seatIds\": [\"{{lockedSeatId}}\"]\n}"}
+          }
+        },
+        {
+          "name": "GET Seat Map (User B — thấy LOCKED)",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/showtimes/{{showtimeId}}/seat-map",
+            "header": [{"key":"Authorization","value":"Bearer {{user2Token}}"}]
+          }
+        },
+        {
+          "name": "❌ POST Lock — User B cố lock ghế đang bị giữ → 409",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/showtimes/{{showtimeId}}/seats/lock",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{user2Token}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"seatIds\": [\"{{lockedSeatId}}\"]\n}"},
+            "description": "Expected: 409 SEAT_ALREADY_TAKEN"
+          }
+        },
+        {
+          "name": "DELETE Unlock Seats (User A)",
+          "request": {
+            "method": "DELETE", "url": "{{baseUrl}}/api/showtimes/{{showtimeId}}/seats/unlock",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{userToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"seatIds\": [\"{{lockedSeatId}}\"]\n}"}
+          }
+        },
+        {
+          "name": "❌ GET Seat Map — Showtime not found → 404",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/showtimes/non-exist/seat-map",
+            "header": [{"key":"Authorization","value":"Bearer {{userToken}}"}]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎟️ Booking CRUD [Phase 3]",
+      "description": "Cần showtimeId trong DB. Lấy seatId từ GET seat-map, copy vào seatIds bên dưới.",
+      "item": [
+        {
+          "name": "POST Lock Seats (trước khi đặt)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/showtimes/{{showtimeId}}/seats/lock",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{userToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"seatIds\": [\"{{lockedSeatId}}\"]\n}"},
+            "description": "Lock trước, sau đó POST /bookings trong 10 phút"
+          }
+        },
+        {
+          "name": "POST Create Booking — Standard",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var j = pm.response.json();",
+            "if (j.success && j.data) pm.collectionVariables.set('bookingId', j.data.id);"
+          ]}}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/bookings",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{userToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"showtimeId\": \"{{showtimeId}}\",\n  \"seatIds\": [\"{{lockedSeatId}}\"],\n  \"extras\": {},\n  \"paymentMethod\": \"MOMO\",\n  \"bookingType\": \"STANDARD\"\n}"}
+          }
+        },
+        {
+          "name": "POST Create Booking — Standard với Promotion + Extra",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/bookings",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{userToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"showtimeId\": \"{{showtimeId}}\",\n  \"seatIds\": [\"{{lockedSeatId}}\"],\n  \"extras\": { \"1\": 2 },\n  \"promotionCode\": \"SUMMER2025\",\n  \"paymentMethod\": \"VNPAY\",\n  \"bookingType\": \"STANDARD\"\n}"},
+            "description": "Thay '1' bằng extraServiceId thật và 'SUMMER2025' bằng promotion code thật"
+          }
+        },
+        {
+          "name": "POST Create Booking — Group (≥5 ghế)",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/bookings",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{userToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"showtimeId\": \"{{showtimeId}}\",\n  \"seatIds\": [\"uuid1\", \"uuid2\", \"uuid3\", \"uuid4\", \"uuid5\"],\n  \"extras\": {},\n  \"paymentMethod\": \"MOMO\",\n  \"bookingType\": \"GROUP\",\n  \"note\": \"Nhóm sinh nhật\"\n}"},
+            "description": "Thay uuid1..5 bằng seatId thật (lock trước). Response bao gồm log group invoice."
+          }
+        },
+        {
+          "name": "❌ POST Create Booking — Group với < 5 ghế → 400",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/bookings",
+            "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{userToken}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"showtimeId\": \"{{showtimeId}}\",\n  \"seatIds\": [\"{{lockedSeatId}}\"],\n  \"extras\": {},\n  \"paymentMethod\": \"MOMO\",\n  \"bookingType\": \"GROUP\"\n}"},
+            "description": "Expected: 400 BOOKING_MIN_SEATS_REQUIRED (1041)"
+          }
+        },
+        {
+          "name": "GET Booking By ID",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/bookings/{{bookingId}}",
+            "header": [{"key":"Authorization","value":"Bearer {{userToken}}"}]
+          }
+        },
+        {
+          "name": "GET My Bookings",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/bookings/my",
+            "header": [{"key":"Authorization","value":"Bearer {{userToken}}"}]
+          }
+        },
+        {
+          "name": "POST Cancel Booking",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/bookings/{{bookingId}}/cancel",
+            "header": [{"key":"Authorization","value":"Bearer {{userToken}}"}]
+          }
+        },
+        {
+          "name": "❌ POST Cancel — double cancel → 409",
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/bookings/{{bookingId}}/cancel",
+            "header": [{"key":"Authorization","value":"Bearer {{userToken}}"}],
+            "description": "Expected: 409 BOOKING_ALREADY_CANCELLED (1042)"
+          }
+        },
+        {
+          "name": "❌ GET Booking — User 2 xem booking của User 1 → 403",
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/bookings/{{bookingId}}",
+            "header": [{"key":"Authorization","value":"Bearer {{user2Token}}"}],
+            "description": "Expected: 403 UNAUTHORIZED"
+          }
+        }
+      ]
+    }
+  ]
+}
