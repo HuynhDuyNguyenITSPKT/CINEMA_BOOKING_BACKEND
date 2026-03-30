@@ -50,6 +50,7 @@ public class MockPublicCinemaFacade implements IPublicCinemaFacade {
 
         return PaginationResponse.<MovieResponse>builder()
                 .currentItems(List.of(mockMovie))
+                .totalItems(1)
                 .totalPages(1)
                 .currentPage(page)
                 .build();

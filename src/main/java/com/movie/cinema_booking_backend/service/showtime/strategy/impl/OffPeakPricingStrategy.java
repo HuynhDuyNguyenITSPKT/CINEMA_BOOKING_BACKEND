@@ -1,6 +1,7 @@
 package com.movie.cinema_booking_backend.service.showtime.strategy.impl;
 
 import com.movie.cinema_booking_backend.service.showtime.strategy.IPricingStrategy;
+import com.movie.cinema_booking_backend.service.showtime.strategy.PricingConstants;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -24,9 +25,6 @@ import java.time.LocalDateTime;
 @Order(2)
 public class OffPeakPricingStrategy implements IPricingStrategy {
 
-    /** Mốc giờ bắt đầu tính là giờ cao điểm — thấp điểm là trước giờ này. */
-    private static final int PEAK_HOUR_START = 17;
-
     /**
      * Kiểm tra xem thời điểm chiếu có thuộc giờ thấp điểm không.
      *
@@ -43,7 +41,7 @@ public class OffPeakPricingStrategy implements IPricingStrategy {
             return false;
         }
         // Ngày thường trước 17:00 → thấp điểm
-        return hour < PEAK_HOUR_START;
+        return hour < PricingConstants.PEAK_HOUR_START;
     }
 
     /**
@@ -58,3 +56,4 @@ public class OffPeakPricingStrategy implements IPricingStrategy {
         return standardPrice;
     }
 }
+

@@ -16,21 +16,23 @@ public class CacheUpdateObserver implements IMovieObserver {
 
     @Override
     public void onMovieAdded(MovieResponse movie) {
-        log.info("[CacheUpdateObserver] Nhận được tín hiệu có phim mới: {}", movie.getTitle());
-        log.info("[CacheUpdateObserver] Đang xóa bộ nhớ đệm Cache danh sách phim cũ...");
-        // Logic thực tế giải quyết việc xóa cache Redis sẽ nằm ở đây
-        log.info("[CacheUpdateObserver] Màn hình UI Movie List đã sẵn sàng load dữ liệu mới cực trong trẻo!");
+        log.info("[CacheUpdateObserver] Phim mới được thêm: {}", movie.getTitle());
+        log.debug("[CacheUpdateObserver] Đang xóa cache danh sách phim cũ...");
+        // TODO: Tích hợp Redis — gọi cacheManager.evict("movies") tại đây
+        log.debug("[CacheUpdateObserver] Cache cleared — UI Movie List sẵn sàng reload dữ liệu mới.");
     }
 
     @Override
     public void onMovieUpdated(MovieResponse movie) {
-        log.info("[CacheUpdateObserver] Tín hiệu Cập nhật dữ liệu phim: {}", movie.getTitle());
-        log.info("[CacheUpdateObserver] Đang làm mới Cache cụ thể cho phim này thông qua ID {}", movie.getId());
+        log.info("[CacheUpdateObserver] Phim được cập nhật: {} (id={})", movie.getTitle(), movie.getId());
+        log.debug("[CacheUpdateObserver] Đang làm mới cache cho phim ID: {}", movie.getId());
+        // TODO: Tích hợp Redis — gọi cacheManager.evict("movie:" + movie.getId()) tại đây
     }
 
     @Override
     public void onMovieDeleted(String movieId) {
-        log.info("[CacheUpdateObserver] Tín hiệu Xóa phim ID: {}", movieId);
-        log.info("[CacheUpdateObserver] Đang xóa Cache cho phim bị xóa khỏi hệ thống...");
+        log.info("[CacheUpdateObserver] Phim bị xóa — ID: {}", movieId);
+        log.debug("[CacheUpdateObserver] Đang xóa cache entry cho phim ID: {}", movieId);
+        // TODO: Tích hợp Redis — gọi cacheManager.evict("movie:" + movieId) tại đây
     }
 }

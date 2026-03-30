@@ -35,7 +35,7 @@ public class ShowtimeController {
     @PostMapping
     public ApiResponse<ShowtimeResponse> createShowtime(@Valid @RequestBody ShowtimeRequest request) {
         ShowtimeResponse response = showtimeService.createShowtime(request);
-        return new ApiResponse.Builder<ShowtimeResponse>()
+        return ApiResponse.<ShowtimeResponse>builder()
                 .success(true)
                 .message("Tạo lịch chiếu thành công")
                 .data(response)
