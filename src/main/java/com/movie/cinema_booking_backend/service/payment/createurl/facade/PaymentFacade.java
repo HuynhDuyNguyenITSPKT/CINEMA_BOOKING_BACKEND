@@ -51,10 +51,9 @@ public class PaymentFacade {
             return 0;
         }
 
-        paymentRepository.findByBooking_Id(bookingId).ifPresent(existing -> {
-            booking.assignPayment(null);
-            paymentRepository.delete(existing);
-        });
+        if (paymentRepository.findByBooking_Id(bookingId).isPresent()) {
+            return 2;
+        }
 
         Payment payment = Payment.builder()
                 .paymentMethod(PaymentMethod.valueOf(paymentMethod.trim().toUpperCase()))
@@ -118,7 +117,7 @@ public class PaymentFacade {
 
     private String resolvePaymentState(boolean verified, String method, String gatewayCode) {
         if (!verified) {
-            return "KHONG_THANH_TOAN";
+            return "HUY";
         }
 
         if ("vnpay".equals(method)) {
@@ -128,7 +127,7 @@ public class PaymentFacade {
             if ("24".equals(gatewayCode)) {
                 return "HUY";
             }
-            return "KHONG_THANH_TOAN";
+            return "HUY";
         }
 
         if ("momo".equals(method)) {
@@ -138,7 +137,7 @@ public class PaymentFacade {
             if ("1006".equals(gatewayCode)) {
                 return "HUY";
             }
-            return "KHONG_THANH_TOAN";
+            return "HUY";
         }
 
         throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
@@ -162,7 +161,7 @@ public class PaymentFacade {
             case "HUY":
                 return "Hủy thanh toán";
             default:
-                return "Không thanh toán";
+                return "Hủy thanh toán";
         }
     }
 
