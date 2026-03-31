@@ -1,10 +1,13 @@
+
 spring:
+  config:
+    import: "optional:file:.env[.properties]"
   application:
     name: CINEMA_BOOKING_BACKEND
   datasource:
     url: jdbc:mysql://localhost:3306/movie
     username: root
-    password: root
+    password: 1234
   jpa:
     hibernate:
       ddl-auto: update
@@ -13,13 +16,26 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
-security:
-  jwt:
-    signerKey: "zV6pL9bK2N8xM4jR7fW3aQ5sD1gH0hJ2kL4mN6bV8pQ0wE1rT3yU5iO7pA9sD1fG"
-    access-token-expiry: 3600 # 1 giờ (giây)
-    refresh-token-expiry: 604800 # 7 ngày (giây)
-
-
+  security:
+    jwt:
+      signerKey: "zV6pL9bK2N8xM4jR7fW3aQ5sD1gH0hJ2kL4mN6bV8pQ0wE1rT3yU5iO7pA9sD1fG"
+      access-token-expiry: 3600 # 1 giờ (giây)
+      refresh-token-expiry: 604800 # 7 ngày (giây)
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+              - phone
+app:
+  frontend:
+    url: "http://localhost:3000"
+    oauth2:
+      callback-url: "http://localhost:3000/oauth2/callback"
 payment:
   vnpay:
     pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
@@ -36,4 +52,3 @@ payment:
     return-url: http://localhost:8080/api/payment/callback/momo
     ipn-url: http://localhost:8080/api/payment/callback/momo
     request-type: payWithATM
-

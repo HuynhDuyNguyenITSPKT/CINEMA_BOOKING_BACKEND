@@ -26,7 +26,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = true)
     private String phone;
 
     @Column(nullable = false)
@@ -34,5 +34,7 @@ public class User {
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Account account;
 }

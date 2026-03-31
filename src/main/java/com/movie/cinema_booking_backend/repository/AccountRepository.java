@@ -14,6 +14,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByUsername(String username);
 
+    Optional<Account> findByUserEmail(String email);
+
     Optional<Account> findByUserId(Long userId);
 
     Page<Account> findByUsernameContainingIgnoreCaseOrUser_FullNameContainingIgnoreCase(

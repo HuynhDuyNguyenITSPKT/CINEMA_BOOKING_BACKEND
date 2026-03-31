@@ -281,6 +281,49 @@
           }
         }
       ]
+    },
+    {
+      "name": "💳 Payment IPN & Check-in [Phase 4]",
+      "description": "Giả lập webhook thanh toán và test State Pattern của Ticket.",
+      "item": [
+        {
+          "name": "GET Mock VNPay Success",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/payment/callback/vnpay?vnp_TxnRef={{bookingId}}&vnp_ResponseCode=00",
+            "description": "Gọi thẳng vào callback để giả lập VNPay trả về thành công. Trạng thái Booking → SUCCESS, Tickets → BOOKED."
+          }
+        },
+        {
+          "name": "GET Mock VNPay Cancelled",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/payment/callback/vnpay?vnp_TxnRef={{bookingId}}&vnp_ResponseCode=24",
+            "description": "Giả lập huỷ thanh toán. Trạng thái Booking → CANCELLED, Tickets → CANCELLED."
+          }
+        },
+        {
+          "name": "POST Check-in Ticket (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tickets/{{ticketId}}/check-in",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "description": "Lấy ticketId bằng cách xem chi tiết Booking. Đổi trạng thái vé từ BOOKED → USED."
+          }
+        },
+        {
+          "name": "❌ POST Check-in (User) → 403 Forbidden",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tickets/{{ticketId}}/check-in",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ]
+          }
+        }
+      ]
     }
   ]
 }
