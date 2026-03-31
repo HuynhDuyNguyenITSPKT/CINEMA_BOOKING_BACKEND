@@ -1,33 +1,33 @@
 package com.movie.cinema_booking_backend.service.impl;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 
 import com.movie.cinema_booking_backend.request.PaymentRequest;
 import com.movie.cinema_booking_backend.service.IPayment;
-import com.movie.cinema_booking_backend.service.payment.createurl.adapter.Adapter_MOMO;
-import com.movie.cinema_booking_backend.service.payment.createurl.adapter.Adapter_VNPAY;
+import com.movie.cinema_booking_backend.service.payment.createurl.adapter.IAdapterPay;
 
 @Service
 public class PaymentService implements IPayment {
 
-    private final Adapter_VNPAY adapter_vnpay;
-    private final Adapter_MOMO adapter_momo;
+    private final Map<String, IAdapterPay> strategy;
 
-
-    public PaymentService(Adapter_VNPAY adapter_vnpay, Adapter_MOMO adapter_momo) {
-        this.adapter_vnpay = adapter_vnpay;
-        this.adapter_momo = adapter_momo;
+    public PaymentService(List<IAdapterPay> adapters) {
+        this.strategy = adapters.stream()
+                .collect(Collectors.toMap(
+                        a -> a.getType().toLowerCase(),
+                        a -> a
+                ));
     }
 
     @Override
     public String createPaymentUrl(String method, PaymentRequest request) {
-        switch (method.toLowerCase()) {
-            case "vnpay":
-                return adapter_vnpay.createPaymentUrl(request);
-            case "momo":
-                return adapter_momo.createPaymentUrl(request);
-            default:
-                return "";
-        }
-    }    
+        IAdapterPay adapter = strategy.get(method.toLowerCase());
+        return adapter.createPaymentUrl(request);
+    }   
+
+
 }
