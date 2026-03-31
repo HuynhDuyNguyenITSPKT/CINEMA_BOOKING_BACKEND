@@ -65,10 +65,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({HttpMessageNotReadableException.class, IllegalArgumentException.class})
     public ResponseEntity<ApiResponse<String>> handleUnreadableMessage(Exception ex) {
         log.warn("[BadRequest] {}", ex.getMessage());
-
+    
         ApiResponse<String> response = new ApiResponse.Builder<String>()
                 .success(false)
-                .message("Dữ liệu yêu cầu không hợp lệ hoặc sai định dạng")
+                .message("Dữ liệu yêu cầu không hợp lệ hoặc sai định dạng " )
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }

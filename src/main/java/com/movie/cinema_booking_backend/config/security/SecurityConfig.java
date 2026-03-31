@@ -53,6 +53,11 @@ public class SecurityConfig {
         "/api/genres", "/oauth2/**"
     };
 
+
+    private static final String[] USER_ENDPOINTS = {
+        "/api/users/profile", "/api/users/me/**"
+    };
+
     private final CustomJwtDecoder customJwtDecoder;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
@@ -75,6 +80,7 @@ public class SecurityConfig {
             .csrf(c -> c.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                .requestMatchers(USER_ENDPOINTS).hasRole("USER")
                 .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

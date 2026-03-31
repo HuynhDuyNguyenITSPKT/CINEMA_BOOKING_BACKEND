@@ -63,7 +63,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                                         .build();
                                         return accountRepository.save(newAccount);
                                 });
-
+                if(account.isActive() == false) {
+                        getRedirectStrategy().sendRedirect(request, response, FRONTEND_OAUTH2_CALLBACK_URL + "?error=account_locked");
+                        return;
+                }
                 // Tạo JWT Token
                 TokenDescriptorBuilder accessToken = new AccessTokenDescriptorBuilder(jwtTokenService);
                 TokenDescriptorBuilder refreshToken = new AccessTokenDescriptorBuilder(jwtTokenService);
