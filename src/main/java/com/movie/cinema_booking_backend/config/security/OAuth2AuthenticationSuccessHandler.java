@@ -63,7 +63,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                                         .build();
                                         return accountRepository.save(newAccount);
                                 });
-
+                if(account.isActive() == false) {
+                        getRedirectStrategy().sendRedirect(request, response, FRONTEND_OAUTH2_CALLBACK_URL + "?error=account_locked");
+                        return;
+                }
                 // Tạo JWT Token
                 TokenDescriptorBuilder accessToken = new AccessTokenDescriptorBuilder(jwtTokenService);
                 TokenDescriptorBuilder refreshToken = new AccessTokenDescriptorBuilder(jwtTokenService);
@@ -73,11 +76,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 String accessTokenStr = accessToken.getResult().getToken();
                 String refreshTokenStr = refreshToken.getResult().getToken();
 
-                // Redirect về Frontend kèm Token trên URL
-                String targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_OAUTH2_CALLBACK_URL)
-                                .queryParam("accessToken", accessTokenStr)
-                                .queryParam("refreshToken", refreshTokenStr)
-                                .build().toUriString();
+                        // Redirect về Frontend kèm Token trên URL
+                        String targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_OAUTH2_CALLBACK_URL)
+                                        .queryParam("accessToken", accessTokenStr)
+                                        .queryParam("refreshToken", refreshTokenStr)
+                                        .build().toUriString();
 
                 getRedirectStrategy().sendRedirect(request, response, targetUrl);
         }

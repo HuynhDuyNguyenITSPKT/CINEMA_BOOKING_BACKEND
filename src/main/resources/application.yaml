@@ -2,12 +2,30 @@
 spring:
   config:
     import: "optional:file:.env[.properties]"
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  messages:
+    encoding: UTF-8
   application:
     name: CINEMA_BOOKING_BACKEND
   datasource:
     url: jdbc:mysql://localhost:3306/movie
     username: root
     password: 1234
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   jpa:
     hibernate:
       ddl-auto: update
@@ -27,15 +45,19 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
             scope:
               - email
               - profile
               - phone
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?prompt=select_account
 app:
   frontend:
-    url: "http://localhost:3000"
+    url: "http://localhost:5173"
     oauth2:
-      callback-url: "http://localhost:3000/oauth2/callback"
+      callback-url: "http://localhost:5173/oauth2/callback"
 payment:
   vnpay:
     pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
