@@ -3,6 +3,7 @@ package com.movie.cinema_booking_backend.controller;
 import com.movie.cinema_booking_backend.request.BookingRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.service.IBookingService;
+import com.movie.cinema_booking_backend.service.bookingticket.facade.BookingFacade;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
@@ -14,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class BookingController {
 
     private final IBookingService bookingService;
+    private final BookingFacade bookingFacade;
 
-    public BookingController(IBookingService bookingService) {
+    public BookingController(IBookingService bookingService, BookingFacade bookingFacade) {
         this.bookingService = bookingService;
+        this.bookingFacade = bookingFacade;
     }
 
     /**
@@ -35,8 +38,8 @@ public class BookingController {
                                         Authentication authentication) {
         return new ApiResponse.Builder<>()
                 .success(true)
-                .message("Đặt vé thành công, trạng thái: PENDING")
-                .data(bookingService.createBooking(request, authentication.getName()))
+                .message("Khởi tạo đặt vé thành công, vui lòng thanh toán")
+                .data(bookingFacade.initiateBooking(request, authentication.getName()))
                 .build();
     }
 

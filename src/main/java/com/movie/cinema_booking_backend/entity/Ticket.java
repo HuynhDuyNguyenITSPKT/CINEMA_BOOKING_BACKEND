@@ -2,6 +2,7 @@ package com.movie.cinema_booking_backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.movie.cinema_booking_backend.enums.TicketStatus;
+import com.movie.cinema_booking_backend.service.bookingticket.state.*;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -43,6 +44,41 @@ public class Ticket {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TicketStatus status;
+
+    @Transient // Không lưu DB
+    @JsonIgnore
+    private TicketState ticketState;
+
+    @PostLoad
+    private void initTicketState() {
+        if (this.status != null) {
+            this.ticketState = switch (this.status) {
+                case PROCESSING -> new ProcessingState();
+                case BOOKED -> new BookedState();
+                case USED -> new UsedState();
+                case CANCELLED -> new CancelledState();
+                default -> new ProcessingState();
+            };
+        }
+    }
+
+    // Khi set status bằng tay (ví dụ lúc tạo), cũng update logic State
+    public void setStatus(TicketStatus status) {
+        this.status = status;
+        initTicketState();
+    }
+
+    /** Uỷ quyền hành động check-in cho State hiện tại */
+    public void checkIn() {
+        if (ticketState == null) initTicketState();
+        ticketState.checkIn(this);
+    }
+
+    /** Uỷ quyền hành động huỷ vé cho State hiện tại */
+    public void cancel() {
+        if (ticketState == null) initTicketState();
+        ticketState.cancel(this);
+    }
 
     @Column(length = 500)
     private String qrCodeUrl;
