@@ -44,7 +44,7 @@ import com.nimbusds.jwt.SignedJWT;
 import jakarta.transaction.Transactional;
 
 @Service
-public class AuthService implements IAuthService {
+public class AuthServiceImpl implements IAuthService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final PendingRegistrationRepository pendingRepo;
@@ -54,7 +54,7 @@ public class AuthService implements IAuthService {
     private final JwtTokenService jwtTokenService;
     private final TokenDescriptorDirector tokenDescriptorDirector;
 
-    public AuthService(
+    public AuthServiceImpl(
             AccountRepository accountRepository,
             UserRepository userRepository,
             PendingRegistrationRepository pendingRepo,
@@ -198,6 +198,7 @@ public class AuthService implements IAuthService {
         User user = acc.getUser();
         return UserResponse.builder()
                 .id(user.getId().toString())
+                .username(acc.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phone(user.getPhone())

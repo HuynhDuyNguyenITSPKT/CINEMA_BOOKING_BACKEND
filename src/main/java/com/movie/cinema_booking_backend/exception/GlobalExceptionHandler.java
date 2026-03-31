@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -70,6 +71,20 @@ public class GlobalExceptionHandler {
                 .message("Dữ liệu yêu cầu không hợp lệ hoặc sai định dạng")
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Xử lý lỗi phân quyền (403).
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<String>> handleAccessDeniedException(AccessDeniedException ex) {
+        log.warn("[AccessDenied] {}", ex.getMessage());
+
+        ApiResponse<String> response = new ApiResponse.Builder<String>()
+                .success(false)
+                .message(ErrorCode.ACCESS_DENIED.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     /**
