@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 @Component
@@ -64,7 +66,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         return accountRepository.save(newAccount);
                                 });
                 if(account.isActive() == false) {
-                        getRedirectStrategy().sendRedirect(request, response, FRONTEND_OAUTH2_CALLBACK_URL + "?error=account_locked");
+                        System.out.println("url: " + FRONTEND_OAUTH2_CALLBACK_URL + "?error=Tài khoản của bạn đã bị khóa.");
+                        String errorMessage = URLEncoder.encode("Tài khoản của bạn đã bị khóa.", StandardCharsets.UTF_8.toString());
+                        String url = "http://localhost:5173/oauth2/callback?error=" + errorMessage;
+                        getRedirectStrategy().sendRedirect(request, response, url);
                         return;
                 }
                 // Tạo JWT Token
