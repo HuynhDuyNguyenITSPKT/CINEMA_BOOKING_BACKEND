@@ -12,14 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * PublicCinemaController — API công khai cho màn hình người dùng (không cần đăng nhập).
- *
- * <p>Tất cả endpoints được khai báo public trong SecurityConfig.PUBLIC_ENDPOINTS.
- * Controller chỉ delegate sang {@link IPublicCinemaFacade} — không chứa business logic.
- *
- * <p>Base path: {@code /api/public/cinema}
- */
 @RestController
 @RequestMapping("/api/public/cinema")
 @RequiredArgsConstructor
@@ -33,9 +25,9 @@ public class PublicCinemaController {
             @RequestParam(required = false) String genreId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-            
+
         PaginationResponse<MovieResponse> response = publicCinemaFacade.searchAndFilterMovies(keyword, genreId, page, size);
-        
+
         return ApiResponse.<PaginationResponse<MovieResponse>>builder()
                 .success(true)
                 .message("Lấy danh sách phim thành công")
@@ -47,9 +39,9 @@ public class PublicCinemaController {
     public ApiResponse<List<ShowtimeResponse>> getShowtimes(
             @PathVariable String movieId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-            
+
         List<ShowtimeResponse> response = publicCinemaFacade.getShowtimesByMovieAndDate(movieId, date);
-        
+
         return ApiResponse.<List<ShowtimeResponse>>builder()
                 .success(true)
                 .message("Lấy danh sách lịch chiếu thành công")

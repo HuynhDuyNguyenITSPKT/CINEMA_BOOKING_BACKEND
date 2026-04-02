@@ -12,27 +12,11 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * MockPublicCinemaFacade — Facade Pattern Implementation cho môi trường dev.
- *
- * <p>Trả về dữ liệu giả định (mock data) thay vì gọi DB thực tế.
- * Cho phép frontend/team khác phát triển độc lập khi DB chưa sẵn sàng.
- *
- * <p>Design Pattern — Facade: Cùng interface IPublicCinemaFacade, chỉ khác implementation.
- * <p>Spring Profile: Chỉ được kích hoạt khi chạy với profile {@code dev}.
- *
- * @see PublicCinemaFacadeImpl dùng trong môi trường production
- */
 @Slf4j
 @Component
 @Profile("dev")
 public class MockPublicCinemaFacade implements IPublicCinemaFacade {
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Trả về một phim mock cố định thay vì query DB.
-     */
     @Override
     public PaginationResponse<MovieResponse> searchAndFilterMovies(String keyword, String genreId, int page, int size) {
         log.debug("[MockPublicCinemaFacade] Đang dùng mock data — profile: dev");
@@ -56,11 +40,6 @@ public class MockPublicCinemaFacade implements IPublicCinemaFacade {
                 .build();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Trả về một lịch chiếu mock cố định thay vì query DB.
-     */
     @Override
     public List<ShowtimeResponse> getShowtimesByMovieAndDate(String movieId, LocalDate date) {
         log.debug("[MockPublicCinemaFacade] Trả về showtime mock cho movieId={}, date={}", movieId, date);
