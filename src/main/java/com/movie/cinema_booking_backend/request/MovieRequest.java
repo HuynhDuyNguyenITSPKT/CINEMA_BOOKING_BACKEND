@@ -7,12 +7,6 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * MovieRequest — DTO nhận dữ liệu tạo/cập nhật phim từ client.
- *
- * <p>Validation theo chuẩn Bean Validation (JSR-380).
- * Service không cần validate thủ công vì @Valid đã được bắt buộc tại Controller.
- */
 @Getter
 @Setter
 @NoArgsConstructor

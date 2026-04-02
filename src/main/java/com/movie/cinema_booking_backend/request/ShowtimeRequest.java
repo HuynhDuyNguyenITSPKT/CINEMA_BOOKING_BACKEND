@@ -11,13 +11,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * ShowtimeRequest — DTO nhận dữ liệu tạo lịch chiếu từ client.
- *
- * <p>Validation theo chuẩn Bean Validation (JSR-380).
- * Các annotation @NotBlank, @NotNull, @Future, @Min đảm bảo
- * dữ liệu hợp lệ trước khi vào tới service layer.
- */
 @Data
 @Builder
 @NoArgsConstructor

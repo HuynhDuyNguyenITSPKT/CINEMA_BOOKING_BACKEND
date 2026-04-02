@@ -6,12 +6,6 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * MovieResponse — DTO trả về client cho Movie.
- *
- * OOP — Immutable: chỉ @Getter, không có setter.
- * Builder: khởi tạo qua Lombok @Builder trong MovieFactory.
- */
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

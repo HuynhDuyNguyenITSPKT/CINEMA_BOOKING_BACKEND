@@ -5,12 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * GenreResponse — DTO trả về client cho Genre (thể loại phim).
- *
- * OOP — Immutable: chỉ @Getter, không có setter.
- * Builder: khởi tạo qua Lombok @Builder trong GenreFactory.
- */
 @Getter
 @Builder
 @NoArgsConstructor
