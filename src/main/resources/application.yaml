@@ -74,3 +74,8 @@ payment:
     return-url: ${MOMO_RETURN_URL:http://localhost:8080/api/payment/callback/momo}
     ipn-url: ${MOMO_IPN_URL:http://localhost:8080/api/payment/callback/momo}
     request-type: ${MOMO_REQUEST_TYPE:payWithATM}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}

@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.movie.cinema_booking_backend.request.PaymentRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
+import com.movie.cinema_booking_backend.response.PaymentCallbackResponse;
 import com.movie.cinema_booking_backend.service.IPayment;
-import com.movie.cinema_booking_backend.service.payment.createurl.facade.PaymentCallbackResponse;
 import com.movie.cinema_booking_backend.service.payment.createurl.facade.PaymentFacade;
 import com.movie.cinema_booking_backend.service.payment.createurl.proxy.PaymentProxy;
 import org.springframework.web.bind.annotation.GetMapping;

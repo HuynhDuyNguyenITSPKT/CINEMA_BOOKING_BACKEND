@@ -34,6 +34,8 @@ public class SecurityConfig {
         "/api/users/**",
         "/api/admin/promotions",
         "/api/admin/promotions/**",
+        "/api/admin/uploads",
+        "/api/admin/uploads/**",
         "/api/admin/extra-services",
         "/api/admin/extra-services/**",
         "/api/admin/payment/**",
