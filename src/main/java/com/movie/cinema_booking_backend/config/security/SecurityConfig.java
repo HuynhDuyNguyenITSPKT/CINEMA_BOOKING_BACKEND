@@ -113,10 +113,6 @@ public class SecurityConfig {
         return jac;
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

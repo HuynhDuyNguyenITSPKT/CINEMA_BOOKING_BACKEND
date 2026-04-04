@@ -29,7 +29,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
@@ -58,6 +58,9 @@ app:
     url: ${FRONTEND_URL:http://localhost:5173}
     oauth2:
       callback-url: ${FRONTEND_OAUTH2_CALLBACK_URL:http://localhost:5173/oauth2/callback}
+  auth:
+    oauth2-code:
+      ttl-seconds: ${OAUTH2_CODE_TTL_SECONDS:60}
 payment:
   vnpay:
     pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}

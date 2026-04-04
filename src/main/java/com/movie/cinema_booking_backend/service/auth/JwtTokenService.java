@@ -6,8 +6,10 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.movie.cinema_booking_backend.entity.Account;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
+import com.movie.cinema_booking_backend.repository.AccountRepository;
 import com.movie.cinema_booking_backend.repository.InvalidatedTokenRepository;
 import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptor;
 import com.nimbusds.jose.JOSEException;
@@ -25,12 +27,15 @@ import com.nimbusds.jwt.SignedJWT;
 public class JwtTokenService {
 
     private final InvalidatedTokenRepository invalidatedTokenRepository;
+    private final AccountRepository accountRepository;
 
     @Value("${spring.security.jwt.signerKey}")
     private String signerKey;
 
-    public JwtTokenService(InvalidatedTokenRepository invalidatedTokenRepository) {
+    public JwtTokenService(InvalidatedTokenRepository invalidatedTokenRepository, AccountRepository accountRepository) {
         this.invalidatedTokenRepository = invalidatedTokenRepository;
+        this.accountRepository = accountRepository;
+
     }
 
     public String generateToken(TokenDescriptor descriptor) {
@@ -54,12 +59,22 @@ public class JwtTokenService {
     public SignedJWT verifyToken(String token) throws Exception {
         SignedJWT signedJWT = SignedJWT.parse(token);
         JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
+
         if (!signedJWT.verify(verifier) || signedJWT.getJWTClaimsSet().getExpirationTime().before(new Date())) {
             throw new AppException(ErrorCode.INVALID_TOKEN);
         }
         if (invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
             throw new AppException(ErrorCode.TOKEN_REVOKED);
         }
+
+        String username = signedJWT.getJWTClaimsSet().getSubject();
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+        if (!account.isActive()) {
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED);
+        }
+
         return signedJWT;
     }
 }

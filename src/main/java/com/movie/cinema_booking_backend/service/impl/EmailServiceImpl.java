@@ -3,11 +3,11 @@ package com.movie.cinema_booking_backend.service.impl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+
 import org.springframework.mail.javamail.MimeMessageHelper;
+
 import org.springframework.stereotype.Service;
-
 import com.movie.cinema_booking_backend.service.IEmailService;
-
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +28,46 @@ public class EmailServiceImpl implements IEmailService {
         message.setSubject("Ma OTP xac thuc - Cinema Booking");
         message.setText("Chao ban,\n\nMa OTP cua ban la: " + otp
                 + "\nMa nay co hieu luc trong 5 phut. Vui long khong chia se ma nay cho bat ky ai.");
+        mailSender.send(message);
+    }
+
+    @Override
+    public void sendGeneratedPasswordEmail(String to, String temporaryPassword) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(to);
+        message.setSubject("[Cinema Booking] Mat khau tam thoi");
+        message.setText(
+            "Chao ban,\n\n" +
+            "He thong da tao mat khau tam thoi cho tai khoan cua ban:\n" +
+            "Mat khau: " + temporaryPassword + "\n\n" +
+            "Vui long dang nhap va doi mat khau ngay de dam bao an toan tai khoan.\n\n" +
+            "Tran trong,\nDoi ngu Cinema Booking"
+        );
+        mailSender.send(message);
+    }
+
+    @Override
+    public void sendAccountStatusChangedEmail(String to, String fullName, boolean isActive) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(to);
+        if (isActive) {
+            message.setSubject("[Cinema Booking] Tai khoan da duoc mo khoa");
+            message.setText(
+                "Chao " + fullName + ",\n\n" +
+                "Tai khoan cua ban da duoc mo khoa va co the su dung lai binh thuong.\n\n" +
+                "Tran trong,\nDoi ngu Cinema Booking"
+            );
+        } else {
+            message.setSubject("[Cinema Booking] Tai khoan da bi khoa");
+            message.setText(
+                "Chao " + fullName + ",\n\n" +
+                "Tai khoan cua ban da bi khoa tam thoi boi quan tri vien.\n" +
+                "Vui long lien he ho tro neu ban can them thong tin.\n\n" +
+                "Tran trong,\nDoi ngu Cinema Booking"
+            );
+        }
         mailSender.send(message);
     }
 
@@ -79,6 +119,7 @@ public class EmailServiceImpl implements IEmailService {
         );
         mailSender.send(message);
     }
+
 
     @Override
     public void sendPaymentSuccessEmail(String to, String bookingId, String paymentMethod, String amount) {

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.movie.cinema_booking_backend.request.AuthRequest;
 import com.movie.cinema_booking_backend.request.ChangePasswordRequest;
 import com.movie.cinema_booking_backend.request.ForgotPasswordRequest;
+import com.movie.cinema_booking_backend.request.OAuth2CodeExchangeRequest;
 import com.movie.cinema_booking_backend.request.OtpRequest;
 import com.movie.cinema_booking_backend.request.RegistrationRequest;
 import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
@@ -21,6 +22,7 @@ import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IAuthService;
+import com.movie.cinema_booking_backend.service.auth.OAuth2CodeExchangeService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class AuthController {
     private final IAuthService authService;
+    private final OAuth2CodeExchangeService oAuth2CodeExchangeService;
 
     @PostMapping("/register")
     public ApiResponse<String> register(@Valid @RequestBody RegistrationRequest req) {
@@ -67,6 +70,16 @@ public class AuthController {
         return new ApiResponse.Builder<AuthResponse>()
                 .success(true)
                 .message("Đăng nhập thành công.")
+                .data(result)
+                .build();
+    }
+
+    @PostMapping("/oauth2/exchange")
+    public ApiResponse<AuthResponse> exchangeOAuth2Code(@Valid @RequestBody OAuth2CodeExchangeRequest req) {
+        AuthResponse result = oAuth2CodeExchangeService.exchangeCode(req.getCode());
+        return new ApiResponse.Builder<AuthResponse>()
+                .success(true)
+                .message("Đăng nhập OAuth2 thành công.")
                 .data(result)
                 .build();
     }
