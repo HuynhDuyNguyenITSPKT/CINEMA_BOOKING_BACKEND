@@ -1,9 +1,12 @@
 package com.movie.cinema_booking_backend.service.payment.createurl.facade;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,31 +19,45 @@ import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.BookingRepository;
 import com.movie.cinema_booking_backend.repository.PaymentRepository;
 import com.movie.cinema_booking_backend.response.PaymentCallbackResponse;
+import com.movie.cinema_booking_backend.service.IEmailService;
 import com.movie.cinema_booking_backend.service.payment.MoMoService;
 import com.movie.cinema_booking_backend.service.payment.VNPayService;
 
 
 @Service
 public class PaymentFacade {
+    private static final Logger log = LoggerFactory.getLogger(PaymentFacade.class);
+
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final VNPayService vnPayService;
     private final MoMoService moMoService;
+    private final IEmailService emailService;
+    private final Map<String, String> creatorEmailByBookingId = new ConcurrentHashMap<>();
 
     public PaymentFacade(
             PaymentRepository paymentRepository,
             BookingRepository bookingRepository,
             VNPayService vnPayService,
-            MoMoService moMoService) {
+            MoMoService moMoService,
+            IEmailService emailService) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.vnPayService = vnPayService;
         this.moMoService = moMoService;
+        this.emailService = emailService;
     }
 
     @Transactional
     public int createPayment(String paymentMethod, String message , String bookingId) {
         return addBookingToPayment(paymentMethod, message, bookingId);
+    }
+
+    public void rememberPaymentCreator(String bookingId, String creatorEmail) {
+        if (bookingId == null || bookingId.isBlank() || creatorEmail == null || creatorEmail.isBlank()) {
+            return;
+        }
+        creatorEmailByBookingId.put(bookingId, creatorEmail);
     }
 
     @Transactional
@@ -107,6 +124,9 @@ public class PaymentFacade {
             payment.setPaytime(LocalDateTime.now());
             paymentRepository.save(payment);
         });
+
+        String creatorEmail = creatorEmailByBookingId.remove(bookingId);
+        sendPaymentResultEmail(creatorEmail, booking, paymentState, normalizedMethod, gatewayCode);
 
         Map<String, String> result = new HashMap<>();
         result.put("bookingId", bookingId);
@@ -206,5 +226,31 @@ public class PaymentFacade {
 
     public void deletePaymentById(Long id) {
         paymentRepository.deleteById(id);
+    }
+
+    private void sendPaymentResultEmail(String creatorEmail, Booking booking, String paymentState, String paymentMethod, String gatewayCode) {
+        String to = creatorEmail;
+        if (to == null || to.isBlank()) {
+            to = booking.getUser() != null ? booking.getUser().getEmail() : null;
+        }
+
+        if (to == null || to.isBlank()) {
+            log.warn("Khong the gui email ket qua thanh toan cho booking {} vi thieu email nguoi dung", booking.getId());
+            return;
+        }
+
+        String bookingId = booking.getId();
+        String amount = booking.getTotalAmount() == null ? "0" : booking.getTotalAmount().toPlainString();
+
+        try {
+            if ("THANH_TOAN_THANH_CONG".equals(paymentState)) {
+                emailService.sendPaymentSuccessEmail(to, bookingId, paymentMethod.toUpperCase(), amount);
+            } else {
+                String reason = "Gateway code: " + (gatewayCode == null || gatewayCode.isBlank() ? "N/A" : gatewayCode);
+                emailService.sendPaymentFailedEmail(to, bookingId, paymentMethod.toUpperCase(), amount, reason);
+            }
+        } catch (Exception ex) {
+            log.error("Gui email ket qua thanh toan that bai cho booking {}: {}", bookingId, ex.getMessage());
+        }
     }
 }

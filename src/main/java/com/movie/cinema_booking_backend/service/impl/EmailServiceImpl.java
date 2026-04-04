@@ -3,10 +3,12 @@ package com.movie.cinema_booking_backend.service.impl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.movie.cinema_booking_backend.service.IEmailService;
 
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -77,4 +79,123 @@ public class EmailServiceImpl implements IEmailService {
         );
         mailSender.send(message);
     }
-}
+
+    @Override
+    public void sendPaymentSuccessEmail(String to, String bookingId, String paymentMethod, String amount) {
+        MimeMessage message = mailSender.createMimeMessage();
+
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("[Cinema Booking] Thanh toán thành công - Đơn " + bookingId);
+
+            String htmlTemplate = """
+                <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
+                    <div style="max-width: 600px; margin: auto; background: white; border-radius: 10px; padding: 20px;">
+                        
+                        <h2 style="color: #28a745;">🎉 Thanh toán thành công</h2>
+                        
+                        <p>Chào bạn,</p>
+                        <p>Đơn đặt vé của bạn đã được thanh toán thành công.</p>
+
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td><b>Mã đơn:</b></td>
+                                <td>{{BOOKING_ID}}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Phương thức:</b></td>
+                                <td>{{PAYMENT_METHOD}}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Số tiền:</b></td>
+                                <td style="color: #28a745;"><b>{{AMOUNT}}</b></td>
+                            </tr>
+                        </table>
+
+                        <p style="margin-top: 20px;">Cảm ơn bạn đã sử dụng dịch vụ 🎬</p>
+
+                        <hr>
+                        <p style="font-size: 12px; color: gray;">Cinema Booking Team</p>
+                    </div>
+                </div>
+            """;
+
+            String html = htmlTemplate
+                    .replace("{{BOOKING_ID}}", bookingId)
+                    .replace("{{PAYMENT_METHOD}}", paymentMethod)
+                    .replace("{{AMOUNT}}", amount);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendPaymentFailedEmail(String to, String bookingId, String paymentMethod, String amount, String reason) {
+        MimeMessage message = mailSender.createMimeMessage();
+
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("[Cinema Booking] Thanh toán thất bại - Đơn " + bookingId);
+
+            String htmlTemplate = """
+                <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
+                    <div style="max-width: 600px; margin: auto; background: white; border-radius: 10px; padding: 20px;">
+                        
+                        <h2 style="color: #dc3545;">❌ Thanh toán thất bại</h2>
+                        
+                        <p>Chào bạn,</p>
+                        <p>Rất tiếc, đơn đặt vé của bạn chưa thanh toán thành công.</p>
+
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td><b>Mã đơn:</b></td>
+                                <td>{{BOOKING_ID}}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Phương thức:</b></td>
+                                <td>{{PAYMENT_METHOD}}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Số tiền:</b></td>
+                                <td><b>{{AMOUNT}}</b></td>
+                            </tr>
+                            <tr>
+                                <td><b>Lý do:</b></td>
+                                <td style="color: #dc3545;">{{REASON}}</td>
+                            </tr>
+                        </table>
+
+                        <p style="margin-top: 20px;">
+                            Bạn có thể thử lại hoặc chọn phương thức thanh toán khác.
+                        </p>
+
+                        <hr>
+                        <p style="font-size: 12px; color: gray;">Cinema Booking Team</p>
+                    </div>
+                </div>
+            """;
+
+            String html = htmlTemplate
+                    .replace("{{BOOKING_ID}}", bookingId)
+                    .replace("{{PAYMENT_METHOD}}", paymentMethod)
+                    .replace("{{AMOUNT}}", amount)
+                    .replace("{{REASON}}", reason);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
