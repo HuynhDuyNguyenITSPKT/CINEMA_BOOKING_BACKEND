@@ -1,13 +1,12 @@
 package com.movie.cinema_booking_backend.service.payment;
 
 import com.movie.cinema_booking_backend.request.PaymentRequest;
+import com.movie.cinema_booking_backend.service.payment.createurl.Template.AbstractPaymentSignatureTemplate;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -15,7 +14,7 @@ import java.text.Normalizer;
 import java.util.*;
 
 @Service
-public class VNPayService {
+public class VNPayService extends AbstractPaymentSignatureTemplate {
 
     @Value("${payment.vnpay.secret-key}")
     private String secretKey;
@@ -119,6 +118,15 @@ public class VNPayService {
     }
 
     public String hash(Map<String, String> params) {
+        return signRequest(params);
+    }
+
+    public boolean verify(Map<String, String> params) {
+        return verifyCallback(params);
+    }
+
+    @Override
+    protected String buildRawDataForSigning(Map<String, String> params) {
         try {
             List<String> fieldNames = new ArrayList<>(params.keySet());
             Collections.sort(fieldNames);
@@ -138,40 +146,33 @@ public class VNPayService {
                 }
             }
 
-            String data = hashData.substring(0, hashData.length() - 1);
-
-            return hmacSHA512(secretKey, data);
-        } catch (Exception e) {
-            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
-        }
-    }
-
-    public boolean verify(Map<String, String> params) {
-        String receivedHash = params.get("vnp_SecureHash");
-        Map<String, String> dataToVerify = new HashMap<>(params);
-        dataToVerify.remove("vnp_SecureHash");
-        dataToVerify.remove("vnp_SecureHashType");
-
-        String calculatedHash = hash(dataToVerify);
-
-        return calculatedHash.equalsIgnoreCase(receivedHash);
-    }
-
-    private String hmacSHA512(String key, String data) {
-        try {
-            Mac hmac = Mac.getInstance("HmacSHA512");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(), "HmacSHA512");
-            hmac.init(secretKeySpec);
-            byte[] bytes = hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-
-            StringBuilder hash = new StringBuilder();
-            for (byte b : bytes) {
-                hash.append(String.format("%02x", b));
+            if (hashData.length() == 0) {
+                throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
             }
 
-            return hash.toString();
+            return hashData.substring(0, hashData.length() - 1);
         } catch (Exception e) {
             throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
+    }
+
+    @Override
+    protected String buildRawDataForVerification(Map<String, String> params) {
+        return buildRawDataForSigning(params);
+    }
+
+    @Override
+    protected String extractReceivedSignature(Map<String, String> params) {
+        return params.get("vnp_SecureHash");
+    }
+
+    @Override
+    protected String getSecretKey() {
+        return secretKey;
+    }
+
+    @Override
+    protected String getHmacAlgorithm() {
+        return "HmacSHA512";
     }
 }
