@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service.payment.createurl.facade;
+package com.movie.cinema_booking_backend.response;
 
 import java.util.Map;
 
