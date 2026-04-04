@@ -2,7 +2,9 @@ package com.movie.cinema_booking_backend.service.auth.proxy;
 
 import java.text.ParseException;
 
-import com.movie.cinema_booking_backend.service.impl.AuthService;
+
+import com.movie.cinema_booking_backend.service.impl.AuthServiceImpl;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +19,7 @@ import com.movie.cinema_booking_backend.response.UserResponse;
 @Service("authTimingProxy")
 public class AuthTimingProxy extends AbstractAuthProxy {
 
-    public AuthTimingProxy(AuthService realSubject) {
+    public AuthTimingProxy(AuthServiceImpl realSubject) {
         super(realSubject);
     }
 

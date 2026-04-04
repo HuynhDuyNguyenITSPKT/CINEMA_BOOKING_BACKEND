@@ -13,30 +13,12 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * MovieFactory - Factory Pattern Implementation cho Movie.
- *
- * Tập trung toàn bộ mapping logic tại đây.
- * Service MovieService chỉ gọi các method này, không tự build entity bằng tay.
- *
- * SOLID — Single Responsibility: Chỉ chịu trách nhiệm tạo/map Movie objects.
- * SOLID — Dependency Inversion: Phụ thuộc vào IGenreFactory (interface), không GenreFactory.
- * OOP — Encapsulation: Logic khởi tạo được đóng gói hoàn toàn tại đây.
- */
 @Component
 @RequiredArgsConstructor
 public class MovieFactory implements IMovieFactory {
 
     private final IGenreFactory genreFactory;
 
-    /**
-     * Tạo Movie Entity mới từ request và genres đã resolve từ DB.
-     * Service chỉ gọi method này, không tự new Movie() bằng tay.
-     *
-     * @param request movie data từ client
-     * @param genres  danh sách genres đã verify từ DB
-     * @return movie entity (chưa save)
-     */
     @Override
     public Movie createEntity(MovieRequest request, List<Genre> genres) {
         Movie movie = Movie.builder()
@@ -53,22 +35,10 @@ public class MovieFactory implements IMovieFactory {
                 .genres(new ArrayList<>())
                 .build();
 
-        // Dùng addGenre() để duy trì bidirectional relationship đúng cách
         genres.forEach(movie::addGenre);
         return movie;
     }
 
-    /**
-     * Cập nhật Movie Entity hiện có từ request và genres mới.
-     * Factory chịu trách nhiệm mapping — Service không set thủ công từng field.
-     *
-     * OOP: Dùng removeAllGenres() để dọn sạch bidirectional refs trước khi add mới.
-     * Tránh trường hợp genre list cũ vẫn còn back-reference trỏ về movie sau khi clear.
-     *
-     * @param movie   movie entity hiện tại (mutable)
-     * @param request dữ liệu cập nhật
-     * @param genres  danh sách genres mới đã verify từ DB
-     */
     @Override
     public void updateEntity(Movie movie, MovieRequest request, List<Genre> genres) {
         movie.setTitle(request.getTitle());
@@ -82,18 +52,10 @@ public class MovieFactory implements IMovieFactory {
         movie.setAgeRating(request.getAgeRating());
         movie.setStatus(request.getStatus());
 
-        // Dùng removeAllGenres() thay vì getGenres().clear() để xóa đúng cả back-reference
         movie.removeAllGenres();
         genres.forEach(movie::addGenre);
     }
 
-    /**
-     * Map Movie Entity sang MovieResponse DTO để trả về client.
-     * Mapping entities → DTOs tại đây, không ở controller hay service.
-     *
-     * @param movie movie entity từ DB
-     * @return movie DTO an toàn trả về client
-     */
     @Override
     public MovieResponse createResponse(Movie movie) {
         if (movie == null) {

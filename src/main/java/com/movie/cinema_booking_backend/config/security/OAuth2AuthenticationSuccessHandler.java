@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 @Component
@@ -63,7 +65,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                                         .build();
                                         return accountRepository.save(newAccount);
                                 });
-
+                if(account.isActive() == false) {
+                        System.out.println("url: " + FRONTEND_OAUTH2_CALLBACK_URL + "?error=Tài khoản của bạn đã bị khóa.");
+                        String errorMessage = URLEncoder.encode("Tài khoản của bạn đã bị khóa.", StandardCharsets.UTF_8.toString());
+                        String url = "http://localhost:5173/oauth2/callback?error=" + errorMessage;
+                        getRedirectStrategy().sendRedirect(request, response, url);
+                        return;
+                }
                 // Tạo JWT Token
                 TokenDescriptorBuilder accessToken = new AccessTokenDescriptorBuilder(jwtTokenService);
                 TokenDescriptorBuilder refreshToken = new AccessTokenDescriptorBuilder(jwtTokenService);
@@ -73,11 +81,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 String accessTokenStr = accessToken.getResult().getToken();
                 String refreshTokenStr = refreshToken.getResult().getToken();
 
-                // Redirect về Frontend kèm Token trên URL
-                String targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_OAUTH2_CALLBACK_URL)
-                                .queryParam("accessToken", accessTokenStr)
-                                .queryParam("refreshToken", refreshTokenStr)
-                                .build().toUriString();
+                        // Redirect về Frontend kèm Token trên URL
+                        String targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_OAUTH2_CALLBACK_URL)
+                                        .queryParam("accessToken", accessTokenStr)
+                                        .queryParam("refreshToken", refreshTokenStr)
+                                        .build().toUriString();
 
                 getRedirectStrategy().sendRedirect(request, response, targetUrl);
         }

@@ -16,6 +16,11 @@ public class Adapter_VNPAY implements IAdapterPay {
     }
 
     @Override
+    public String getType() {
+        return "vnpay";
+    }
+
+    @Override
     public String createPaymentUrl(PaymentRequest request) {
         return vnPayService.createPaymentUrl(request);
     }

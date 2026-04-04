@@ -22,17 +22,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * ShowtimeService - Triển khai business logic cho Showtime (lịch chiếu).
- *
- * SOLID — Single Responsibility: Service điều phối, Factory build, Strategy tính giá.
- * SOLID — Open/Closed: Thêm chiến lược giá mới không cần sửa service.
- * SOLID — Dependency Inversion: Phụ thuộc vào PricingStrategyContext, IShowtimeFactory.
- *
- * Design Patterns:
- * - Strategy (PricingStrategyContext): tính giá theo giờ cao điểm/thấp điểm
- * - Factory (IShowtimeFactory): tạo/map Showtime entity và DTO
- */
 @Service
 @RequiredArgsConstructor
 public class ShowtimeService implements IShowtimeService {
@@ -52,10 +41,8 @@ public class ShowtimeService implements IShowtimeService {
         Auditorium auditorium = auditoriumRepository.findById(request.getAuditoriumId())
                 .orElseThrow(() -> new AppException(ErrorCode.AUDITORIUM_NOT_FOUND));
 
-        // Bàn giao việc tính endTime (kèm 15 phút dọn dẹp) cho chính đối tượng Movie tự quản lý (OOP: Tell, Don't Ask)
         LocalDateTime endTime = movie.calculateEndTimeWithCleaning(request.getStartTime());
 
-        // Check đụng độ lịch chiếu
         boolean isOverlapping = showtimeRepository.existsOverlappingShowtime(
                 auditorium.getId(), request.getStartTime(), endTime);
 
@@ -63,7 +50,6 @@ public class ShowtimeService implements IShowtimeService {
             throw new AppException(ErrorCode.OVERLAPPING_SHOWTIME);
         }
 
-        // Tính giá vé sử dụng Strategy Context dựa trên basePrice admin truyền vào
         int basePrice = pricingStrategyContext.getPrice(request.getStandardPrice(), request.getStartTime());
 
         Showtime showtime = showtimeFactory.createEntity(movie, auditorium, request.getStartTime(), endTime, basePrice);

@@ -3,6 +3,7 @@ package com.movie.cinema_booking_backend.service.impl;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IAuthService;
+import com.movie.cinema_booking_backend.service.IEmailService;
 import com.movie.cinema_booking_backend.service.auth.JwtTokenService;
 import com.movie.cinema_booking_backend.service.auth.factory.AuthEntityFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.AccountFactory;
@@ -44,23 +46,25 @@ import com.nimbusds.jwt.SignedJWT;
 import jakarta.transaction.Transactional;
 
 @Service
-public class AuthService implements IAuthService {
+public class AuthServiceImpl implements IAuthService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final PendingRegistrationRepository pendingRepo;
     private final PendingPasswordResetRepository pendingPasswordResetRepository;
     private final InvalidatedTokenRepository invalidatedRepo;
     private final PasswordEncoder passwordEncoder;
+    private final IEmailService emailService;
     private final JwtTokenService jwtTokenService;
     private final TokenDescriptorDirector tokenDescriptorDirector;
 
-    public AuthService(
+    public AuthServiceImpl(
             AccountRepository accountRepository,
             UserRepository userRepository,
             PendingRegistrationRepository pendingRepo,
             PendingPasswordResetRepository pendingPasswordResetRepository,
             InvalidatedTokenRepository invalidatedRepo,
             PasswordEncoder passwordEncoder,
+                IEmailService emailService,
             JwtTokenService jwtTokenService,
             TokenDescriptorDirector tokenDescriptorDirector
     ) {
@@ -70,6 +74,7 @@ public class AuthService implements IAuthService {
         this.pendingPasswordResetRepository = pendingPasswordResetRepository;
         this.invalidatedRepo = invalidatedRepo;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
         this.jwtTokenService = jwtTokenService;
         this.tokenDescriptorDirector = tokenDescriptorDirector;
     }
@@ -109,7 +114,7 @@ public class AuthService implements IAuthService {
         );
         pendingRepo.save(pending);
 
-        System.out.println("OTP for " + request.getUsername() + ": " + otp);
+        emailService.sendOtpEmail(request.getEmail(), otp);
     }
 
     @Override
@@ -151,8 +156,7 @@ public class AuthService implements IAuthService {
         pending.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         pending.setOtpGeneratedTime(LocalDateTime.now());
         pendingRepo.save(pending);
-        System.out.println("Resent OTP for " + pending.getUsername() + ": " + newOtp);
-        // emailService.sendOtpEmail(email, newOtp);
+        emailService.sendOtpEmail(email, newOtp);
     }
 
     @Override
@@ -198,6 +202,7 @@ public class AuthService implements IAuthService {
         User user = acc.getUser();
         return UserResponse.builder()
                 .id(user.getId().toString())
+                .username(acc.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phone(user.getPhone())
@@ -212,17 +217,36 @@ public class AuthService implements IAuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        pendingPasswordResetRepository.deleteByEmail(user.getEmail());
-
         String otp = OtpGeneratorSingleton.getInstance().generateSixDigits();
         LocalDateTime now = LocalDateTime.now();
+        String email = user.getEmail();
 
-        PendingPasswordReset pending = AuthEntityFactory.getEntity(
-            new PendingPasswordResetFactory(user.getEmail(), otp, now)
-        );
+        PendingPasswordReset pending = pendingPasswordResetRepository.findByEmail(email);
+        if (pending == null) {
+            pending = AuthEntityFactory.getEntity(
+                new PendingPasswordResetFactory(email, otp, now)
+            );
+        } else {
+            pending.setOtp(otp);
+            pending.setOtpGeneratedTime(now);
+            pending.setExpiryDate(now.plusMinutes(5));
+        }
 
-        pendingPasswordResetRepository.save(pending);
-        System.out.println("Reset password OTP for " + user.getEmail() + ": " + otp);
+        try {
+            pendingPasswordResetRepository.save(pending);
+        } catch (DataIntegrityViolationException ex) {
+            // Handle concurrent forgot-password requests for the same email.
+            PendingPasswordReset existingPending = pendingPasswordResetRepository.findByEmail(email);
+            if (existingPending == null) {
+                throw ex;
+            }
+            existingPending.setOtp(otp);
+            existingPending.setOtpGeneratedTime(now);
+            existingPending.setExpiryDate(now.plusMinutes(5));
+            pendingPasswordResetRepository.save(existingPending);
+        }
+
+        emailService.sendOtpEmail(email, otp);
     }
 
     @Override

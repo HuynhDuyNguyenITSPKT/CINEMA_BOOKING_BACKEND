@@ -18,6 +18,11 @@ public class Adapter_MOMO implements IAdapterPay {
     }
 
     @Override
+    public String getType() {
+        return "momo";
+    }
+
+    @Override
     public String createPaymentUrl(PaymentRequest request) {
 
         Map<String, String> momoParams = new HashMap<>();

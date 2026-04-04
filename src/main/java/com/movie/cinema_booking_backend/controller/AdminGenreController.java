@@ -10,14 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * AdminGenreController — Quản lý CRUD thể loại phim (Admin only).
- *
- * <p>Tất cả endpoints được bảo vệ bởi role ADMIN thông qua SecurityConfig.
- * Controller chỉ nhận request, delegate sang service, trả về response — không chứa business logic.
- *
- * <p>Base path: {@code /api/admin/genres}
- */
 @RestController
 @RequestMapping("/api/admin/genres")
 @RequiredArgsConstructor
@@ -25,12 +17,6 @@ public class AdminGenreController {
 
     private final IGenreService genreService;
 
-    /**
-     * Lấy thông tin chi tiết một thể loại theo ID.
-     *
-     * @param id ID thể loại cần tra cứu
-     * @return thông tin thể loại
-     */
     @GetMapping("/{id}")
     public ApiResponse<GenreResponse> getGenreById(@PathVariable String id) {
         return ApiResponse.<GenreResponse>builder()
@@ -40,13 +26,6 @@ public class AdminGenreController {
                 .build();
     }
 
-    /**
-     * Lấy danh sách thể loại phân trang — dành cho trang quản lý admin.
-     *
-     * @param page trang hiện tại (0-indexed, mặc định 0)
-     * @param size số item mỗi trang (mặc định 10)
-     * @return danh sách thể loại có phân trang
-     */
     @GetMapping
     public ApiResponse<PaginationResponse<GenreResponse>> getAllGenresPageable(
             @RequestParam(defaultValue = "0") int page,
@@ -68,14 +47,6 @@ public class AdminGenreController {
                 .build();
     }
 
-    /**
-     * Tạo thể loại phim mới.
-     *
-     * <p>Validate: Tên thể loại không được trùng (case-sensitive).
-     *
-     * @param request tên thể loại cần tạo
-     * @return xác nhận tạo thành công (không trả về data)
-     */
     @PostMapping
     public ApiResponse<Void> createGenre(@Valid @RequestBody GenreRequest request) {
         genreService.createGenre(request);
@@ -85,15 +56,6 @@ public class AdminGenreController {
                 .build();
     }
 
-    /**
-     * Cập nhật tên thể loại theo ID.
-     *
-     * <p>Validate: Thể loại tồn tại, tên mới không trùng với thể loại khác.
-     *
-     * @param id      ID thể loại cần cập nhật
-     * @param request dữ liệu cập nhật
-     * @return thể loại sau khi cập nhật
-     */
     @PutMapping("/{id}")
     public ApiResponse<GenreResponse> updateGenre(
             @PathVariable String id,
@@ -106,14 +68,6 @@ public class AdminGenreController {
                 .build();
     }
 
-    /**
-     * Xóa thể loại theo ID.
-     *
-     * <p>Validate: Thể loại phải tồn tại trước khi xóa.
-     *
-     * @param id ID thể loại cần xóa
-     * @return xác nhận xóa thành công (không trả về data)
-     */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteGenre(@PathVariable String id) {
         genreService.deleteGenre(id);

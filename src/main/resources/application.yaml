@@ -1,13 +1,25 @@
-
 spring:
   config:
     import: "optional:file:.env[.properties]"
+  messages:
+    encoding: UTF-8
   application:
     name: CINEMA_BOOKING_BACKEND
   datasource:
-    url: jdbc:mysql://localhost:3306/movie
-    username: root
-    password: root
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   jpa:
     hibernate:
       ddl-auto: update
@@ -18,37 +30,48 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
   security:
     jwt:
-      signerKey: "zV6pL9bK2N8xM4jR7fW3aQ5sD1gH0hJ2kL4mN6bV8pQ0wE1rT3yU5iO7pA9sD1fG"
-      access-token-expiry: 3600 # 1 giờ (giây)
-      refresh-token-expiry: 604800 # 7 ngày (giây)
+      signerKey: ${JWT_SIGNER_KEY}
+      access-token-expiry: ${JWT_ACCESS_TOKEN_EXPIRY:3600} # 1 hour (seconds)
+      refresh-token-expiry: ${JWT_REFRESH_TOKEN_EXPIRY:604800} # 7 days (seconds)
     oauth2:
       client:
         registration:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
             scope:
               - email
               - profile
               - phone
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?prompt=select_account
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 app:
   frontend:
-    url: "http://localhost:3000"
+    url: ${FRONTEND_URL:http://localhost:5173}
     oauth2:
-      callback-url: "http://localhost:3000/oauth2/callback"
+      callback-url: ${FRONTEND_OAUTH2_CALLBACK_URL:http://localhost:5173/oauth2/callback}
 payment:
   vnpay:
-    pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-    return-url: http://localhost:8080/api/payment/callback/vnpay
-    tmn-code: 4VQWM52N
-    secret-key: VVO7QRU44345Y78HMHE2PTP71FC287Q3
-    version: 2.1.0
-    command: pay
+    pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+    return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/payment/callback/vnpay}
+    tmn-code: ${VNPAY_TMN_CODE}
+    secret-key: ${VNPAY_SECRET_KEY}
+    version: ${VNPAY_VERSION:2.1.0}
+    command: ${VNPAY_COMMAND:pay}
   momo:
-    partner-code: MOMO
-    access-key: F8BBA842ECF85
-    secret-key: K951B6PE1waDMi640xX08PD3vg6EkVlz
-    endpoint: https://test-payment.momo.vn/v2/gateway/api
-    return-url: http://localhost:8080/api/payment/callback/momo
-    ipn-url: http://localhost:8080/api/payment/callback/momo
-    request-type: payWithATM
+    partner-code: ${MOMO_PARTNER_CODE:MOMO}
+    access-key: ${MOMO_ACCESS_KEY}
+    secret-key: ${MOMO_SECRET_KEY}
+    endpoint: ${MOMO_ENDPOINT:https://test-payment.momo.vn/v2/gateway/api}
+    return-url: ${MOMO_RETURN_URL:http://localhost:8080/api/payment/callback/momo}
+    ipn-url: ${MOMO_IPN_URL:http://localhost:8080/api/payment/callback/momo}
+    request-type: ${MOMO_REQUEST_TYPE:payWithATM}

@@ -9,28 +9,9 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
-/**
- * ShowtimeFactory — Factory Pattern Implementation cho Showtime.
- *
- * <p>Tập trung toàn bộ mapping logic tại đây.
- * Service ShowtimeService chỉ gọi các method này, không tự build entity hay map DTO bằng tay.
- *
- * <p>SOLID — Single Responsibility: Chỉ chịu trách nhiệm tạo/map Showtime objects.
- * <p>OOP — Encapsulation: Logic khởi tạo được đóng gói hoàn toàn tại đây.
- */
 @Component
 public class ShowtimeFactory implements IShowtimeFactory {
 
-    /**
-     * Tạo Showtime Entity từ các thành phần đã được validate.
-     *
-     * @param movie      entity phim đã được tìm thấy trong DB (không null)
-     * @param auditorium entity phòng chiếu đã được tìm thấy trong DB (không null)
-     * @param startTime  thời gian bắt đầu buổi chiếu
-     * @param endTime    thời gian kết thúc (bao gồm buffer dọn dẹp)
-     * @param basePrice  giá vé đã được tính qua PricingStrategyContext
-     * @return showtime entity (chưa lưu vào DB)
-     */
     @Override
     public Showtime createEntity(Movie movie, Auditorium auditorium,
                                  LocalDateTime startTime, LocalDateTime endTime,
@@ -50,13 +31,6 @@ public class ShowtimeFactory implements IShowtimeFactory {
                 .build();
     }
 
-    /**
-     * Map Showtime Entity sang ShowtimeResponse DTO để trả về client.
-     * Validate null đầu vào để đảm bảo không trả về null response.
-     *
-     * @param showtime showtime entity từ DB (không được null)
-     * @return showtime DTO an toàn trả về client
-     */
     @Override
     public ShowtimeResponse createResponse(Showtime showtime) {
         if (showtime == null) {

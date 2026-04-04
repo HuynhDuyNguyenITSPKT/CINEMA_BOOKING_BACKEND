@@ -1,5 +1,8 @@
 package com.movie.cinema_booking_backend.config.security;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -11,17 +14,24 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+    
     /**
      * Endpoints chỉ dành cho ADMIN — tài khoản user bình thường không có quyền truy cập.
      */
     private static final String[] ADMIN_ENDPOINTS = {
         "/api/users",
+        "/api/users/**",
         "/api/admin/promotions",
         "/api/admin/promotions/**",
         "/api/admin/extra-services",
@@ -41,6 +51,11 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
         "/api/auth/**", "/api/extra-services/**", "/api/payment/**", "/api/public/cinema/**",
         "/api/genres", "/oauth2/**"
+    };
+
+
+    private static final String[] USER_ENDPOINTS = {
+        "/api/users/profile", "/api/users/me/**"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -65,6 +80,7 @@ public class SecurityConfig {
             .csrf(c -> c.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                .requestMatchers(USER_ENDPOINTS).hasRole("USER")
                 .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
@@ -98,6 +114,18 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(frontendUrl)); 
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
     
 }

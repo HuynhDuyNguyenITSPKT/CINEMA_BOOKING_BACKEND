@@ -4,20 +4,6 @@ import lombok.Getter;
 
 import java.util.List;
 
-/**
- * PaginationResponse — Wrapper phân trang chuẩn cho mọi list API.
- *
- * <p>Gồm đủ thông tin để client render UI phân trang:
- * <ul>
- *   <li>{@code currentItems} — danh sách items trang hiện tại</li>
- *   <li>{@code totalItems}   — tổng số records trong toàn bộ dataset</li>
- *   <li>{@code totalPages}   — tổng số trang dựa vào size</li>
- *   <li>{@code currentPage}  — trang hiện tại (0-indexed)</li>
- * </ul>
- *
- * <p>Design Pattern — Builder: constructor private, khởi tạo qua Builder.
- * OOP — Immutable: fields được set một lần trong constructor, không có setter.
- */
 @Getter
 public class PaginationResponse<T> {
 

@@ -89,7 +89,8 @@ public enum ErrorCode {
     TICKET_NOT_PAID(4015, "Vé chưa được thanh toán, không thể check-in", HttpStatus.BAD_REQUEST),
     BOOKING_MIN_SEATS_REQUIRED(4016, "Đặt vé nhóm cần ít nhất 5 ghế", HttpStatus.BAD_REQUEST),
     BOOKING_ALREADY_CANCELLED(4017, "Đơn đặt vé đã bị huỷ", HttpStatus.CONFLICT),
-
+    PAYMENTSUCCESS(4018, "Thanh đã toán thành công rùi", HttpStatus.OK),
+    PAYMENT_ALREADY_EXISTS_UNSUCCESS(4019, "Đã thanh toán chưa thành công", HttpStatus.CONFLICT),
 
     // ── Generic ───────────────────────────────────────────────────────
     INVALID_KEY(9001,               "Khóa không hợp lệ",               HttpStatus.BAD_REQUEST),

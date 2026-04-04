@@ -23,20 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * MovieService - Triển khai business logic cho Movie module.
- *
- * Luồng xử lý chuẩn:
- *   Request → validate → Factory (build entity) → Repository (persist) → Observer (notify) → Response
- *
- * SOLID — Single Responsibility: Service chỉ điều phối, không build entity thủ công.
- * SOLID — Open/Closed: Thêm observer mới không cần sửa service.
- * SOLID — Dependency Inversion: Phụ thuộc vào IMovieFactory, không MovieFactory cụ thể.
- *
- * Design Patterns:
- * - Factory (IMovieFactory): tạo/map Movie entity và DTO
- * - Observer (MovieEventPublisher): thông báo sự kiện CRUD phim
- */
 @Service
 @RequiredArgsConstructor
 public class MovieService implements IMovieService {
@@ -53,13 +39,11 @@ public class MovieService implements IMovieService {
             throw new AppException(ErrorCode.MOVIE_TITLE_EXISTS);
         }
 
-        // Factory chịu trách nhiệm build entity — Service chỉ điều phối (SRP)
         List<Genre> genres = resolveGenres(request.getGenreIds());
         Movie movie = movieFactory.createEntity(request, genres);
         movie = movieRepository.save(movie);
 
         MovieResponse response = movieFactory.createResponse(movie);
-        // Observer Pattern: thông báo tất cả subscribers về phim mới
         movieEventPublisher.notifyMovieAdded(response);
         return response;
     }
@@ -70,19 +54,16 @@ public class MovieService implements IMovieService {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
 
-        // Chỉ kiểm tra trùng tên nếu tên thực sự thay đổi
         if (!movie.getTitle().equals(request.getTitle())
                 && movieRepository.existsByTitle(request.getTitle())) {
             throw new AppException(ErrorCode.MOVIE_TITLE_EXISTS);
         }
 
-        // Factory chịu trách nhiệm update fields — không set thủ công từng field ở Service
         List<Genre> genres = resolveGenres(request.getGenreIds());
         movieFactory.updateEntity(movie, request, genres);
         movie = movieRepository.save(movie);
 
         MovieResponse response = movieFactory.createResponse(movie);
-        // Observer Pattern: thông báo tất cả subscribers về phim được cập nhật
         movieEventPublisher.notifyMovieUpdated(response);
         return response;
     }
@@ -93,11 +74,9 @@ public class MovieService implements IMovieService {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
 
-        // Xóa bidirectional relationship trước khi delete entity
         movie.removeAllGenres();
         movieRepository.delete(movie);
 
-        // Observer Pattern: thông báo tất cả subscribers về phim bị xóa
         movieEventPublisher.notifyMovieDeleted(id);
     }
 
@@ -114,12 +93,6 @@ public class MovieService implements IMovieService {
         return movieRepository.findAll(pageable).map(movieFactory::createResponse);
     }
 
-    /**
-     * Tìm kiếm và lọc phim đang chiếu (NOW_SHOWING) theo keyword và thể loại.
-     * Được gọi bởi PublicCinemaFacade — Facade không inject repository trực tiếp.
-     *
-     * SOLID — DIP: Facade gọi qua interface này thay vì MovieRepository.
-     */
     @Override
     public PaginationResponse<MovieResponse> searchNowShowingMovies(
             String keyword, String genreId, int page, int size) {
@@ -140,18 +113,6 @@ public class MovieService implements IMovieService {
                 .build();
     }
 
-    // ================================================================
-    // Private Helpers
-    // ================================================================
-
-    /**
-     * Validate và resolve Genre entities từ danh sách ID.
-     * Private helper — tái sử dụng ở createMovie và updateMovie (DRY).
-     *
-     * @param genreIds danh sách ID genre từ request
-     * @return danh sách Genre entity đã verify từ DB
-     * @throws AppException nếu có ID không tồn tại trong DB
-     */
     private List<Genre> resolveGenres(List<String> genreIds) {
         if (genreIds == null || genreIds.isEmpty()) {
             return new ArrayList<>();

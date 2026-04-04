@@ -17,15 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * GenreService - Triển khai business logic cho Genre (thể loại phim).
- *
- * SOLID — Single Responsibility: Service chỉ điều phối, Factory handle mapping.
- * SOLID — Dependency Inversion: Phụ thuộc vào IGenreFactory, IGenreService.
- *
- * Design Patterns:
- * - Factory (IGenreFactory): tạo/map Genre entity và DTO
- */
 @Service
 @RequiredArgsConstructor
 public class GenreService implements IGenreService {
@@ -69,14 +60,12 @@ public class GenreService implements IGenreService {
         Genre genre = genreRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.GENRE_NOT_FOUND));
 
-        // Chỉ kiểm tra trùng tên nếu tên thực sự thay đổi
         String newName = request.getName().trim();
         if (!genre.getName().equalsIgnoreCase(newName)
                 && genreRepository.existsByNameIgnoreCase(newName)) {
             throw new AppException(ErrorCode.GENRE_EXISTS);
         }
 
-        // Factory chịu trách nhiệm update fields
         genreFactory.updateGenreEntity(genre, request);
         genre = genreRepository.save(genre);
 
