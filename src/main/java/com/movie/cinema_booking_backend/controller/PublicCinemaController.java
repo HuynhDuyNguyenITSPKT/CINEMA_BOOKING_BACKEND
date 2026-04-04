@@ -1,6 +1,6 @@
 package com.movie.cinema_booking_backend.controller;
 
-import com.movie.cinema_booking_backend.service.public_cinema.facade.IPublicCinemaFacade;
+import com.movie.cinema_booking_backend.service.movie.facade.IPublicCinemaFacade;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.response.MovieResponse;
 import com.movie.cinema_booking_backend.response.PaginationResponse;

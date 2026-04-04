@@ -11,8 +11,8 @@ import com.movie.cinema_booking_backend.repository.ShowtimeRepository;
 import com.movie.cinema_booking_backend.request.ShowtimeRequest;
 import com.movie.cinema_booking_backend.response.ShowtimeResponse;
 import com.movie.cinema_booking_backend.service.IShowtimeService;
-import com.movie.cinema_booking_backend.service.showtime.factory.IShowtimeFactory;
-import com.movie.cinema_booking_backend.service.showtime.strategy.PricingStrategyContext;
+import com.movie.cinema_booking_backend.service.movie.factory.IShowtimeFactory;
+import com.movie.cinema_booking_backend.service.movie.strategy.PricingStrategyContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +56,63 @@ public class ShowtimeService implements IShowtimeService {
         showtime = showtimeRepository.save(showtime);
 
         return showtimeFactory.createResponse(showtime);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ShowtimeResponse getShowtimeById(String id) {
+        Showtime showtime = showtimeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+        return showtimeFactory.createResponse(showtime);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShowtimeResponse> getAllShowtimes() {
+        return showtimeRepository.findAll().stream()
+                .map(showtimeFactory::createResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ShowtimeResponse updateShowtime(String id, ShowtimeRequest request) {
+        Showtime showtime = showtimeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+
+        Movie movie = movieRepository.findById(request.getMovieId())
+                .orElseThrow(() -> new AppException(ErrorCode.MOVIE_NOT_FOUND));
+
+        Auditorium auditorium = auditoriumRepository.findById(request.getAuditoriumId())
+                .orElseThrow(() -> new AppException(ErrorCode.AUDITORIUM_NOT_FOUND));
+
+        LocalDateTime endTime = movie.calculateEndTimeWithCleaning(request.getStartTime());
+
+        boolean isOverlapping = showtimeRepository.existsOverlappingShowtimeExcluding(
+                auditorium.getId(), request.getStartTime(), endTime, id);
+
+        if (isOverlapping) {
+            throw new AppException(ErrorCode.OVERLAPPING_SHOWTIME);
+        }
+
+        int basePrice = pricingStrategyContext.getPrice(request.getStandardPrice(), request.getStartTime());
+
+        showtime.setMovie(movie);
+        showtime.setAuditorium(auditorium);
+        showtime.setStartTime(request.getStartTime());
+        showtime.setEndTime(endTime);
+        showtime.setBasePrice(basePrice);
+
+        showtime = showtimeRepository.save(showtime);
+        return showtimeFactory.createResponse(showtime);
+    }
+
+    @Override
+    @Transactional
+    public void deleteShowtime(String id) {
+        Showtime showtime = showtimeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+        showtimeRepository.delete(showtime);
     }
 
     @Override

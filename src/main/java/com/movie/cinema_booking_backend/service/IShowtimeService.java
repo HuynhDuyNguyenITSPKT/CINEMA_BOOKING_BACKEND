@@ -10,5 +10,13 @@ public interface IShowtimeService {
 
     ShowtimeResponse createShowtime(ShowtimeRequest request);
 
+    ShowtimeResponse getShowtimeById(String id);
+
+    List<ShowtimeResponse> getAllShowtimes();
+
+    ShowtimeResponse updateShowtime(String id, ShowtimeRequest request);
+
+    void deleteShowtime(String id);
+
     List<ShowtimeResponse> getShowtimesByMovieAndDate(String movieId, LocalDate date);
 }

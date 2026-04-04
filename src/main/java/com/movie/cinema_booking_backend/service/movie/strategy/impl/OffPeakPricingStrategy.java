@@ -1,7 +1,7 @@
-package com.movie.cinema_booking_backend.service.showtime.strategy.impl;
+package com.movie.cinema_booking_backend.service.movie.strategy.impl;
 
-import com.movie.cinema_booking_backend.service.showtime.strategy.IPricingStrategy;
-import com.movie.cinema_booking_backend.service.showtime.strategy.PricingConstants;
+import com.movie.cinema_booking_backend.service.movie.strategy.IPricingStrategy;
+import com.movie.cinema_booking_backend.service.movie.strategy.PricingConstants;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -9,8 +9,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 
 @Component
-@Order(1)
-public class PeakHourPricingStrategy implements IPricingStrategy {
+@Order(2)
+public class OffPeakPricingStrategy implements IPricingStrategy {
 
     @Override
     public boolean isApplicable(LocalDateTime startTime) {
@@ -18,13 +18,13 @@ public class PeakHourPricingStrategy implements IPricingStrategy {
         int hour = startTime.getHour();
 
         if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
-            return true;
+            return false;
         }
-        return hour >= PricingConstants.PEAK_HOUR_START;
+        return hour < PricingConstants.PEAK_HOUR_START;
     }
 
     @Override
     public int calculatePrice(int standardPrice, LocalDateTime startTime) {
-        return (int) (standardPrice * PricingConstants.PEAK_PRICE_MULTIPLIER);
+        return standardPrice;
     }
 }
