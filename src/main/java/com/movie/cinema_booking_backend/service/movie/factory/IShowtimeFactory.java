@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service.showtime.factory;
+package com.movie.cinema_booking_backend.service.movie.factory;
 
 import com.movie.cinema_booking_backend.entity.Auditorium;
 import com.movie.cinema_booking_backend.entity.Movie;

@@ -11,6 +11,7 @@ import com.movie.cinema_booking_backend.request.MovieRequest;
 import com.movie.cinema_booking_backend.response.MovieResponse;
 import com.movie.cinema_booking_backend.response.PaginationResponse;
 import com.movie.cinema_booking_backend.service.IMovieService;
+import com.movie.cinema_booking_backend.service.movie.builder.IMovieBuilder;
 import com.movie.cinema_booking_backend.service.movie.factory.IMovieFactory;
 import com.movie.cinema_booking_backend.service.movie.observer.MovieEventPublisher;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class MovieService implements IMovieService {
 
     private final MovieRepository movieRepository;
     private final GenreRepository genreRepository;
+    private final IMovieBuilder movieBuilder;
     private final IMovieFactory movieFactory;
     private final MovieEventPublisher movieEventPublisher;
 
@@ -40,7 +42,7 @@ public class MovieService implements IMovieService {
         }
 
         List<Genre> genres = resolveGenres(request.getGenreIds());
-        Movie movie = movieFactory.createEntity(request, genres);
+        Movie movie = movieBuilder.withBasicInfo(request).withGenres(genres).build();
         movie = movieRepository.save(movie);
 
         MovieResponse response = movieFactory.createResponse(movie);
