@@ -1,5 +1,6 @@
 package com.movie.cinema_booking_backend.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.movie.cinema_booking_backend.enums.DiscountType;
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +23,7 @@ public class PromotionResponse {
     private LocalDateTime endDate;
     private String code;
     private Integer quantity;
+    @JsonProperty("isActive")
     private boolean isActive;
     private String imageUrl;
 }
