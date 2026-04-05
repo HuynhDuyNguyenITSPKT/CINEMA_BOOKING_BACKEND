@@ -41,8 +41,9 @@ public class BookingDirector {
     public Booking construct(BookingBuilder builder, BookingRequest request, String username) {
         builder.reset(request, username);    // Step 1: Nhận input, clean state
         builder.loadEntities();              // Step 2: Load từ DB
-        builder.runPricing(pricingEngine);   // Step 3: Tính tiền (Pipeline)
-        builder.buildEntities();             // Step 4: Đúc Entity
-        return builder.getResult();          // Step 5: Lấy sản phẩm
+        builder.validateRules();             // Step 3: Validate theo từng luật của class con
+        builder.runPricing(pricingEngine);   // Step 4: Tính tiền (Pipeline)
+        builder.buildEntities();             // Step 5: Đúc Entity
+        return builder.getResult();          // Step 6: Lấy sản phẩm
     }
 }

@@ -25,6 +25,8 @@ public interface BookingBuilder {
 
     void loadEntities();
 
+    void validateRules();
+
     void runPricing(PricingEngine engine);
 
     void buildEntities();

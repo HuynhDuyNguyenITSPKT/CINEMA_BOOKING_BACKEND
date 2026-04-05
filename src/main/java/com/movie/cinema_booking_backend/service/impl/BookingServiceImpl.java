@@ -12,10 +12,10 @@ import com.movie.cinema_booking_backend.response.BookingExtraResponse;
 import com.movie.cinema_booking_backend.response.BookingResponse;
 import com.movie.cinema_booking_backend.response.TicketResponse;
 import com.movie.cinema_booking_backend.service.IBookingService;
-import com.movie.cinema_booking_backend.service.bookingticket.builder.BookingContextBuilder;
+import com.movie.cinema_booking_backend.service.bookingticket.builder.BookingBuilder;
+import com.movie.cinema_booking_backend.service.bookingticket.builder.BookingBuilderFactory;
 import com.movie.cinema_booking_backend.service.bookingticket.builder.BookingDirector;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,21 +26,17 @@ import java.util.stream.Collectors;
  * BookingServiceImpl — Điểm kết nối giữa Facade và hệ thống Builder/Engine.
  *
  * Luồng tạo Booking:
- *   1. ObjectProvider lấy 1 instance prototype BookingContextBuilder mới (thread-safe).
- *   2. BookingDirector điều phối 5 bước: reset → loadEntities → runPricing → buildEntities → getResult.
+ *   1. BookingBuilderFactory lấy 1 instance prototype Builder tương ứng (thread-safe).
+ *   2. BookingDirector điều phối 6 bước: reset → loadEntities → validateRules → runPricing → buildEntities → getResult.
  *   3. bookingRepository.save() persist Booking + Tickets + Extras (cascade).
- *
- * Không còn if-else theo bookingType, không còn Template Method.
- * Thêm loại booking mới → chỉ cần Concrete Builder + Policy mới.
  */
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements IBookingService {
 
-    // ObjectProvider để lấy prototype bean − mỗi request 1 instance mới
-    private final ObjectProvider<BookingContextBuilder> builderProvider;
-    private final BookingDirector   director;
-    private final BookingRepository bookingRepository;
+    private final BookingBuilderFactory factory;
+    private final BookingDirector       director;
+    private final BookingRepository     bookingRepository;
 
     // ═══════════════════════════════════════════════════════════
     //  CREATE
@@ -49,10 +45,10 @@ public class BookingServiceImpl implements IBookingService {
     @Override
     @Transactional
     public BookingResponse createBooking(BookingRequest request, String username) {
-        // Lấy prototype instance mới − KHÔNG share state giữa các request
-        BookingContextBuilder builder = builderProvider.getObject();
+        // Factory chọn đúng Builder (Standard, Couple, Group) dựa trên type truyền vào
+        BookingBuilder builder = factory.getBuilder(request.getBookingType());
 
-        // Director điều phối toàn bộ luồng Builder + PricingEngine
+        // Director điều phối toàn bộ luồng
         Booking booking = director.construct(builder, request, username);
 
         // Persist Booking + cascade save Tickets + BookingExtras

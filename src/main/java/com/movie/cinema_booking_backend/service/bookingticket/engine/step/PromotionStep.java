@@ -3,8 +3,7 @@ package com.movie.cinema_booking_backend.service.bookingticket.engine.step;
 import com.movie.cinema_booking_backend.service.bookingticket.engine.PricingStep;
 import com.movie.cinema_booking_backend.service.bookingticket.engine.dto.CalculationRequest;
 import com.movie.cinema_booking_backend.service.bookingticket.engine.dto.CalculationResult;
-import com.movie.cinema_booking_backend.service.bookingticket.engine.policy.PolicyFactory;
-import lombok.RequiredArgsConstructor;
+import com.movie.cinema_booking_backend.entity.Promotion;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -23,24 +22,42 @@ import java.util.List;
  */
 @Component
 @Order(3)
-@RequiredArgsConstructor
 public class PromotionStep implements PricingStep {
-
-    private final PolicyFactory policyFactory;
 
     @Override
     public void process(CalculationRequest request, CalculationResult result) {
-        BigDecimal baseSubtotal = result.getBaseSubtotal();
+        if (request.promotion() == null || !request.promotion().isActive()) {
+            return; // No promo, do nothing
+        }
 
-        // Hỏi Policy tính discount (Group: thêm extra %; Standard: chỉ dùng mã)
-        BigDecimal discount = policyFactory
-                .getPolicy(request.bookingType())
-                .calculateDiscount(baseSubtotal, request.promotion());
+        BigDecimal baseSubtotal = result.getBaseSubtotal();
+        
+        // Vì đã bỏ PolicyFactory (để đưa validate vào Builder), ta tính discount trực tiếp ở đây:
+        BigDecimal discount = calculateDiscount(baseSubtotal, request.promotion());
 
         result.setPromotionDiscount(discount);
-
-        // Phân bổ discount về từng vé (chỉ trừ phần base, không chạm surcharge)
         distributeDiscount(request.seats(), result, discount);
+    }
+
+    private BigDecimal calculateDiscount(BigDecimal discountableAmount, Promotion promo) {
+        if (promo.getMinOrderValue() != null
+                && promo.getMinOrderValue().compareTo(BigDecimal.ZERO) > 0
+                && discountableAmount.compareTo(promo.getMinOrderValue()) < 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal discount = switch (promo.getDiscountType()) {
+            case PERCENTAGE -> discountableAmount
+                    .multiply(promo.getDiscountValue())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.FLOOR);
+            case FIXED_AMOUNT -> promo.getDiscountValue().min(discountableAmount);
+        };
+
+        if (promo.getMaxDiscountAmount() != null
+                && promo.getMaxDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
+            discount = discount.min(promo.getMaxDiscountAmount());
+        }
+        return discount;
     }
 
     /**
