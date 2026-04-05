@@ -46,10 +46,12 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
 
         // EXTRA RULE: Khách đoàn được giảm thêm 5% trực tiếp lên final price (trước extras)
         // (Đây là cách override tính giá linh hoạt ngay trong Builder mà không cần Policy)
-        BigDecimal total = calcResult.getFinalTotal()
-                .multiply(BigDecimal.valueOf(95))
+        BigDecimal totalBeforeExtras = calcResult.getFinalTotal().subtract(calcResult.getExtrasTotal());
+        BigDecimal groupDiscount = totalBeforeExtras.multiply(BigDecimal.valueOf(5))
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        
+
+        calcResult.setPromotionDiscount(calcResult.getPromotionDiscount().add(groupDiscount));
+
         // Không sửa lại ticket list để hiển thị đúng bill ban đầu, chỉ giảm tồng
         // Hoặc có thể viết thêm logic giảm điều vào từng vé ở đây
     }
