@@ -19,6 +19,8 @@ import com.movie.cinema_booking_backend.request.UpdateProfileRequest;
 import com.movie.cinema_booking_backend.response.AdminUserAccountResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IUserService;
+import com.movie.cinema_booking_backend.service.auth.observer.AccountStatusChangedEvent;
+import com.movie.cinema_booking_backend.service.auth.observer.AccountStatusSubject;
 
 import jakarta.transaction.Transactional;
 
@@ -26,10 +28,16 @@ import jakarta.transaction.Transactional;
 public class UserService implements IUserService{
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
+    private final AccountStatusSubject accountStatusSubject;
 
-    public UserService(UserRepository userRepository, AccountRepository accountRepository) {
+    public UserService(
+            UserRepository userRepository,
+            AccountRepository accountRepository,
+            AccountStatusSubject accountStatusSubject
+    ) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
+        this.accountStatusSubject = accountStatusSubject;
     }
 
     @Override
@@ -99,15 +107,31 @@ public class UserService implements IUserService{
         Account account = accountRepository.findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
+        boolean statusChanged = false;
+
         if (request.getRole() != null) {
             account.setRole(request.getRole());
         }
 
         if (request.getActive() != null) {
-            account.setActive(request.getActive());
+            boolean nextStatus = request.getActive();
+            statusChanged = account.isActive() != nextStatus;
+            account.setActive(nextStatus);
         }
 
-        return mapToUserAccountResponse(accountRepository.save(account));
+        Account savedAccount = accountRepository.save(account);
+
+        if (statusChanged) {
+            User savedUser = savedAccount.getUser();
+            accountStatusSubject.notifyObservers(new AccountStatusChangedEvent(
+                    savedAccount.getUsername(),
+                    savedUser.getEmail(),
+                    savedUser.getFullName(),
+                    savedAccount.isActive()
+            ));
+        }
+
+        return mapToUserAccountResponse(savedAccount);
     }
 
     private AdminUserAccountResponse mapToUserAccountResponse(Account account) {

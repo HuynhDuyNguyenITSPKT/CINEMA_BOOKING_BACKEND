@@ -1,20 +1,18 @@
-package com.movie.cinema_booking_backend.service.public_cinema.facade.impl;
+package com.movie.cinema_booking_backend.service.movie.facade.impl;
 
 import com.movie.cinema_booking_backend.response.MovieResponse;
 import com.movie.cinema_booking_backend.response.PaginationResponse;
 import com.movie.cinema_booking_backend.response.ShowtimeResponse;
 import com.movie.cinema_booking_backend.service.IMovieService;
 import com.movie.cinema_booking_backend.service.IShowtimeService;
-import com.movie.cinema_booking_backend.service.public_cinema.facade.IPublicCinemaFacade;
+import com.movie.cinema_booking_backend.service.movie.facade.IPublicCinemaFacade;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Component
-@Profile("!dev")
 @RequiredArgsConstructor
 public class PublicCinemaFacadeImpl implements IPublicCinemaFacade {
 

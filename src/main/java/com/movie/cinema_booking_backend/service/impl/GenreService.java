@@ -7,7 +7,7 @@ import com.movie.cinema_booking_backend.repository.GenreRepository;
 import com.movie.cinema_booking_backend.request.GenreRequest;
 import com.movie.cinema_booking_backend.response.GenreResponse;
 import com.movie.cinema_booking_backend.service.IGenreService;
-import com.movie.cinema_booking_backend.service.genre.factory.IGenreFactory;
+import com.movie.cinema_booking_backend.service.movie.factory.IGenreFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

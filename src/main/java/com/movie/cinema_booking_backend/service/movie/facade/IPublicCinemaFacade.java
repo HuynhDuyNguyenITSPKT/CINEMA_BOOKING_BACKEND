@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service.public_cinema.facade;
+package com.movie.cinema_booking_backend.service.movie.facade;
 
 import com.movie.cinema_booking_backend.response.MovieResponse;
 import com.movie.cinema_booking_backend.response.PaginationResponse;

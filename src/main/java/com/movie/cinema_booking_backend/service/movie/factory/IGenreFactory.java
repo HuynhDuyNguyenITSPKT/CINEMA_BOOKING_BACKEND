@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service.genre.factory;
+package com.movie.cinema_booking_backend.service.movie.factory;
 
 import com.movie.cinema_booking_backend.entity.Genre;
 import com.movie.cinema_booking_backend.request.GenreRequest;

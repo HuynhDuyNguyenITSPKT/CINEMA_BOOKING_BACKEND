@@ -51,6 +51,8 @@ public enum ErrorCode {
     OTP_EXPIRED(1021,                       "Mã OTP đã hết hạn",                          HttpStatus.BAD_REQUEST),
     PENDING_REGISTRATION_NOT_FOUND(1022,    "Yêu cầu đăng ký không tồn tại",             HttpStatus.NOT_FOUND),
     PENDING_RESET_PASSWORD_NOT_FOUND(1023,  "Yêu cầu đặt lại mật khẩu không tồn tại",   HttpStatus.NOT_FOUND),
+    OAUTH2_CODE_INVALID(1024,               "Mã xác thực OAuth2 không hợp lệ",           HttpStatus.BAD_REQUEST),
+    OAUTH2_CODE_EXPIRED(1025,               "Mã xác thực OAuth2 đã hết hạn",             HttpStatus.BAD_REQUEST),
 
     // ── Movie ─────────────────────────────────────────────────────────
     MOVIE_NOT_FOUND(2001,       "Phim không tồn tại",      HttpStatus.NOT_FOUND),

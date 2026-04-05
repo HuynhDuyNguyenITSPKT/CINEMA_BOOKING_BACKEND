@@ -22,7 +22,16 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, String> {
     @Query("SELECT s FROM Showtime s WHERE s.movie.id = :movieId " +
            "AND s.startTime >= :startOfDay AND s.startTime < :endOfDay ORDER BY s.startTime ASC")
     List<Showtime> findShowtimesByMovieAndDate(
-            @Param("movieId") String movieId, 
-            @Param("startOfDay") LocalDateTime startOfDay, 
+            @Param("movieId") String movieId,
+            @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END " +
+           "FROM Showtime s WHERE s.auditorium.id = :auditoriumId " +
+           "AND s.id <> :excludeId " +
+           "AND s.startTime <= :endTime AND s.endTime >= :startTime")
+    boolean existsOverlappingShowtimeExcluding(@Param("auditoriumId") String auditoriumId,
+                                               @Param("startTime") LocalDateTime startTime,
+                                               @Param("endTime") LocalDateTime endTime,
+                                               @Param("excludeId") String excludeId);
 }

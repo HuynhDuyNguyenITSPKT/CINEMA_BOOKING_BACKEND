@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service.showtime.strategy;
+package com.movie.cinema_booking_backend.service.movie.strategy;
 
 import java.time.LocalDateTime;
 

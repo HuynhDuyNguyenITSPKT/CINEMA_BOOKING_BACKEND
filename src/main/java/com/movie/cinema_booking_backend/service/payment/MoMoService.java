@@ -2,6 +2,8 @@ package com.movie.cinema_booking_backend.service.payment;
 
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
+import com.movie.cinema_booking_backend.service.payment.createurl.Template.AbstractPaymentSignatureTemplate;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpEntity;
@@ -12,16 +14,13 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
-public class MoMoService {
+public class MoMoService extends AbstractPaymentSignatureTemplate {
 
     @Value("${payment.momo.partner-code}")
     private String partnerCode;
@@ -107,18 +106,7 @@ public class MoMoService {
     }
 
     public String sign(Map<String, String> params) {
-        String rawData = "accessKey=" + accessKey +
-                "&amount=" + params.get("amount") +
-                "&extraData=" + params.getOrDefault("extraData", "") +
-                "&ipnUrl=" + notifyUrl +
-                "&orderId=" + params.get("orderId") +
-                "&orderInfo=" + params.get("orderInfo") +
-                "&partnerCode=" + partnerCode +
-                "&redirectUrl=" + returnUrl +
-                "&requestId=" + params.getOrDefault("requestId", "") +
-                "&requestType=" + requestType;
-
-        return hmacSHA256(secretKey, rawData);
+        return signRequest(params);
     }
 
     private String buildCreateUrl() {
@@ -167,14 +155,27 @@ public class MoMoService {
     }
 
     public boolean verify(Map<String, String> params) {
-        String signature = params.get("signature");
-        if (signature == null || signature.isEmpty()) {
-            return false;
-        }
+        return verifyCallback(params);
+    }
 
-        String rawData;
+    @Override
+    protected String buildRawDataForSigning(Map<String, String> params) {
+        return "accessKey=" + accessKey +
+                "&amount=" + params.get("amount") +
+                "&extraData=" + params.getOrDefault("extraData", "") +
+                "&ipnUrl=" + notifyUrl +
+                "&orderId=" + params.get("orderId") +
+                "&orderInfo=" + params.get("orderInfo") +
+                "&partnerCode=" + partnerCode +
+                "&redirectUrl=" + returnUrl +
+                "&requestId=" + params.getOrDefault("requestId", "") +
+                "&requestType=" + requestType;
+    }
+
+    @Override
+    protected String buildRawDataForVerification(Map<String, String> params) {
         if (params.containsKey("resultCode")) {
-            rawData = "accessKey=" + accessKey +
+            return "accessKey=" + accessKey +
                     "&amount=" + params.getOrDefault("amount", "") +
                     "&extraData=" + params.getOrDefault("extraData", "") +
                     "&message=" + params.getOrDefault("message", "") +
@@ -187,36 +188,27 @@ public class MoMoService {
                     "&responseTime=" + params.getOrDefault("responseTime", "") +
                     "&resultCode=" + params.getOrDefault("resultCode", "") +
                     "&transId=" + params.getOrDefault("transId", "");
-        } else {
-            rawData = "amount=" + params.get("amount") +
-                    "&orderId=" + params.get("orderId") +
-                    "&orderInfo=" + params.get("orderInfo");
         }
 
-        String calculated = hmacSHA256(secretKey, rawData);
+        return "amount=" + params.get("amount") +
+                "&orderId=" + params.get("orderId") +
+                "&orderInfo=" + params.get("orderInfo");
+    }
 
-        return calculated.equalsIgnoreCase(signature);
+    @Override
+    protected String extractReceivedSignature(Map<String, String> params) {
+        return params.get("signature");
+    }
+
+    @Override
+    protected String getSecretKey() {
+        return secretKey;
+    }
+
+    @Override
+    protected String getHmacAlgorithm() {
+        return "HmacSHA256";
     }
 
 
-    private String hmacSHA256(String key, String data) {
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec =
-                    new SecretKeySpec(key.getBytes(), "HmacSHA256");
-
-            mac.init(secretKeySpec);
-            byte[] bytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-
-            StringBuilder hash = new StringBuilder();
-            for (byte b : bytes) {
-                hash.append(String.format("%02x", b));
-            }
-
-            return hash.toString();
-
-        } catch (Exception e) {
-            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
-        }
-    }
 }

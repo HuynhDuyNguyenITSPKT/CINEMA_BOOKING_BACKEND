@@ -1,5 +1,7 @@
 package com.movie.cinema_booking_backend.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.movie.cinema_booking_backend.enums.DiscountType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -49,6 +51,8 @@ public class PromotionRequest {
     @Min(value = 0, message = "Quantity must be greater than or equal to 0")
     private Integer quantity;
 
+    @JsonProperty("isActive")
+    @JsonAlias({"active"})
     private Boolean isActive;
 
     private String imageUrl;

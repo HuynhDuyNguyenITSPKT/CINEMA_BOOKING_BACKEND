@@ -1,9 +1,9 @@
-package com.movie.cinema_booking_backend.service.genre.factory.impl;
+package com.movie.cinema_booking_backend.service.movie.factory.impl;
 
 import com.movie.cinema_booking_backend.entity.Genre;
 import com.movie.cinema_booking_backend.request.GenreRequest;
 import com.movie.cinema_booking_backend.response.GenreResponse;
-import com.movie.cinema_booking_backend.service.genre.factory.IGenreFactory;
+import com.movie.cinema_booking_backend.service.movie.factory.IGenreFactory;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -34,6 +34,8 @@ public class SecurityConfig {
         "/api/users/**",
         "/api/admin/promotions",
         "/api/admin/promotions/**",
+        "/api/admin/uploads",
+        "/api/admin/uploads/**",
         "/api/admin/extra-services",
         "/api/admin/extra-services/**",
         "/api/admin/payment/**",
@@ -111,10 +113,6 @@ public class SecurityConfig {
         return jac;
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

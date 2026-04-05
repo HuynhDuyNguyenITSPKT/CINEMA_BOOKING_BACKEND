@@ -1,10 +1,10 @@
-package com.movie.cinema_booking_backend.service.showtime.factory.impl;
+package com.movie.cinema_booking_backend.service.movie.factory.impl;
 
 import com.movie.cinema_booking_backend.entity.Auditorium;
 import com.movie.cinema_booking_backend.entity.Movie;
 import com.movie.cinema_booking_backend.entity.Showtime;
 import com.movie.cinema_booking_backend.response.ShowtimeResponse;
-import com.movie.cinema_booking_backend.service.showtime.factory.IShowtimeFactory;
+import com.movie.cinema_booking_backend.service.movie.factory.IShowtimeFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
