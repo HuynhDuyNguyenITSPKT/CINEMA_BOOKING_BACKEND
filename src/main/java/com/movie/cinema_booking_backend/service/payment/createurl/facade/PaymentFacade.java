@@ -14,6 +14,7 @@ import com.movie.cinema_booking_backend.entity.Booking;
 import com.movie.cinema_booking_backend.entity.Payment;
 import com.movie.cinema_booking_backend.enums.BookingStatus;
 import com.movie.cinema_booking_backend.enums.PaymentMethod;
+import com.movie.cinema_booking_backend.enums.TicketStatus;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.BookingRepository;
@@ -114,8 +115,10 @@ public class PaymentFacade {
 
         if ("THANH_TOAN_THANH_CONG".equals(paymentState)) {
             booking.setStatus(BookingStatus.SUCCESS);
+            booking.getTickets().forEach(t -> t.setStatus(TicketStatus.BOOKED));
         } else {
             booking.setStatus(BookingStatus.CANCELLED);
+            booking.getTickets().forEach(t -> t.cancel());
         }
         bookingRepository.save(booking);
 

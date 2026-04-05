@@ -1,12 +1,6 @@
-
 spring:
   config:
     import: "optional:file:.env[.properties]"
-  http:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
   messages:
     encoding: UTF-8
   application:
@@ -53,6 +47,13 @@ spring:
         provider:
           google:
             authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?prompt=select_account
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 app:
   frontend:
     url: ${FRONTEND_URL:http://localhost:5173}
