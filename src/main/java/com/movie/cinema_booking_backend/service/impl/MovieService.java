@@ -64,10 +64,7 @@ public class MovieService implements IMovieService {
         List<Genre> genres = resolveGenres(request.getGenreIds());
         movieFactory.updateEntity(movie, request, genres);
         movie = movieRepository.save(movie);
-
-        MovieResponse response = movieFactory.createResponse(movie);
-        movieEventPublisher.notifyMovieUpdated(response);
-        return response;
+        return movieFactory.createResponse(movie);
     }
 
     @Override
@@ -78,8 +75,6 @@ public class MovieService implements IMovieService {
 
         movie.removeAllGenres();
         movieRepository.delete(movie);
-
-        movieEventPublisher.notifyMovieDeleted(id);
     }
 
     @Override
