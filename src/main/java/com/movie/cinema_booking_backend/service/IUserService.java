@@ -1,7 +1,5 @@
 package com.movie.cinema_booking_backend.service;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 
@@ -11,8 +9,6 @@ import com.movie.cinema_booking_backend.response.AdminUserAccountResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 
 public interface IUserService {
-
-    List<UserResponse> getAllUsers();
 
     UserResponse updateProfile(Authentication authentication, UpdateProfileRequest request);
 

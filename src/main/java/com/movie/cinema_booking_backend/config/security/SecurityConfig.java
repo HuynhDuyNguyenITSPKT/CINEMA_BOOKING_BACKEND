@@ -82,7 +82,7 @@ public class SecurityConfig {
             .csrf(c -> c.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                .requestMatchers(USER_ENDPOINTS).hasRole("USER")
+                .requestMatchers(USER_ENDPOINTS).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

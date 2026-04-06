@@ -1,8 +1,5 @@
 package com.movie.cinema_booking_backend.service.impl;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
@@ -38,20 +35,6 @@ public class UserService implements IUserService{
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
         this.accountStatusSubject = accountStatusSubject;
-    }
-
-    @Override
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(user -> UserResponse.builder()
-                        .id(user.getId().toString())
-                        .email(user.getEmail())
-                        .fullName(user.getFullName())
-                        .phone(user.getPhone())
-                        .dateOfBirth(user.getDateOfBirth())
-                        .role(user.getAccount().getRole())
-                        .build())
-                .collect(Collectors.toList());
     }
 
     @Override
