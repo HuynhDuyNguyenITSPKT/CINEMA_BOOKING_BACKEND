@@ -90,38 +90,6 @@ public class EmailServiceImpl implements IEmailService {
     }
 
     @Override
-    public void sendMovieUpdatedNotificationEmail(String to, String movieTitle, String description) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
-        message.setTo(to);
-        message.setSubject("[Cinema Booking] Thong tin phim duoc cap nhat: " + movieTitle);
-        message.setText(
-            "Chao ban,\n\n" +
-            "Thong tin phim \"" + movieTitle + "\" vua duoc cap nhat:\n\n" +
-            "Mo ta moi: " + description + "\n\n" +
-            "Truy cap Cinema Booking de xem chi tiet.\n\n" +
-            "Tran trong,\nDoi ngu Cinema Booking"
-        );
-        mailSender.send(message);
-    }
-
-    @Override
-    public void sendMovieDeletedNotificationEmail(String to, String movieTitle) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
-        message.setTo(to);
-        message.setSubject("[Cinema Booking] Phim da bi go: " + movieTitle);
-        message.setText(
-            "Chao ban,\n\n" +
-            "Phim \"" + movieTitle + "\" da duoc go khoi he thong Cinema Booking.\n" +
-            "Neu ban da dat ve, vui long lien he de duoc ho tro.\n\n" +
-            "Tran trong,\nDoi ngu Cinema Booking"
-        );
-        mailSender.send(message);
-    }
-
-
-    @Override
     public void sendPaymentSuccessEmail(String to, String bookingId, String paymentMethod, String amount) {
         MimeMessage message = mailSender.createMimeMessage();
 
