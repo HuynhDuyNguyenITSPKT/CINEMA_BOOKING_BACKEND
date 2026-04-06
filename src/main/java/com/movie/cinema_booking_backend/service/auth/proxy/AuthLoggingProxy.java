@@ -1,11 +1,16 @@
 package com.movie.cinema_booking_backend.service.auth.proxy;
 
 import java.text.ParseException;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.movie.cinema_booking_backend.exception.AppException;
+import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.request.AuthRequest;
 import com.movie.cinema_booking_backend.request.ChangePasswordRequest;
 import com.movie.cinema_booking_backend.request.ForgotPasswordRequest;
@@ -13,72 +18,160 @@ import com.movie.cinema_booking_backend.request.RegistrationRequest;
 import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
+import com.movie.cinema_booking_backend.service.impl.AuthServiceImpl;
 
 @Service
 @Primary
 public class AuthLoggingProxy extends AbstractAuthProxy {
 
-    public AuthLoggingProxy(AuthTimingProxy nextProxy) {
-        super(nextProxy);
+    private static final Logger log = LoggerFactory.getLogger(AuthLoggingProxy.class);
+
+    public AuthLoggingProxy(AuthServiceImpl realSubject) {
+        super(realSubject);
     }
 
     @Override
     public void register(RegistrationRequest request) {
-        System.out.println("[Proxy GhiLog] Đăng ký tài khoản: " + request.getUsername());
-        next.register(request);
+        long start = System.nanoTime();
+        log.info("[AuthProxy] Đăng ký tài khoản username={} email={}", safe(request.getUsername()), safe(request.getEmail()));
+        try {
+            next.register(request);
+        } finally {
+            logDuration("đăng ký tài khoản", start);
+        }
     }
 
     @Override
     public void verifyOtp(String email, String otp) {
-        System.out.println("[Proxy GhiLog] Đang xác thực OTP cho email: " + email);
-        next.verifyOtp(email, otp);
+        long start = System.nanoTime();
+        log.info("[AuthProxy] Xác thực OTP email={}", safe(email));
+        try {
+            next.verifyOtp(email, otp);
+        } finally {
+            logDuration("xác thực OTP", start);
+        }
     }
 
     @Override
     public void resendOtp(String email) {
-        System.out.println("[Proxy GhiLog] Đang gửi lại OTP cho email: " + email);
-        next.resendOtp(email);
+        long start = System.nanoTime();
+        log.info("[AuthProxy] Gửi lại OTP email={}", safe(email));
+        try {
+            next.resendOtp(email);
+        } finally {
+            logDuration("gửi lại OTP", start);
+        }
     }
 
     @Override
     public AuthResponse login(AuthRequest req) {
-        System.out.println("[Proxy GhiLog] Đang đăng nhập: " + req.getUsername());
-        return next.login(req);
+        long start = System.nanoTime();
+        log.info("[AuthProxy] Đăng nhập username={}", safe(req.getUsername()));
+        try {
+            return next.login(req);
+        } finally {
+            logDuration("đăng nhập", start);
+        }
     }
 
     @Override
     public void logout(String token) throws ParseException {
-        System.out.println("[Proxy GhiLog] Đang đăng xuất tài khoản với token: " + token);
-        next.logout(token);
+        long start = System.nanoTime();
+        validateToken(token);
+        log.info("[AuthProxy] Đăng xuất token={}", maskToken(token));
+        try {
+            next.logout(token);
+        } finally {
+            logDuration("đăng xuất", start);
+        }
     }
 
     @Override
     public AuthResponse refreshToken(String token) throws Exception {
-        System.out.println("[Proxy GhiLog] Đang làm mới token: " + token);
-        return next.refreshToken(token);
+        long start = System.nanoTime();
+        validateToken(token);
+        log.info("[AuthProxy] Làm mới token={}", maskToken(token));
+        try {
+            return next.refreshToken(token);
+        } finally {
+            logDuration("làm mới token", start);
+        }
     }
 
     @Override
     public UserResponse getCurrentUser(Authentication authentication) {
-        System.out.println("[Proxy GhiLog] Đang lấy thông tin người dùng hiện tại: " + authentication.getName());
-        return next.getCurrentUser(authentication);
+        long start = System.nanoTime();
+        ensureAuthenticated(authentication);
+        log.info("[AuthProxy] Lấy thông tin người dùng hiện tại username={}", authentication.getName());
+        try {
+            return next.getCurrentUser(authentication);
+        } finally {
+            logDuration("lấy thông tin người dùng hiện tại", start);
+        }
     }
 
     @Override
     public void forgotPassword(ForgotPasswordRequest request) {
-        System.out.println("[Proxy GhiLog] Đang xử lý quên mật khẩu cho email: " + request.getEmail());
-        next.forgotPassword(request);
+        long start = System.nanoTime();
+        log.info("[AuthProxy] Quên mật khẩu email={}", safe(request.getEmail()));
+        try {
+            next.forgotPassword(request);
+        } finally {
+            logDuration("quên mật khẩu", start);
+        }
     }
 
     @Override
     public void resetPassword(ResetPasswordRequest request) {
-        System.out.println("[Proxy GhiLog] Đang đặt lại mật khẩu cho email: " + request.getEmail());
-        next.resetPassword(request);
+        long start = System.nanoTime();
+        log.info("[AuthProxy] Đặt lại mật khẩu email={}", safe(request.getEmail()));
+        try {
+            next.resetPassword(request);
+        } finally {
+            logDuration("đặt lại mật khẩu", start);
+        }
     }
 
     @Override
     public void changePassword(Authentication authentication, ChangePasswordRequest request) {
-        System.out.println("[Proxy GhiLog] Đang đổi mật khẩu cho user: " + authentication.getName());
-        next.changePassword(authentication, request);
+        long start = System.nanoTime();
+        ensureAuthenticated(authentication);
+        log.info("[AuthProxy] Đổi mật khẩu username={}", authentication.getName());
+        try {
+            next.changePassword(authentication, request);
+        } finally {
+            logDuration("đổi mật khẩu", start);
+        }
+    }
+
+    private void ensureAuthenticated(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+    }
+
+    private void validateToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new AppException(ErrorCode.INVALID_TOKEN);
+        }
+    }
+
+    private String safe(String value) {
+        return value == null || value.isBlank() ? "<rỗng>" : value;
+    }
+
+    private String maskToken(String token) {
+        if (token == null || token.isBlank()) {
+            return "<rỗng>";
+        }
+        if (token.length() <= 16) {
+            return "***";
+        }
+        return token.substring(0, 8) + "..." + token.substring(token.length() - 6);
+    }
+
+    private void logDuration(String action, long startNano) {
+        long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNano);
+        log.info("[AuthProxy] {} hoàn tất trong {} ms", action, elapsedMs);
     }
 }
