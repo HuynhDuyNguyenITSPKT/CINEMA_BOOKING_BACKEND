@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OAuth2CodeExchangeRequest {
 
-    @NotBlank(message = "Code khong duoc de trong")
+    @NotBlank(message = "Code không được để trống")
     private String code;
 }

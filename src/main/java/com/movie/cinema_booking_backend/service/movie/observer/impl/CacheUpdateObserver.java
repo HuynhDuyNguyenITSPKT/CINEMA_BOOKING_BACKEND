@@ -13,14 +13,4 @@ public class CacheUpdateObserver implements IMovieObserver {
     public void onMovieAdded(MovieResponse movie) {
         log.info("[CacheUpdateObserver] Phim mới được thêm: {}", movie.getTitle());
     }
-
-    @Override
-    public void onMovieUpdated(MovieResponse movie) {
-        log.info("[CacheUpdateObserver] Phim được cập nhật: {} (id={})", movie.getTitle(), movie.getId());
-    }
-
-    @Override
-    public void onMovieDeleted(String movieId) {
-        log.info("[CacheUpdateObserver] Phim bị xóa — ID: {}", movieId);
-    }
 }
