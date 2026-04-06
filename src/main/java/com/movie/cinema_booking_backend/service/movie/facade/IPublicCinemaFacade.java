@@ -11,5 +11,7 @@ public interface IPublicCinemaFacade {
 
     PaginationResponse<MovieResponse> searchAndFilterMovies(String keyword, String genreId, int page, int size);
 
+    MovieResponse getMovieById(String movieId);
+
     List<ShowtimeResponse> getShowtimesByMovieAndDate(String movieId, LocalDate date);
 }

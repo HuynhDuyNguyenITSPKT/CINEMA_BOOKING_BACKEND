@@ -26,6 +26,12 @@ public class Auditorium {
     private int seatCount;
 
     /**
+     * Kích thước lưới ghế được lưu để tái dựng layout khi admin ở giao diện sửa phòng chiếu.
+     */
+    private int totalRows;
+    private int totalColumns;
+
+    /**
      * Trạng thái phòng chiếu.
      * Mặc định là ACTIVE khi tạo mới.
      * Dùng bởi AuditoriumState (Phase 4 - State Pattern) để guard tạo Showtime.

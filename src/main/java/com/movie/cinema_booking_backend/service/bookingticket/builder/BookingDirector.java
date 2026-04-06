@@ -46,4 +46,17 @@ public class BookingDirector {
         builder.buildEntities();             // Step 5: Đúc Entity
         return builder.getResult();          // Step 6: Lấy sản phẩm
     }
+
+    /**
+     * Chạy pipeline CHỈ ĐẾN bước tính giá (Step 4).
+     * Không buildEntities(), không persist — dùng cho Preview Price API.
+     * Caller đọc calcResult từ AbstractBookingBuilder sau khi gọi.
+     */
+    public void constructPreview(BookingBuilder builder, BookingRequest request, String username) {
+        builder.reset(request, username);  // Step 1
+        builder.loadEntities();            // Step 2
+        builder.validateRules();           // Step 3 (validate promotion, seat count...)
+        builder.runPricing(pricingEngine); // Step 4 — Chain of Responsibility chạy xong
+        // Step 5 & 6 bị bỏ qua: Không tạo entity, không lưu DB
+    }
 }

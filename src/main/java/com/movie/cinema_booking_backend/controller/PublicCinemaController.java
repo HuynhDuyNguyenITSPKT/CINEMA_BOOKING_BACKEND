@@ -35,6 +35,15 @@ public class PublicCinemaController {
                 .build();
     }
 
+    @GetMapping("/movies/{movieId}")
+    public ApiResponse<MovieResponse> getMovieById(@PathVariable String movieId) {
+        return ApiResponse.<MovieResponse>builder()
+                .success(true)
+                .message("Lấy thông tin phim thành công")
+                .data(publicCinemaFacade.getMovieById(movieId))
+                .build();
+    }
+
     @GetMapping("/movies/{movieId}/showtimes")
     public ApiResponse<List<ShowtimeResponse>> getShowtimes(
             @PathVariable String movieId,

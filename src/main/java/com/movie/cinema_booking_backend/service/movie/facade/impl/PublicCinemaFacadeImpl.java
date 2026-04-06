@@ -25,6 +25,11 @@ public class PublicCinemaFacadeImpl implements IPublicCinemaFacade {
     }
 
     @Override
+    public MovieResponse getMovieById(String movieId) {
+        return movieService.getMovieById(movieId);
+    }
+
+    @Override
     public List<ShowtimeResponse> getShowtimesByMovieAndDate(String movieId, LocalDate date) {
         return showtimeService.getShowtimesByMovieAndDate(movieId, date);
     }

@@ -5,6 +5,7 @@ import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.SeatTypeRepository;
 import com.movie.cinema_booking_backend.request.SeatTypeRequest;
+import com.movie.cinema_booking_backend.response.SeatTypeAdminResponse;
 import com.movie.cinema_booking_backend.response.SeatTypeResponse;
 import com.movie.cinema_booking_backend.service.ISeatTypeService;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,14 @@ public class SeatTypeServiceImpl implements ISeatTypeService {
         return seatTypeRepository.findAll()
                 .stream()
                 .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SeatTypeAdminResponse> getAllSeatTypesForAdmin() {
+        return seatTypeRepository.findAllWithSeatUsage()
+                .stream()
+                .map(this::toAdminResponse)
                 .collect(Collectors.toList());
     }
 
@@ -84,6 +93,19 @@ public class SeatTypeServiceImpl implements ISeatTypeService {
                 .id(seatType.getId())
                 .name(seatType.getName())
                 .surcharge(seatType.getSurcharge())
+                .build();
+    }
+
+    private SeatTypeAdminResponse toAdminResponse(Object[] row) {
+        SeatType seatType = (SeatType) row[0];
+        long usedSeatCount = ((Long) row[1]);
+
+        return SeatTypeAdminResponse.builder()
+                .id(seatType.getId())
+                .name(seatType.getName())
+                .surcharge(seatType.getSurcharge())
+                .usedSeatCount(usedSeatCount)
+                .deletable(usedSeatCount == 0)
                 .build();
     }
 }

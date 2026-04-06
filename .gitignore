@@ -3,6 +3,7 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+cinema_hcmute_fontend/
 
 ### STS ###
 .apt_generated

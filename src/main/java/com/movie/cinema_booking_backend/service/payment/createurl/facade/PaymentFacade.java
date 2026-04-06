@@ -193,6 +193,13 @@ public class PaymentFacade {
         if ("vnpay".equals(method)) {
             String bookingId = params.getOrDefault("vnp_TxnRef", "").trim();
             if (!bookingId.isEmpty()) {
+                // Khôi phục lại dấu gạch nối cho UUID nếu VNPay trả về chuỗi 32 ký tự alphanumeric
+                if (bookingId.length() == 32 && bookingId.matches("^[0-9a-fA-F]{32}$")) {
+                    bookingId = bookingId.replaceFirst(
+                        "^([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})$",
+                        "$1-$2-$3-$4-$5"
+                    );
+                }
                 return bookingId;
             }
         }

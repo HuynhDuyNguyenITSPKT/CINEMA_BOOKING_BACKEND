@@ -1,6 +1,7 @@
 package com.movie.cinema_booking_backend.repository;
 
 import com.movie.cinema_booking_backend.entity.Booking;
+import com.movie.cinema_booking_backend.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,7 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
 
     /** "My bookings" via JWT username — không cần load User entity trước */
     List<Booking> findByUser_Account_Username(String username);
+    List<Booking> findByStatus(BookingStatus status);
 
 
     /**
@@ -28,4 +30,3 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
            "WHERE b.id = :id")
     Optional<Booking> findByIdWithDetails(@Param("id") String id);
 }
-

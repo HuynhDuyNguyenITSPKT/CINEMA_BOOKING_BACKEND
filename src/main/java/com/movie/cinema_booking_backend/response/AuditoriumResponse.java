@@ -16,5 +16,8 @@ public class AuditoriumResponse {
     /** Số ghế thực tế đã generate (computed, không nhập tay). */
     private int totalSeats;
     private AuditoriumStatus status;
+    /** Kích thước lưới được lưu khi tạo phòng — dùng để tái dựng Grid lúc admin sửa. */
+    private int totalRows;
+    private int totalColumns;
 }
 
