@@ -57,6 +57,7 @@ public enum ErrorCode {
     // ── Movie ─────────────────────────────────────────────────────────
     MOVIE_NOT_FOUND(2001,       "Phim không tồn tại",      HttpStatus.NOT_FOUND),
     MOVIE_TITLE_EXISTS(2002,    "Tên phim đã tồn tại",     HttpStatus.BAD_REQUEST),
+    INVALID_MOVIE_STATUS(2003,  "Trạng thái phim không hợp lệ. Chỉ hỗ trợ NOW_SHOWING hoặc COMING_SOON", HttpStatus.BAD_REQUEST),
 
     // ── Genre ─────────────────────────────────────────────────────────
     GENRE_NOT_FOUND(2010,   "Thể loại không tồn tại",  HttpStatus.NOT_FOUND),
