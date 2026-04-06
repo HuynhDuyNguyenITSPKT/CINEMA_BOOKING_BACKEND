@@ -6,6 +6,8 @@ import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.response.ExtraServiceResponse;
 import com.movie.cinema_booking_backend.response.PaginationResponse;
 import com.movie.cinema_booking_backend.service.IExtraServiceService;
+import com.movie.cinema_booking_backend.service.payment.createurl.proxy.ExtraLazyProxy;
+
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +19,7 @@ public class ExtraServiceController {
 
     private final IExtraServiceService extraServiceService;
 
-    public ExtraServiceController(IExtraServiceService extraServiceService) {
+    public ExtraServiceController(ExtraLazyProxy extraServiceService) {
         this.extraServiceService = extraServiceService;
     }
 

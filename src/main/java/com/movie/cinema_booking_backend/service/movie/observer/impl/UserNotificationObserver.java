@@ -36,37 +36,4 @@ public class UserNotificationObserver implements IMovieObserver {
         }
         log.info("[UserNotificationObserver] Hoan thanh gui thong bao phim moi cho {} nguoi dung.", emails.size());
     }
-
-    @Override
-    @Async
-    public void onMovieUpdated(MovieResponse movie) {
-        log.info("[UserNotificationObserver] Phim cap nhat: {} — bat dau gui email thong bao.", movie.getTitle());
-        List<String> emails = userRepository.findAllEmails();
-        String description = movie.getDescription() != null ? movie.getDescription() : "";
-        for (String email : emails) {
-            try {
-                emailService.sendMovieUpdatedNotificationEmail(email, movie.getTitle(), description);
-                log.debug("[UserNotificationObserver] Da gui email 'cap nhat phim' toi: {}", email);
-            } catch (Exception e) {
-                log.error("[UserNotificationObserver] Gui email that bai toi {}: {}", email, e.getMessage());
-            }
-        }
-        log.info("[UserNotificationObserver] Hoan thanh gui thong bao cap nhat phim cho {} nguoi dung.", emails.size());
-    }
-
-    @Override
-    @Async
-    public void onMovieDeleted(String movieId) {
-        log.info("[UserNotificationObserver] Phim bi xoa — ID: {} — bat dau gui email thong bao.", movieId);
-        List<String> emails = userRepository.findAllEmails();
-        for (String email : emails) {
-            try {
-                emailService.sendMovieDeletedNotificationEmail(email, movieId);
-                log.debug("[UserNotificationObserver] Da gui email 'phim bi xoa' toi: {}", email);
-            } catch (Exception e) {
-                log.error("[UserNotificationObserver] Gui email that bai toi {}: {}", email, e.getMessage());
-            }
-        }
-        log.info("[UserNotificationObserver] Hoan thanh gui thong bao xoa phim cho {} nguoi dung.", emails.size());
-    }
 }

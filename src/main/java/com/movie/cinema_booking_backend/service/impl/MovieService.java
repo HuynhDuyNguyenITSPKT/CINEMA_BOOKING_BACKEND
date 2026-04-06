@@ -64,10 +64,7 @@ public class MovieService implements IMovieService {
         List<Genre> genres = resolveGenres(request.getGenreIds());
         movieFactory.updateEntity(movie, request, genres);
         movie = movieRepository.save(movie);
-
-        MovieResponse response = movieFactory.createResponse(movie);
-        movieEventPublisher.notifyMovieUpdated(response);
-        return response;
+        return movieFactory.createResponse(movie);
     }
 
     @Override
@@ -78,8 +75,6 @@ public class MovieService implements IMovieService {
 
         movie.removeAllGenres();
         movieRepository.delete(movie);
-
-        movieEventPublisher.notifyMovieDeleted(id);
     }
 
     @Override
@@ -96,12 +91,12 @@ public class MovieService implements IMovieService {
     }
 
     @Override
-    public PaginationResponse<MovieResponse> searchNowShowingMovies(
-            String keyword, String genreId, int page, int size) {
+    public PaginationResponse<MovieResponse> searchMovies(
+            String keyword, String genreId, MovieStatus status, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Movie> moviePage = movieRepository.searchAndFilterShowingMovies(
-                keyword, genreId, MovieStatus.NOW_SHOWING, pageable);
+                keyword, genreId, status, pageable);
 
         List<MovieResponse> items = moviePage.getContent().stream()
                 .map(movieFactory::createResponse)

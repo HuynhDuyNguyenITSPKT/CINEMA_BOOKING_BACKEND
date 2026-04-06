@@ -1,7 +1,5 @@
 package com.movie.cinema_booking_backend.controller;
 
-import java.util.List;
-
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,17 +26,6 @@ public class UserController {
 
     public UserController(IUserService userService) {
         this.userService = userService;
-    }
-
-    @GetMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<UserResponse>> getAllUsers() {
-        List<UserResponse> users = userService.getAllUsers();
-        return new ApiResponse.Builder<List<UserResponse>>()
-                .success(true)
-                .message("Lấy danh sách người dùng thành công")
-                .data(users)
-                .build();
     }
 
     @PutMapping("/profile")

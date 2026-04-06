@@ -1,5 +1,6 @@
 package com.movie.cinema_booking_backend.service;
 
+import com.movie.cinema_booking_backend.enums.MovieStatus;
 import com.movie.cinema_booking_backend.request.MovieRequest;
 import com.movie.cinema_booking_backend.response.MovieResponse;
 import com.movie.cinema_booking_backend.response.PaginationResponse;
@@ -17,5 +18,10 @@ public interface IMovieService {
 
     Page<MovieResponse> getAllMovies(int page, int size);
 
-    PaginationResponse<MovieResponse> searchNowShowingMovies(String keyword, String genreId, int page, int size);
+    PaginationResponse<MovieResponse> searchMovies(
+            String keyword,
+            String genreId,
+            MovieStatus status,
+            int page,
+            int size);
 }

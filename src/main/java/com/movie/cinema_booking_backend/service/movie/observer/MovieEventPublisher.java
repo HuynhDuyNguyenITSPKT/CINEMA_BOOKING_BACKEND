@@ -17,12 +17,4 @@ public class MovieEventPublisher {
     public void notifyMovieAdded(MovieResponse movie) {
         observers.forEach(observer -> observer.onMovieAdded(movie));
     }
-
-    public void notifyMovieUpdated(MovieResponse movie) {
-        observers.forEach(observer -> observer.onMovieUpdated(movie));
-    }
-
-    public void notifyMovieDeleted(String movieId) {
-        observers.forEach(observer -> observer.onMovieDeleted(movieId));
-    }
 }
