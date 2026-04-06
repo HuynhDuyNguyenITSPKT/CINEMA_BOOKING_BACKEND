@@ -1,5 +1,6 @@
 package com.movie.cinema_booking_backend.service.movie.facade.impl;
 
+import com.movie.cinema_booking_backend.enums.MovieStatus;
 import com.movie.cinema_booking_backend.response.MovieResponse;
 import com.movie.cinema_booking_backend.response.PaginationResponse;
 import com.movie.cinema_booking_backend.response.ShowtimeResponse;
@@ -20,8 +21,13 @@ public class PublicCinemaFacadeImpl implements IPublicCinemaFacade {
     private final IShowtimeService showtimeService;
 
     @Override
-    public PaginationResponse<MovieResponse> searchAndFilterMovies(String keyword, String genreId, int page, int size) {
-        return movieService.searchNowShowingMovies(keyword, genreId, page, size);
+    public PaginationResponse<MovieResponse> searchAndFilterMovies(
+            String keyword,
+            String genreId,
+            MovieStatus status,
+            int page,
+            int size) {
+        return movieService.searchMovies(keyword, genreId, status, page, size);
     }
 
     @Override

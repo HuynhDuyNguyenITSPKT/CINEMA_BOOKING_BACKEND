@@ -91,12 +91,12 @@ public class MovieService implements IMovieService {
     }
 
     @Override
-    public PaginationResponse<MovieResponse> searchNowShowingMovies(
-            String keyword, String genreId, int page, int size) {
+    public PaginationResponse<MovieResponse> searchMovies(
+            String keyword, String genreId, MovieStatus status, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Movie> moviePage = movieRepository.searchAndFilterShowingMovies(
-                keyword, genreId, MovieStatus.NOW_SHOWING, pageable);
+                keyword, genreId, status, pageable);
 
         List<MovieResponse> items = moviePage.getContent().stream()
                 .map(movieFactory::createResponse)

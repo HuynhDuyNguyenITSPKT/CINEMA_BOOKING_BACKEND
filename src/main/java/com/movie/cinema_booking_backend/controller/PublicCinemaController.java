@@ -1,5 +1,8 @@
 package com.movie.cinema_booking_backend.controller;
 
+import com.movie.cinema_booking_backend.enums.MovieStatus;
+import com.movie.cinema_booking_backend.exception.AppException;
+import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.service.movie.facade.IPublicCinemaFacade;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.response.MovieResponse;
@@ -23,16 +26,28 @@ public class PublicCinemaController {
     public ApiResponse<PaginationResponse<MovieResponse>> searchMovies(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String genreId,
+            @RequestParam(defaultValue = "NOW_SHOWING") String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        PaginationResponse<MovieResponse> response = publicCinemaFacade.searchAndFilterMovies(keyword, genreId, page, size);
+        MovieStatus movieStatus = resolvePublicMovieStatus(status);
+        PaginationResponse<MovieResponse> response = publicCinemaFacade.searchAndFilterMovies(
+                keyword, genreId, movieStatus, page, size);
 
         return ApiResponse.<PaginationResponse<MovieResponse>>builder()
                 .success(true)
                 .message("Lấy danh sách phim thành công")
                 .data(response)
                 .build();
+    }
+
+    private MovieStatus resolvePublicMovieStatus(String status) {
+        String normalizedStatus = status == null ? "" : status.trim().toUpperCase();
+        return switch (normalizedStatus) {
+            case "NOW_SHOWING" -> MovieStatus.NOW_SHOWING;
+            case "COMING_SOON" -> MovieStatus.COMING_SOON;
+            default -> throw new AppException(ErrorCode.INVALID_MOVIE_STATUS);
+        };
     }
 
     @GetMapping("/movies/{movieId}/showtimes")
