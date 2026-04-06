@@ -36,8 +36,7 @@ public class SeatTemplateGenerator {
     /**
      * @param auditorium   Phòng chiếu đã được save (có ID).
      * @param config       Layout config từ request.
-     * @param seatTypeMap  Map từ tên SeatType (uppercase) → SeatType entity.
-     *                     Cần có "STANDARD". "VIP" và "PREMIUM" optional.
+     * @param seatTypeMap  Map từ ID SeatType → SeatType entity.
      * @return Danh sách Seat chưa save (caller gọi seatRepository.saveAll).
      */
     public List<Seat> generate(Auditorium auditorium,
@@ -52,9 +51,11 @@ public class SeatTemplateGenerator {
                     "Số hàng tối đa là " + MAX_ROWS + " (A-Z). Yêu cầu: " + rows);
         }
 
-        // Convert vipRows/premiumRows sang Set<Integer> (1-based) để lookup O(1)
-        Set<Integer> vipRowSet    = new HashSet<>(config.getVipRows());
-        Set<Integer> premiumRowSet = new HashSet<>(config.getPremiumRows());
+        // Kiểm tra loại ghế mặc định
+        SeatType defaultType = seatTypeMap.get(config.getDefaultSeatTypeId());
+        if (defaultType == null) {
+            throw new IllegalArgumentException("Không tìm thấy loại ghế mặc định có ID: " + config.getDefaultSeatTypeId());
+        }
 
         // Convert disabledSeats sang Set<String> (uppercase) để lookup O(1)
         Set<String> disabled = new HashSet<>();
@@ -62,36 +63,33 @@ public class SeatTemplateGenerator {
             config.getDisabledSeats().forEach(s -> disabled.add(s.toUpperCase()));
         }
 
-        SeatType standardType = seatTypeMap.get("STANDARD");
-        SeatType vipType      = seatTypeMap.get("VIP");
-        SeatType premiumType  = seatTypeMap.get("PREMIUM");
-
-        // Fallback: nếu không có VIP/PREMIUM, dùng STANDARD
-        if (vipType == null)     vipType = standardType;
-        if (premiumType == null) premiumType = standardType;
+        // Build bản đồ tra cứu nhanh: Tên Ghế -> SeatType
+        java.util.Map<String, SeatType> customSeatTypes = new java.util.HashMap<>();
+        if (config.getSeatTypeMappings() != null) {
+            config.getSeatTypeMappings().forEach((typeId, seatNames) -> {
+                SeatType type = seatTypeMap.get(typeId);
+                if (type != null && seatNames != null) {
+                    seatNames.forEach(name -> customSeatTypes.put(name.toUpperCase(), type));
+                }
+            });
+        }
 
         List<Seat> seats = new ArrayList<>();
 
         for (int r = 0; r < rows; r++) {
             char rowChar = (char) ('A' + r);         // 0→'A', 1→'B'
-            int  rowNum  = r + 1;                    // 1-based cho lookup vipRows
 
             for (int c = 0; c < cols; c++) {
                 String seatName = String.valueOf(rowChar) + (c + 1); // "A1", "B3"
+                String upperName = seatName.toUpperCase();
 
                 // Bỏ qua ghế bị disable
-                if (disabled.contains(seatName.toUpperCase())) {
+                if (disabled.contains(upperName)) {
                     continue;
                 }
 
-                SeatType seatType;
-                if (vipRowSet.contains(rowNum)) {
-                    seatType = vipType;
-                } else if (premiumRowSet.contains(rowNum)) {
-                    seatType = premiumType;
-                } else {
-                    seatType = standardType;
-                }
+                // Gán loại ghế từ map custom, nếu không có thì lấy loại mặc định
+                SeatType seatType = customSeatTypes.getOrDefault(upperName, defaultType);
 
                 Seat seat = Seat.builder()
                         .name(seatName)

@@ -58,6 +58,22 @@ public class CoupleBookingBuilder extends AbstractBookingBuilder {
                     .id(UUID.randomUUID().toString())
                     .showtime(showtime).seat(seat).price(price).status(TicketStatus.PROCESSING)
                     .build();
+
+            // Nếu có khuyến mãi, gán vào vé
+            if (promotion != null && calcResult.getPromotionDiscount().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal discountPerTicket = calcResult.getPromotionDiscount()
+                        .divide(BigDecimal.valueOf(seats.size()), 0, java.math.RoundingMode.HALF_UP);
+                        
+                TicketPromotion tp = TicketPromotion.builder()
+                        .id(new TicketPromotionId(ticket.getId(), promotion.getId()))
+                        .ticket(ticket)
+                        .promotion(promotion)
+                        .discountAmount(discountPerTicket)
+                        .appliedDate(LocalDateTime.now())
+                        .build();
+                ticket.addPromotion(tp);
+            }
+
             booking.addTicket(ticket);
         }
 

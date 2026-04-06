@@ -60,11 +60,13 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
         Auditorium auditorium = Auditorium.builder()
                 .name(request.getName())
                 .status(request.getStatus())
-                .seatCount(0) // 임시; cập nhật sau khi generate
+                .seatCount(0)
+                .totalRows(request.getSeatLayout().getTotalRows())
+                .totalColumns(request.getSeatLayout().getTotalColumns())
                 .build();
         auditoriumRepository.save(auditorium);
 
-        // 2. Load SeatType map (STANDARD bắt buộc phải có)
+        // 2. Load SeatType map
         Map<String, SeatType> seatTypeMap = loadSeatTypeMap();
 
         // 3. Generate ghế từ SeatLayoutConfig
@@ -121,8 +123,10 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
 
         seatRepository.saveAll(newSeats);
 
-        // 4. Cập nhật seatCount
+        // 4. Cập nhật seatCount + kích thước lưới mới
         auditorium.setSeatCount(newSeats.size());
+        auditorium.setTotalRows(request.getSeatLayout().getTotalRows());
+        auditorium.setTotalColumns(request.getSeatLayout().getTotalColumns());
         auditoriumRepository.save(auditorium);
 
         return toResponse(auditorium);
@@ -136,25 +140,17 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
     }
 
     /**
-     * Load tất cả SeatType từ DB, đưa vào Map<tên_uppercase → SeatType>.
-     * Generator dùng: seatTypeMap.get("STANDARD"), .get("VIP"), .get("PREMIUM").
-     *
-     * Nếu không tìm thấy "STANDARD" → throw SEAT_TYPE_NOT_FOUND.
-     * Admin phải tạo SeatType "STANDARD" trước khi tạo Auditorium.
+     * Load tất cả SeatType từ DB, đưa vào Map<id → SeatType>.
+     * Generator dùng: seatTypeMap.get(id).
      */
     private Map<String, SeatType> loadSeatTypeMap() {
-        Map<String, SeatType> map = seatTypeRepository.findAll()
+        return seatTypeRepository.findAll()
                 .stream()
                 .collect(Collectors.toMap(
-                        st -> st.getName().toUpperCase(),
+                        SeatType::getId,
                         st -> st,
-                        (a, b) -> a // nếu trùng tên (impossible với unique constraint) lấy cái đầu
+                        (a, b) -> a
                 ));
-
-        if (!map.containsKey("STANDARD")) {
-            throw new AppException(ErrorCode.SEAT_TYPE_NOT_FOUND);
-        }
-        return map;
     }
 
     private AuditoriumResponse toResponse(Auditorium auditorium) {
@@ -163,6 +159,8 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
                 .name(auditorium.getName())
                 .totalSeats(auditorium.getSeatCount())
                 .status(auditorium.getStatus())
+                .totalRows(auditorium.getTotalRows())
+                .totalColumns(auditorium.getTotalColumns())
                 .build();
     }
 }

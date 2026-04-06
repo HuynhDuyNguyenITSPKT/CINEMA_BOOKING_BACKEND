@@ -12,10 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "tickets", uniqueConstraints = {
-        // Trong 1 suất chiếu (showtime_id), 1 cái ghế (seat_id) chỉ được phép tồn tại 1 lần duy nhất!
-        @UniqueConstraint(columnNames = {"showtime_id", "seat_id"})
-})
+@Table(name = "tickets")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -83,7 +80,7 @@ public class Ticket {
     @Column(length = 500)
     private String qrCodeUrl;
 
-    @OneToMany(mappedBy = "ticket")
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @Builder.Default
     private List<TicketPromotion> promotions = new ArrayList<>();

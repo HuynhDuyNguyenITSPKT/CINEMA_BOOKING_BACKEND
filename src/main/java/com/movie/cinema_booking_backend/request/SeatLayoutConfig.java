@@ -1,22 +1,28 @@
 package com.movie.cinema_booking_backend.request;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Cấu hình layout phòng chiếu dùng khi tạo hoặc re-generate ghế.
  *
- * Ví dụ phòng 10×20 = 200 ghế, hàng 9-10 là VIP, ghế A1 và J20 không dùng:
+ * Ví dụ phòng 10×20 = 200 ghế, ghế A1 và J20 không dùng, set loại ghế cho các ô cụ thể:
  * {
  *   "totalRows": 10,
  *   "totalColumns": 20,
- *   "vipRows": [9, 10],
- *   "premiumRows": [7, 8],
+ *   "seatTypeMappings": {
+ *       "e9b4...": ["A3", "A4"],
+ *       "f3a2...": ["B1", "B2"]
+ *   },
+ *   "defaultSeatTypeId": "a1b2...",
  *   "disabledSeats": ["A1", "J20"]
  * }
  *
@@ -37,15 +43,17 @@ public class SeatLayoutConfig {
     private Integer totalColumns;
 
     /**
-     * Chỉ số hàng (1-based) được gán là VIP.
-     * VD: [9, 10] = hàng I và J tính từ đầu phòng.
+     * Ánh xạ danh sách ghế theo UUID của SeatType.
+     * VD: {"seat-type-id-1": ["A3", "A4"], "seat-type-id-vip": ["D5", "D6"]}
      */
-    private List<Integer> vipRows = new ArrayList<>();
+    private Map<String, List<String>> seatTypeMappings = new HashMap<>();
 
     /**
-     * Chỉ số hàng (1-based) được gán là Premium (giữa Standard và VIP).
+     * ID loại ghế mặc định cho các ghế không thuộc seatTypeMappings.
+     * Bắt buộc có để tạo ghế còn lại thành công.
      */
-    private List<Integer> premiumRows = new ArrayList<>();
+    @NotBlank(message = "ID loại ghế mặc định (defaultSeatTypeId) không được để trống")
+    private String defaultSeatTypeId;
 
     /**
      * Danh sách tên ghế bị vô hiệu hoá (không tạo Seat record).

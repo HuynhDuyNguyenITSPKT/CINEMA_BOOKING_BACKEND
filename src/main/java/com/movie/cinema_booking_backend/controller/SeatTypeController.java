@@ -27,6 +27,15 @@ public class SeatTypeController {
                 .build();
     }
 
+    @GetMapping("/admin/seat-types")
+    public ApiResponse<?> getAllSeatTypesForAdmin() {
+        return new ApiResponse.Builder<>()
+                .success(true)
+                .message("Lấy danh sách loại ghế quản trị thành công")
+                .data(seatTypeService.getAllSeatTypesForAdmin())
+                .build();
+    }
+
     @GetMapping("/seat-types/{id}")
     public ApiResponse<?> getSeatTypeById(@PathVariable String id) {
         return new ApiResponse.Builder<>()

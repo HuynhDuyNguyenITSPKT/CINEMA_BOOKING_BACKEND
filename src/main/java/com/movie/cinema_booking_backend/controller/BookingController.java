@@ -2,6 +2,7 @@ package com.movie.cinema_booking_backend.controller;
 
 import com.movie.cinema_booking_backend.request.BookingRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
+import com.movie.cinema_booking_backend.response.PricePreviewResponse;
 import com.movie.cinema_booking_backend.service.IBookingService;
 import com.movie.cinema_booking_backend.service.bookingticket.facade.BookingFacade;
 import jakarta.validation.Valid;
@@ -83,4 +84,23 @@ public class BookingController {
                 .data(bookingService.cancelBooking(id, authentication.getName()))
                 .build();
     }
+
+    /**
+     * POST /api/bookings/calculate-price
+     *
+     * Chạy Chain of Responsibility (PricingEngine) để tính giá preview.
+     * KHÔNG lưu DB — Chỉ trả về hóa đơn bóc tách để Frontend hiển thị xem trước tại Checkout.
+     * Đảm bảo giá hiển thị = giá sẽ thanh toán thật (zero drift).
+     */
+    @PostMapping("/calculate-price")
+    public ApiResponse<PricePreviewResponse> calculatePrice(
+            @Valid @RequestBody BookingRequest request,
+            Authentication authentication) {
+        return new ApiResponse.Builder<PricePreviewResponse>()
+                .success(true)
+                .message("Tính giá thành công")
+                .data(bookingService.calculatePreviewPrice(request, authentication.getName()))
+                .build();
+    }
 }
+

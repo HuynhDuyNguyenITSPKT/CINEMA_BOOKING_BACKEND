@@ -45,8 +45,8 @@ public class PaymentController {
         this.authService = authService;
     }
 
-    @GetMapping("/user/payment-url")
-    public ApiResponse<?> getMethodName(@RequestParam String method,@RequestBody PaymentRequest paymentRequest,Authentication authentication) {
+    @org.springframework.web.bind.annotation.PostMapping("/user/payment-url")
+    public ApiResponse<?> getMethodName(@RequestParam String method, @RequestBody PaymentRequest paymentRequest, Authentication authentication) {
         UserResponse currentUser = authService.getCurrentUser(authentication);
         paymentFacade.rememberPaymentCreator(paymentRequest.getBookingId(), currentUser.getEmail());
 
@@ -61,25 +61,49 @@ public class PaymentController {
         public ResponseEntity<Void> paymentCallback(
             @PathVariable String method,
             @RequestParam Map<String, String> params) {
-        PaymentCallbackResponse callbackResponse = paymentFacade.processPaymentCallback(method, params);
 
-        Map<String, String> data = callbackResponse.getData();
+        String normalizedMethod = (method == null ? "" : method.trim().toLowerCase());
 
-        String redirectUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl)
-            .path("/callpay")
-            .queryParam("success", callbackResponse.isSuccess())
-            .queryParam("message", callbackResponse.getMessage())
-            .queryParam("bookingId", data.getOrDefault("bookingId", ""))
-            .queryParam("paymentStatus", data.getOrDefault("paymentStatus", ""))
-            .queryParam("method", data.getOrDefault("method", method))
-            .queryParam("gatewayCode", data.getOrDefault("gatewayCode", ""))
-            .build()
-            .encode()
-            .toUriString();
+        try {
+            PaymentCallbackResponse callbackResponse = paymentFacade.processPaymentCallback(method, params);
 
-        return ResponseEntity.status(HttpStatus.FOUND)
-            .header(HttpHeaders.LOCATION, redirectUrl)
-            .build();
+            Map<String, String> data = callbackResponse.getData();
+
+            String redirectUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl)
+                .path("/callpay")
+                .queryParam("success", callbackResponse.isSuccess())
+                .queryParam("message", callbackResponse.getMessage())
+                .queryParam("bookingId", data.getOrDefault("bookingId", ""))
+                .queryParam("paymentStatus", data.getOrDefault("paymentStatus", ""))
+                .queryParam("method", data.getOrDefault("method", normalizedMethod))
+                .queryParam("gatewayCode", data.getOrDefault("gatewayCode", ""))
+                .build()
+                .encode()
+                .toUriString();
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, redirectUrl)
+                .build();
+
+        } catch (Exception ex) {
+            // Nếu có lỗi bất kỳ (booking không tồn tại, callback gọi lần 2, v.v.)
+            // → vẫn redirect về frontend thay vì trả JSON thô ra browser
+            String errorRedirectUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl)
+                .path("/callpay")
+                .queryParam("success", false)
+                .queryParam("message", "Có lỗi xảy ra khi xử lý kết quả thanh toán")
+                .queryParam("bookingId", "")
+                .queryParam("paymentStatus", "HUY")
+                .queryParam("method", normalizedMethod)
+                .queryParam("gatewayCode", "")
+                .build()
+                .encode()
+                .toUriString();
+
+            return ResponseEntity.status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, errorRedirectUrl)
+                .build();
+        }
     }
     
 }

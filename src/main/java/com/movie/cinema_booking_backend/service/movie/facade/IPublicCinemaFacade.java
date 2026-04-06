@@ -17,5 +17,7 @@ public interface IPublicCinemaFacade {
             int page,
             int size);
 
+    MovieResponse getMovieById(String movieId);
+
     List<ShowtimeResponse> getShowtimesByMovieAndDate(String movieId, LocalDate date);
 }

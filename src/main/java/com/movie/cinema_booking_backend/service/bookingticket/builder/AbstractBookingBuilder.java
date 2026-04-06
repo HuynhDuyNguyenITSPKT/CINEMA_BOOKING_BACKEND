@@ -122,6 +122,14 @@ public abstract class AbstractBookingBuilder implements BookingBuilder {
         return booking;
     }
 
+    /** Dùng cho constructPreview(): Đọc kết quả tính giá không qua buildEntities. */
+    public com.movie.cinema_booking_backend.service.bookingticket.engine.dto.CalculationResult getCalcResult() {
+        if (calcResult == null) {
+            throw new IllegalStateException("Chưa chạy runPricing(). Gọi constructPreview() trước.");
+        }
+        return calcResult;
+    }
+
     protected CalculationRequest buildCalculationRequest() {
         List<SeatInfo> seatInfos = seats.stream().map(s -> new SeatInfo(
                 s.getId(),
