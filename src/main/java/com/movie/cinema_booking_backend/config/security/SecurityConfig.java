@@ -52,7 +52,8 @@ public class SecurityConfig {
      */
     private static final String[] PUBLIC_ENDPOINTS = {
         "/api/auth/**", "/api/extra-services/**", "/api/payment/**", "/api/public/cinema/**",
-        "/api/genres", "/oauth2/**"
+        "/api/genres", "/oauth2/**",
+        "/google4213d9ec89513d14.html", "/robots.txt", "/sitemap.xml", "/favicon.ico"
     };
 
 
