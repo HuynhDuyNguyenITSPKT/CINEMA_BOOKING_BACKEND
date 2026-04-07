@@ -12,7 +12,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.Normalizer;
 import java.util.HashMap;
@@ -21,6 +24,8 @@ import java.util.UUID;
 
 @Service
 public class MoMoService extends AbstractPaymentSignatureTemplate {
+
+    private static final Logger log = LoggerFactory.getLogger(MoMoService.class);
 
     @Value("${payment.momo.partner-code}")
     private String partnerCode;
@@ -79,13 +84,19 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestData, headers);
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+        ResponseEntity<Map<String, Object>> response;
+        try {
+            response = restTemplate.exchange(
                 buildCreateUrl(),
                 HttpMethod.POST,
                 entity,
                 new ParameterizedTypeReference<Map<String, Object>>() {
                 }
-        );
+            );
+        } catch (RestClientException ex) {
+            log.error("MoMo gateway call failed: {}", ex.getMessage());
+            throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
+        }
 
         Map<String, Object> body = response.getBody();
         if (body == null) {
@@ -94,6 +105,9 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
 
         String resultCode = String.valueOf(body.getOrDefault("resultCode", ""));
         if (!"0".equals(resultCode)) {
+            log.warn("MoMo create payment failed. resultCode={}, message={}",
+                    resultCode,
+                    String.valueOf(body.getOrDefault("message", "")));
             throw new AppException(ErrorCode.PAYMENT_GATEWAY_ERROR);
         }
 
