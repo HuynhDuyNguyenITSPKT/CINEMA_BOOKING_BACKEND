@@ -7,6 +7,7 @@ import com.movie.cinema_booking_backend.repository.AccountRepository;
 import com.movie.cinema_booking_backend.repository.UserRepository;
 import com.movie.cinema_booking_backend.service.IEmailService;
 import com.movie.cinema_booking_backend.service.auth.OAuth2CodeExchangeService;
+import com.movie.cinema_booking_backend.service.cache.UserAdminPageCache;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,6 +35,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         private final OAuth2CodeExchangeService oAuth2CodeExchangeService;
         private final IEmailService emailService;
         private final PasswordEncoder passwordEncoder;
+        private final UserAdminPageCache userAdminPageCache;
 
         @Override
         public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -63,6 +65,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                                         .build();
                                         Account acc = accountRepository.save(newAccount);
                                         emailService.sendGeneratedPasswordEmail(email, ranPass);
+                                        userAdminPageCache.clear();
                                         return acc;
                                 });
                 if(account.isActive() == false) {

@@ -35,7 +35,7 @@ public class UserController {
         UserResponse updated = userService.updateProfile(authentication, request);
         return new ApiResponse.Builder<UserResponse>()
                 .success(true)
-                .message("Cập nhật thông tin cá nhân thành công")
+                .message("Profile updated successfully")
                 .data(updated)
                 .build();
     }
@@ -55,12 +55,12 @@ public class UserController {
 
         return new ApiResponse.Builder<PaginationResponse<AdminUserAccountResponse>>()
                 .success(true)
-                .message("Lấy danh sách người dùng thành công")
+                .message("Users retrieved successfully")
                 .data(pagination)
                 .build();
     }
 
-    @PutMapping("/account/status/{userId}")
+    @PutMapping("/account/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<AdminUserAccountResponse> updateUserAccountByAdmin(
             @PathVariable Long userId,
@@ -68,7 +68,7 @@ public class UserController {
         AdminUserAccountResponse result = userService.updateUserAccountByAdmin(userId, request);
         return new ApiResponse.Builder<AdminUserAccountResponse>()
                 .success(true)
-                .message("Cập nhật tài khoản thành công")
+                .message("User account updated successfully")
                 .data(result)
                 .build();
     }
