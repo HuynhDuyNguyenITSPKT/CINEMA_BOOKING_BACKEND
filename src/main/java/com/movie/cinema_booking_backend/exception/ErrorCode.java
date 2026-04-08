@@ -72,6 +72,7 @@ public enum ErrorCode {
     SEAT_TYPE_NOT_FOUND(2025, "Loại ghế không tồn tại",                               HttpStatus.NOT_FOUND),
     SEAT_TYPE_NAME_EXISTS(2026, "Tên loại ghế đã tồn tại",                            HttpStatus.BAD_REQUEST),
     SEAT_NOT_FOUND(2027, "Ghế không tồn tại",                                         HttpStatus.NOT_FOUND),
+    AUDITORIUM_HAS_TICKETS(2028, "Không thể tái cấu hình ghế vì phòng đã có vé tham chiếu", HttpStatus.CONFLICT),
 
     // ── Promotion & Extra Service ─────────────────────────────────────
     PROMOTION_NOT_FOUND(3001,           "Khuyến mãi không tồn tại",                        HttpStatus.NOT_FOUND),

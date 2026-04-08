@@ -26,4 +26,8 @@ public interface TicketRepository extends JpaRepository<Ticket, String> {
     Set<String> findSeatIdsByShowtimeIdAndStatus(
             @Param("showtimeId") String showtimeId,
             @Param("status") TicketStatus status);
+
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END " +
+           "FROM Ticket t WHERE t.seat.auditorium.id = :auditoriumId")
+    boolean existsAnyByAuditoriumId(@Param("auditoriumId") String auditoriumId);
 }

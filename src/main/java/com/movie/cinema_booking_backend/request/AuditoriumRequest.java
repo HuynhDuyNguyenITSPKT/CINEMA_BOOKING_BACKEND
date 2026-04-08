@@ -19,12 +19,10 @@ public class AuditoriumRequest {
 
     /**
      * Cấu hình layout ghế.
-     * Khi tạo phòng mới: bắt buộc phải có để auto-generate ghế.
-     * Khi gọi regenerate-seats: dùng để tái cấu hình lại layout.
-     * @Valid đảm bảo validate lồng (totalRows, totalColumns min=1).
+     * - create/regenerate-seats: bắt buộc phải có (được validate ở service).
+     * - update metadata: có thể null khi chỉ đổi tên/trạng thái.
      */
     @Valid
-    @NotNull(message = "Cấu hình layout ghế không được để trống")
     private SeatLayoutConfig seatLayout;
 }
 
