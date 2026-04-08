@@ -2,10 +2,16 @@ package com.movie.cinema_booking_backend.service.payment;
 
 import com.movie.cinema_booking_backend.request.PaymentRequest;
 import com.movie.cinema_booking_backend.service.payment.createurl.Template.AbstractPaymentSignatureTemplate;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import com.movie.cinema_booking_backend.config.PaymentConfig;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +40,17 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
     @Value("${payment.vnpay.command:pay}")
     private String command;
 
+    // Giữ tương thích với các call site cũ không truyền HttpServletRequest.
     public String createPaymentUrl(PaymentRequest request) {
+        HttpServletRequest currentRequest = null;
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs != null) {
+            currentRequest = attrs.getRequest();
+        }
+        return createPaymentUrl(request, currentRequest);
+    }
+
+    public String createPaymentUrl(PaymentRequest request,HttpServletRequest httpRequest) {
         validateRequest(request);
 
         Map<String, String> params = new HashMap<>();
@@ -48,7 +64,7 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
         params.put("vnp_OrderInfo", sanitizeOrderInfo(request.getDescription()));
         params.put("vnp_OrderType", "other");
         params.put("vnp_ReturnUrl", returnUrl);
-        params.put("vnp_IpAddr", "127.0.0.1");
+        params.put("vnp_IpAddr", PaymentConfig.getIpAddress(httpRequest));
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
