@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.Set;
 
 @Repository
@@ -26,6 +27,13 @@ public interface TicketRepository extends JpaRepository<Ticket, String> {
     Set<String> findSeatIdsByShowtimeIdAndStatus(
             @Param("showtimeId") String showtimeId,
             @Param("status") TicketStatus status);
+
+    @Query("SELECT t.seat.id FROM Ticket t " +
+           "WHERE t.showtime.id = :showtimeId " +
+           "AND t.status IN :statuses")
+    Set<String> findSeatIdsByShowtimeIdAndStatuses(
+            @Param("showtimeId") String showtimeId,
+            @Param("statuses") Collection<TicketStatus> statuses);
 
     @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END " +
            "FROM Ticket t WHERE t.seat.auditorium.id = :auditoriumId")

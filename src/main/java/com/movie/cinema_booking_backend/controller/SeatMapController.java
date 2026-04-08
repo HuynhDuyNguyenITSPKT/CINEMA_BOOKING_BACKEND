@@ -15,12 +15,9 @@ import org.springframework.web.bind.annotation.*;
 public class SeatMapController {
 
     private final SeatValidationProxy seatProxy;
-    private final SeatLockRegistry lockRegistry;
 
-    public SeatMapController(SeatValidationProxy seatProxy,
-                             SeatLockRegistry lockRegistry) {
+    public SeatMapController(SeatValidationProxy seatProxy) {
         this.seatProxy    = seatProxy;
-        this.lockRegistry = lockRegistry;
     }
 
     /**
@@ -57,7 +54,7 @@ public class SeatMapController {
                                     @Valid @RequestBody SeatLockRequest request,
                                     Authentication authentication) {
         String userId = authentication.getName();
-        lockRegistry.tryLockAll(id, request.getSeatIds(), userId,
+        seatProxy.lockSeats(id, request.getSeatIds(), userId,
                 SeatLockRegistry.DEFAULT_TTL);
         return new ApiResponse.Builder<>()
                 .success(true)
@@ -79,7 +76,7 @@ public class SeatMapController {
                                       @Valid @RequestBody SeatLockRequest request,
                                       Authentication authentication) {
         String userId = authentication.getName();
-        lockRegistry.unlockAll(id, request.getSeatIds(), userId);
+        seatProxy.unlockSeats(id, request.getSeatIds(), userId);
         return new ApiResponse.Builder<>()
                 .success(true)
                 .message("Unlock ghế thành công")

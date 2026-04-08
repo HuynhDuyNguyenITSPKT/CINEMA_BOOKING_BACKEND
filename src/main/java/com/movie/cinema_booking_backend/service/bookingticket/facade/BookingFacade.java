@@ -33,16 +33,13 @@ import java.time.Instant;
 public class BookingFacade {
 
     private final SeatValidationProxy seatValidationProxy;
-    private final SeatLockRegistry seatLockRegistry;
     private final IBookingService bookingService;
     private final IPayment paymentProxy; // Bean IPayment từ teammates
 
     public BookingFacade(SeatValidationProxy seatValidationProxy,
-                         SeatLockRegistry seatLockRegistry,
                          IBookingService bookingService,
                          @org.springframework.beans.factory.annotation.Qualifier("paymentProxy") IPayment paymentProxy) {
         this.seatValidationProxy = seatValidationProxy;
-        this.seatLockRegistry = seatLockRegistry;
         this.bookingService = bookingService;
         this.paymentProxy = paymentProxy;
     }
@@ -53,31 +50,38 @@ public class BookingFacade {
      */
     @Transactional
     public BookingInitiateResponse initiateBooking(BookingRequest request, String username) {
-        
+        SeatLockRegistry seatLockRegistry = SeatLockRegistry.getInstance();
+
         // 1. PROXY: Validate 3 tầng (tồn tại, RAM lock, DB status)
         seatValidationProxy.validateForBooking(request.getShowtimeId(), request.getSeatIds(), username);
 
         // 2. SINGLETON: Khoá ghế trong bộ nhớ (TTL = 10 phút)
         seatLockRegistry.tryLockAll(request.getShowtimeId(), request.getSeatIds(), username, Duration.ofMinutes(10));
 
-        // 3. TEMPLATE METHOD + BUILDER: Tạo Booking Draft & Tickets vào DB
-        // BookingService sẽ lưu state PENDING / PROCESSING / PENDING_APPROVAL
-        BookingResponse bookingDraft = bookingService.createBooking(request, username);
+        try {
+            // 3. TEMPLATE METHOD + BUILDER: Tạo Booking Draft & Tickets vào DB
+            // BookingService sẽ lưu state PENDING / PROCESSING / PENDING_APPROVAL
+            BookingResponse bookingDraft = bookingService.createBooking(request, username);
 
-        // 4. IPAYMENT: Gọi dịch vụ Payment của teammates
-        PaymentRequest payReq = PaymentRequest.builder()
-                .bookingId(bookingDraft.getId())
-                .amount(bookingDraft.getTotalAmount().longValue())
-                .description("Mua ve xem phim " + (bookingDraft.getMovieName() != null ? bookingDraft.getMovieName() : ""))
-                .build();
-                
-        // (VNPAY / MOMO tuỳ ý user)
-        String payUrl = paymentProxy.createPaymentUrl(request.getPaymentMethod().name(), payReq);
+            // 4. IPAYMENT: Gọi dịch vụ Payment của teammates
+            PaymentRequest payReq = PaymentRequest.builder()
+                    .bookingId(bookingDraft.getId())
+                    .amount(bookingDraft.getTotalAmount().longValue())
+                    .description("Mua ve xem phim " + (bookingDraft.getMovieName() != null ? bookingDraft.getMovieName() : ""))
+                    .build();
 
-        return BookingInitiateResponse.builder()
-                .bookingId(bookingDraft.getId())
-                .paymentUrl(payUrl)
-                .expiresAt(Instant.now().plus(Duration.ofMinutes(10)))
-                .build();
+            // (VNPAY / MOMO tuỳ ý user)
+            String payUrl = paymentProxy.createPaymentUrl(request.getPaymentMethod().name(), payReq);
+
+            return BookingInitiateResponse.builder()
+                    .bookingId(bookingDraft.getId())
+                    .paymentUrl(payUrl)
+                    .expiresAt(Instant.now().plus(Duration.ofMinutes(10)))
+                    .build();
+        } catch (RuntimeException ex) {
+            // DB transaction rollback khong tu dong rollback lock trong RAM.
+            seatLockRegistry.unlockAll(request.getShowtimeId(), request.getSeatIds(), username);
+            throw ex;
+        }
     }
 }
