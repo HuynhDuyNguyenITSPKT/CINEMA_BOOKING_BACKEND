@@ -1,8 +1,5 @@
 package com.movie.cinema_booking_backend.service.user.proxy;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,6 +9,7 @@ import com.movie.cinema_booking_backend.request.AdminAccountUpdateRequest;
 import com.movie.cinema_booking_backend.request.UpdateProfileRequest;
 import com.movie.cinema_booking_backend.response.AdminUserAccountResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
+import com.movie.cinema_booking_backend.service.cache.UserAdminPageCache;
 import com.movie.cinema_booking_backend.service.impl.UserService;
 
 import org.springframework.security.core.Authentication;
@@ -21,10 +19,11 @@ public class UserLazyLoadProxy extends AbstractUserProxy {
 
     private static final Logger log = LoggerFactory.getLogger(UserLazyLoadProxy.class);
 
-    private final Map<String, Page<AdminUserAccountResponse>> adminPageCache = new ConcurrentHashMap<>();
+    private final UserAdminPageCache adminPageCache;
 
-    public UserLazyLoadProxy(UserService realService) {
+    public UserLazyLoadProxy(UserService realService, UserAdminPageCache adminPageCache) {
         super(realService);
+        this.adminPageCache = adminPageCache;
     }
 
     @Override
