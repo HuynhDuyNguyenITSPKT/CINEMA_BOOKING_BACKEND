@@ -70,8 +70,7 @@ public class AuditoriumController {
      * Dùng khi phòng chiếu được sửa chữa vật lý (thêm/bớt ghế, đổi layout).
      * Toàn bộ ghế cũ bị xoá và được generate lại từ SeatLayoutConfig mới.
      *
-     * ⚠️ WARNING: Tất cả Ticket chưa USED sẽ bị orphan. Gọi endpoint này
-     *    chỉ khi phòng không có Showtime đang active.
+     * Lưu ý: endpoint sẽ chặn thao tác nếu phòng đã có vé tham chiếu tới ghế cũ.
      */
     @PutMapping("/admin/auditoriums/{id}/regenerate-seats")
     public ApiResponse<?> regenerateSeats(@PathVariable("id") String id,

@@ -8,6 +8,7 @@ import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.AuditoriumRepository;
 import com.movie.cinema_booking_backend.repository.SeatRepository;
 import com.movie.cinema_booking_backend.repository.SeatTypeRepository;
+import com.movie.cinema_booking_backend.repository.TicketRepository;
 import com.movie.cinema_booking_backend.request.AuditoriumRequest;
 import com.movie.cinema_booking_backend.response.AuditoriumResponse;
 import com.movie.cinema_booking_backend.service.IAuditoriumService;
@@ -24,15 +25,18 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
     private final AuditoriumRepository auditoriumRepository;
     private final SeatRepository seatRepository;
     private final SeatTypeRepository seatTypeRepository;
+    private final TicketRepository ticketRepository;
     private final SeatTemplateGenerator seatTemplateGenerator;
 
     public AuditoriumServiceImpl(AuditoriumRepository auditoriumRepository,
                                  SeatRepository seatRepository,
                                  SeatTypeRepository seatTypeRepository,
+                                 TicketRepository ticketRepository,
                                  SeatTemplateGenerator seatTemplateGenerator) {
         this.auditoriumRepository    = auditoriumRepository;
         this.seatRepository          = seatRepository;
         this.seatTypeRepository      = seatTypeRepository;
+        this.ticketRepository        = ticketRepository;
         this.seatTemplateGenerator   = seatTemplateGenerator;
     }
 
@@ -52,6 +56,8 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
     @Override
     @Transactional
     public AuditoriumResponse createAuditorium(AuditoriumRequest request) {
+        validateSeatLayoutRequired(request);
+
         if (auditoriumRepository.existsByName(request.getName())) {
             throw new AppException(ErrorCode.AUDITORIUM_NAME_EXISTS);
         }
@@ -108,7 +114,14 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
     @Override
     @Transactional
     public AuditoriumResponse regenerateSeats(String id, AuditoriumRequest request) {
+        validateSeatLayoutRequired(request);
+
         Auditorium auditorium = findByIdOrThrow(id);
+
+        // Không cho regenerate khi đã có ticket tham chiếu tới ghế của phòng này
+        if (ticketRepository.existsAnyByAuditoriumId(id)) {
+            throw new AppException(ErrorCode.AUDITORIUM_HAS_TICKETS);
+        }
 
         // 1. Xoá toàn bộ ghế cũ (mô phỏng sửa phòng chiếu vật lý)
         List<Seat> existingSeats = seatRepository.findByAuditoriumId(id);
@@ -137,6 +150,12 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
     private Auditorium findByIdOrThrow(String id) {
         return auditoriumRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.AUDITORIUM_NOT_FOUND));
+    }
+
+    private void validateSeatLayoutRequired(AuditoriumRequest request) {
+        if (request == null || request.getSeatLayout() == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
     }
 
     /**
