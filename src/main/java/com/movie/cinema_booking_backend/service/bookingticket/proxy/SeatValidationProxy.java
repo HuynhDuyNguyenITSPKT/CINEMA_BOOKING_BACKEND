@@ -14,6 +14,8 @@ import com.movie.cinema_booking_backend.service.impl.SeatServiceImpl;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,19 +47,19 @@ import java.util.stream.Collectors;
 @Service
 public class SeatValidationProxy implements ISeatService {
 
+    private static final Set<TicketStatus> OCCUPIED_TICKET_STATUSES =
+            EnumSet.of(TicketStatus.PROCESSING, TicketStatus.BOOKED, TicketStatus.USED);
+
     private final SeatServiceImpl realSeatService;
-    private final SeatLockRegistry lockRegistry;
     private final TicketRepository ticketRepository;
     private final SeatRepository seatRepository;
     private final ShowtimeRepository showtimeRepository;
 
     public SeatValidationProxy(SeatServiceImpl realSeatService,
-                               SeatLockRegistry lockRegistry,
                                TicketRepository ticketRepository,
                                SeatRepository seatRepository,
                                ShowtimeRepository showtimeRepository) {
         this.realSeatService     = realSeatService;
-        this.lockRegistry        = lockRegistry;
         this.ticketRepository    = ticketRepository;
         this.seatRepository      = seatRepository;
         this.showtimeRepository  = showtimeRepository;
@@ -95,7 +97,7 @@ public class SeatValidationProxy implements ISeatService {
 
         // 3. Lấy tập hợp seatId đã BOOKED từ DB (O(1) lookup sau đó)
         Set<String> bookedSeatIds = ticketRepository
-                .findSeatIdsByShowtimeIdAndStatus(showtimeId, TicketStatus.BOOKED);
+                .findSeatIdsByShowtimeIdAndStatuses(showtimeId, OCCUPIED_TICKET_STATUSES);
 
         // 4. Enrich từng ghế
         return seats.stream()
@@ -114,6 +116,7 @@ public class SeatValidationProxy implements ISeatService {
      * Ném AppException ngay khi phát hiện ghế đầu tiên vi phạm.
      */
     public void validateForBooking(String showtimeId, List<String> seatIds, String userId) {
+        SeatLockRegistry lockRegistry = SeatLockRegistry.getInstance();
         // Lấy tập hợp seatId hợp lệ trong showtime này
         Set<String> validSeatIds = seatRepository
                 .findByShowtimeIdWithSeatType(showtimeId)
@@ -123,7 +126,7 @@ public class SeatValidationProxy implements ISeatService {
 
         // Lấy tập hợp seatId đã BOOKED
         Set<String> bookedSeatIds = ticketRepository
-                .findSeatIdsByShowtimeIdAndStatus(showtimeId, TicketStatus.BOOKED);
+                .findSeatIdsByShowtimeIdAndStatuses(showtimeId, OCCUPIED_TICKET_STATUSES);
 
         for (String seatId : seatIds) {
             // Check 1: ghế có thuộc phòng chiếu của showtime này không
@@ -140,12 +143,19 @@ public class SeatValidationProxy implements ISeatService {
             }
         }
     }
+    public void lockSeats(String showtimeId, List<String> seatIds, String userId, Duration ttl){
+        SeatLockRegistry.getInstance().tryLockAll(showtimeId, seatIds, userId, ttl);
+    }
+    public void unlockSeats(String showtimeId, List<String> seatIds, String userId){
+        SeatLockRegistry.getInstance().unlockAll(showtimeId, seatIds, userId);
+    }
 
     // ─── Private helpers ────────────────────────────────────────────────────
 
     private SeatResponse enrichStatus(Seat seat, String showtimeId,
                                       Set<String> bookedSeatIds, String currentUserId) {
         String status;
+        SeatLockRegistry lockRegistry = SeatLockRegistry.getInstance();
         if (bookedSeatIds.contains(seat.getId())) {
             status = "BOOKED";
         } else if (lockRegistry.isLockedByOther(showtimeId, seat.getId(), currentUserId)) {
