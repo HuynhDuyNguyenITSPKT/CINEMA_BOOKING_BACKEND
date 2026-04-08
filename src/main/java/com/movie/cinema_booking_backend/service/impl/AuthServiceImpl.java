@@ -28,13 +28,13 @@ import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IAuthService;
-import com.movie.cinema_booking_backend.service.IEmailService;
 import com.movie.cinema_booking_backend.service.auth.JwtTokenService;
 import com.movie.cinema_booking_backend.service.auth.factory.AuthEntityFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.AccountFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.PendingPasswordResetFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.PendingRegistrationFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.UserFactory;
+import com.movie.cinema_booking_backend.service.auth.observer.otp.OtpEventPublisher;
 import com.movie.cinema_booking_backend.service.auth.builder.AccessTokenDescriptorBuilder;
 import com.movie.cinema_booking_backend.service.auth.builder.RefreshTokenDescriptorBuilder;
 import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptor;
@@ -53,7 +53,7 @@ public class AuthServiceImpl implements IAuthService {
     private final PendingPasswordResetRepository pendingPasswordResetRepository;
     private final InvalidatedTokenRepository invalidatedRepo;
     private final PasswordEncoder passwordEncoder;
-    private final IEmailService emailService;
+    private final OtpEventPublisher otpEventPublisher;
     private final JwtTokenService jwtTokenService;
     private final TokenDescriptorDirector tokenDescriptorDirector;
 
@@ -64,7 +64,7 @@ public class AuthServiceImpl implements IAuthService {
             PendingPasswordResetRepository pendingPasswordResetRepository,
             InvalidatedTokenRepository invalidatedRepo,
             PasswordEncoder passwordEncoder,
-                IEmailService emailService,
+            OtpEventPublisher otpEventPublisher,
             JwtTokenService jwtTokenService,
             TokenDescriptorDirector tokenDescriptorDirector
     ) {
@@ -74,7 +74,7 @@ public class AuthServiceImpl implements IAuthService {
         this.pendingPasswordResetRepository = pendingPasswordResetRepository;
         this.invalidatedRepo = invalidatedRepo;
         this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
+        this.otpEventPublisher = otpEventPublisher;
         this.jwtTokenService = jwtTokenService;
         this.tokenDescriptorDirector = tokenDescriptorDirector;
     }
@@ -114,7 +114,7 @@ public class AuthServiceImpl implements IAuthService {
         );
         pendingRepo.save(pending);
 
-        emailService.sendOtpEmail(request.getEmail(), otp);
+        otpEventPublisher.notifyOtpGenerated(request.getEmail(), otp);
     }
 
     @Override
@@ -156,7 +156,7 @@ public class AuthServiceImpl implements IAuthService {
         pending.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         pending.setOtpGeneratedTime(LocalDateTime.now());
         pendingRepo.save(pending);
-        emailService.sendOtpEmail(email, newOtp);
+        otpEventPublisher.notifyOtpGenerated(email, newOtp);
     }
 
     @Override
@@ -246,7 +246,7 @@ public class AuthServiceImpl implements IAuthService {
             pendingPasswordResetRepository.save(existingPending);
         }
 
-        emailService.sendOtpEmail(email, otp);
+        otpEventPublisher.notifyOtpGenerated(email, otp);
     }
 
     @Override

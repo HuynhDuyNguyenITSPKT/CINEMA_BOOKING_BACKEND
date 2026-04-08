@@ -40,7 +40,7 @@ public class AuthController {
         authService.register(req);
         return new ApiResponse.Builder<String>()
                 .success(true)
-                .message("OTP Sent")
+                .message("OTP xác thực đã được gửi đến email của bạn. Vui lòng kiểm tra và xác thực để hoàn tất đăng ký.")
                 .data(req.getEmail())
                 .build();
     }

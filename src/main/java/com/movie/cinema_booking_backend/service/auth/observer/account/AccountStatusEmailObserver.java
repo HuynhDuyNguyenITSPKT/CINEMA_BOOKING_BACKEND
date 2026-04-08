@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service.auth.observer;
+package com.movie.cinema_booking_backend.service.auth.observer.account;
 
 import com.movie.cinema_booking_backend.service.IEmailService;
 import lombok.RequiredArgsConstructor;
