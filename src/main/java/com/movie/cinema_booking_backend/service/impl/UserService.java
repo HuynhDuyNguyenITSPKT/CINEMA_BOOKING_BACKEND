@@ -16,8 +16,8 @@ import com.movie.cinema_booking_backend.request.UpdateProfileRequest;
 import com.movie.cinema_booking_backend.response.AdminUserAccountResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IUserService;
-import com.movie.cinema_booking_backend.service.auth.observer.AccountStatusChangedEvent;
-import com.movie.cinema_booking_backend.service.auth.observer.AccountStatusSubject;
+import com.movie.cinema_booking_backend.service.auth.observer.account.AccountStatusChangedEvent;
+import com.movie.cinema_booking_backend.service.auth.observer.account.AccountStatusSubject;
 
 import jakarta.transaction.Transactional;
 
@@ -106,7 +106,7 @@ public class UserService implements IUserService{
 
         if (statusChanged) {
             User savedUser = savedAccount.getUser();
-            accountStatusSubject.notifyObservers(new AccountStatusChangedEvent(
+            accountStatusSubject.notifyAccountStatusChanged(new AccountStatusChangedEvent(
                     savedAccount.getUsername(),
                     savedUser.getEmail(),
                     savedUser.getFullName(),
