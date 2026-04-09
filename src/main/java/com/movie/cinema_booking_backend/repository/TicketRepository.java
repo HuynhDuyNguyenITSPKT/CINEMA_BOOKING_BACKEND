@@ -8,10 +8,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, String> {
+
+       List<Ticket> findByBookingIdIn(Collection<String> bookingIds);
+
+       List<Ticket> findByShowtimeIdIn(Collection<String> showtimeIds);
 
     /**
      * Lấy tập hợp seatId đã có Ticket với status BOOKED trong một showtime.

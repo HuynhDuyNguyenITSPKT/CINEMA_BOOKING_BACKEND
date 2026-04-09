@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, String> {
 
+       List<Showtime> findByStartTimeGreaterThanEqualAndStartTimeLessThan(LocalDateTime start, LocalDateTime end);
+
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END " +
            "FROM Showtime s WHERE s.auditorium.id = :auditoriumId " +
            "AND s.startTime <= :endTime AND s.endTime >= :startTime")

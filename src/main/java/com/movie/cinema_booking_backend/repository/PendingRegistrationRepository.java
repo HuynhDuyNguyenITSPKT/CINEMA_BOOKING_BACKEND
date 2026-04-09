@@ -1,5 +1,7 @@
 package com.movie.cinema_booking_backend.repository;
 
+import java.time.LocalDateTime;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import com.movie.cinema_booking_backend.entity.PendingRegistration;
@@ -12,5 +14,10 @@ public interface PendingRegistrationRepository extends JpaRepository<PendingRegi
     void deleteByUsername(String username);
 
     void deleteByEmail(String email);
+
+    long countByOtpGeneratedTimeGreaterThanEqualAndOtpGeneratedTimeLessThan(
+            LocalDateTime start,
+            LocalDateTime end
+    );
 
 }
