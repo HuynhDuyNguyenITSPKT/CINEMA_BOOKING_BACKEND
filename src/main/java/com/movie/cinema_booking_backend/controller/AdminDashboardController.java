@@ -4,16 +4,12 @@ import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.service.IDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 @RestController
@@ -114,28 +110,6 @@ public class AdminDashboardController {
                 .build();
     }
 
-    @GetMapping("/forecast/capacity-alerts")
-    public ApiResponse<?> getCapacityAlerts(
-            @RequestParam(defaultValue = "0.85") double threshold,
-            @RequestParam(defaultValue = "48") int hoursAhead) {
-        return ApiResponse.builder()
-                .success(true)
-                .message("Capacity alerts fetched successfully")
-                .data(dashboardService.getCapacityAlerts(threshold, hoursAhead))
-                .build();
-    }
-
-    @GetMapping("/forecast/extra-service-spikes")
-    public ApiResponse<?> getExtraServiceSpikeAlerts(
-            @RequestParam(defaultValue = "2.0") double multiplier,
-            @RequestParam(defaultValue = "14") int lookbackDays) {
-        return ApiResponse.builder()
-                .success(true)
-                .message("Extra service spike alerts fetched successfully")
-                .data(dashboardService.getExtraServiceSpikeAlerts(multiplier, lookbackDays))
-                .build();
-    }
-
     @GetMapping("/reports/excel-data")
     public ApiResponse<?> getExcelReportData(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -145,19 +119,6 @@ public class AdminDashboardController {
                 .message("Excel report data fetched successfully")
                 .data(dashboardService.getExcelReportData(fromDate, toDate))
                 .build();
-    }
-
-    @GetMapping(value = "/reports/export-excel.csv", produces = "text/csv")
-    public ResponseEntity<byte[]> exportTransactionsCsv(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
-        String csv = dashboardService.exportTransactionsAsCsv(fromDate, toDate);
-        byte[] data = csv.getBytes(StandardCharsets.UTF_8);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=dashboard-transactions.csv")
-                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-                .body(data);
     }
 
     @GetMapping("/reports/pdf-summary")

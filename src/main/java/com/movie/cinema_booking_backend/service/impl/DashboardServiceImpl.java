@@ -676,7 +676,7 @@ public class DashboardServiceImpl implements IDashboardService {
         result.put("fromDate", from);
         result.put("toDate", to);
         result.put("transactions", transactions);
-        result.put("exportHint", "Use /api/admin/dashboard/reports/export-excel.csv for direct CSV download");
+        result.put("exportHint", "Use /api/admin/dashboard/reports/excel-data to get transaction data for Excel export");
         return result;
     }
 
