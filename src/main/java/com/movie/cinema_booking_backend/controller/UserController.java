@@ -51,6 +51,7 @@ public class UserController {
                 .currentItems(pageResult.getContent())
                 .totalPages(pageResult.getTotalPages())
                 .currentPage(pageResult.getNumber())
+                .totalItems(pageResult.getTotalElements())
                 .build();
 
         return new ApiResponse.Builder<PaginationResponse<AdminUserAccountResponse>>()
