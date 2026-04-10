@@ -35,10 +35,17 @@ public class UserLoggingProxy extends AbstractUserProxy {
     }
 
     @Override
-    public Page<AdminUserAccountResponse> getUsersForAdmin(int page, int size, String keyword) {
+    public Page<AdminUserAccountResponse> getUsersForAdmin(
+            int page,
+            int size,
+            String keyword,
+            String email,
+            String phone,
+            Boolean status
+    ) {
         long start = System.nanoTime();
         try {
-            return next.getUsersForAdmin(page, size, keyword);
+            return next.getUsersForAdmin(page, size, keyword, email, phone, status);
         } finally {
             logDuration("lấy danh sách người dùng phân trang", start);
         }
