@@ -73,15 +73,27 @@ public class UserService implements IUserService{
     }
 
     @Override
-    public Page<AdminUserAccountResponse> getUsersForAdmin(int page, int size, String keyword) {
-        String value = keyword == null ? "" : keyword.trim();
+    public Page<AdminUserAccountResponse> getUsersForAdmin(
+            int page,
+            int size,
+            String keyword,
+            String email,
+            String phone,
+            Boolean status
+    ) {
+        String keywordValue = keyword == null ? "" : keyword.trim();
+        String emailValue = email == null ? "" : email.trim();
+        String phoneValue = phone == null ? "" : phone.trim();
+
         return accountRepository
-                .findByUsernameContainingIgnoreCaseOrUser_FullNameContainingIgnoreCase(
-                        value,
-                        value,
+                .searchAccountsForAdmin(
+                        keywordValue,
+                        emailValue,
+                        phoneValue,
+                        status,
                         PageRequest.of(page, size)
                 )
-            .map(this::mapToUserAccountResponse);
+                .map(this::mapToUserAccountResponse);
     }
 
     @Override

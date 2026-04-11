@@ -45,8 +45,11 @@ public class UserController {
     public ApiResponse<PaginationResponse<AdminUserAccountResponse>> getUsersForAdmin(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String keyword) {
-        var pageResult = userService.getUsersForAdmin(page, size, keyword);
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") String email,
+            @RequestParam(defaultValue = "") String phone,
+            @RequestParam(required = false) Boolean status) {
+        var pageResult = userService.getUsersForAdmin(page, size, keyword, email, phone, status);
         var pagination = new PaginationResponse.Builder<AdminUserAccountResponse>()
                 .currentItems(pageResult.getContent())
                 .totalPages(pageResult.getTotalPages())

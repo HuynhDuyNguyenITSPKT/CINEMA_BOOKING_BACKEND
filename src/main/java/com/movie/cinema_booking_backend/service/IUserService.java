@@ -12,7 +12,14 @@ public interface IUserService {
 
     UserResponse updateProfile(Authentication authentication, UpdateProfileRequest request);
 
-    Page<AdminUserAccountResponse> getUsersForAdmin(int page, int size, String keyword);
+    Page<AdminUserAccountResponse> getUsersForAdmin(
+            int page,
+            int size,
+            String keyword,
+            String email,
+            String phone,
+            Boolean status
+    );
 
     AdminUserAccountResponse updateUserAccountByAdmin(Long userId, AdminAccountUpdateRequest request);
 

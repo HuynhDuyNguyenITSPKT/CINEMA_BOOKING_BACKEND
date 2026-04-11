@@ -44,7 +44,9 @@ public class SecurityConfig {
         "/api/admin/genres",
         "/api/admin/genres/**",
         "/api/admin/showtimes",
-        "/api/admin/showtimes/**"
+        "/api/admin/showtimes/**",
+        "/api/admin/reviews",
+        "/api/admin/reviews/**"
     };
 
     /**
