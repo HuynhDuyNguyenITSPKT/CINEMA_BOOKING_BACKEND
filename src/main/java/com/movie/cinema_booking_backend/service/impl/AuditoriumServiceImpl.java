@@ -8,10 +8,12 @@ import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.AuditoriumRepository;
 import com.movie.cinema_booking_backend.repository.SeatRepository;
 import com.movie.cinema_booking_backend.repository.SeatTypeRepository;
+import com.movie.cinema_booking_backend.repository.ShowtimeRepository;
 import com.movie.cinema_booking_backend.repository.TicketRepository;
 import com.movie.cinema_booking_backend.request.AuditoriumRequest;
 import com.movie.cinema_booking_backend.response.AuditoriumResponse;
 import com.movie.cinema_booking_backend.service.IAuditoriumService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,17 +26,20 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
 
     private final AuditoriumRepository auditoriumRepository;
     private final SeatRepository seatRepository;
+    private final ShowtimeRepository showtimeRepository;
     private final SeatTypeRepository seatTypeRepository;
     private final TicketRepository ticketRepository;
     private final SeatTemplateGenerator seatTemplateGenerator;
 
     public AuditoriumServiceImpl(AuditoriumRepository auditoriumRepository,
                                  SeatRepository seatRepository,
+                                 ShowtimeRepository showtimeRepository,
                                  SeatTypeRepository seatTypeRepository,
                                  TicketRepository ticketRepository,
                                  SeatTemplateGenerator seatTemplateGenerator) {
         this.auditoriumRepository    = auditoriumRepository;
         this.seatRepository          = seatRepository;
+        this.showtimeRepository      = showtimeRepository;
         this.seatTypeRepository      = seatTypeRepository;
         this.ticketRepository        = ticketRepository;
         this.seatTemplateGenerator   = seatTemplateGenerator;
@@ -108,7 +113,26 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
     @Override
     @Transactional
     public void deleteAuditorium(String id) {
-        auditoriumRepository.delete(findByIdOrThrow(id));
+        Auditorium auditorium = findByIdOrThrow(id);
+
+        // Block destructive delete when dependent data exists.
+        if (ticketRepository.existsAnyByAuditoriumId(id)) {
+            throw new AppException(ErrorCode.AUDITORIUM_HAS_TICKETS);
+        }
+        if (showtimeRepository.existsByAuditoriumId(id)) {
+            throw new AppException(ErrorCode.AUDITORIUM_DELETE_CONFLICT);
+        }
+
+        // Remove seats first to satisfy FK seats.auditorium_id -> auditoriums.id.
+        if (seatRepository.existsByAuditoriumId(id)) {
+            seatRepository.deleteAll(seatRepository.findByAuditoriumId(id));
+        }
+
+        try {
+            auditoriumRepository.delete(auditorium);
+        } catch (DataIntegrityViolationException ex) {
+            throw new AppException(ErrorCode.AUDITORIUM_DELETE_CONFLICT);
+        }
     }
 
     @Override

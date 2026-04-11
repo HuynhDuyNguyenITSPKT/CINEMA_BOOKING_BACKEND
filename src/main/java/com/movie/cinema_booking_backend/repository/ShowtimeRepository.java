@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, String> {
 
+    boolean existsByAuditoriumId(String auditoriumId);
+
        List<Showtime> findByStartTimeGreaterThanEqualAndStartTimeLessThan(LocalDateTime start, LocalDateTime end);
 
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END " +

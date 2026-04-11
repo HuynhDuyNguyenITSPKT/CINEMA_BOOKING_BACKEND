@@ -60,7 +60,7 @@ public interface MovieReviewRepository extends JpaRepository<MovieReview, String
     );
 
     @Query("SELECT new com.movie.cinema_booking_backend.response.MovieRatingStatsResponse(" +
-            "m.id, m.title, COALESCE(AVG(r.rating), 0.0), COUNT(r.id)) " +
+            "m.id, m.title, AVG(r.rating), COUNT(r.id)) " +
             "FROM Movie m LEFT JOIN MovieReview r ON r.movie.id = m.id " +
             "WHERE m.id = :movieId " +
             "GROUP BY m.id, m.title")

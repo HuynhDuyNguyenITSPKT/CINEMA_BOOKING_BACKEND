@@ -44,12 +44,11 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
 
 
     /**
-     * Load Booking kèm Tickets + BookingExtras trong 1 query.
-     * Tránh N+1 khi map sang BookingResponse chi tiết.
+     * Load Booking kèm tickets.
+     * Không fetch đồng thời nhiều collection kiểu List để tránh MultipleBagFetchException.
      */
     @Query("SELECT DISTINCT b FROM Booking b " +
            "LEFT JOIN FETCH b.tickets t " +
-           "LEFT JOIN FETCH b.bookingExtras " +
            "WHERE b.id = :id")
     Optional<Booking> findByIdWithDetails(@Param("id") String id);
 }
