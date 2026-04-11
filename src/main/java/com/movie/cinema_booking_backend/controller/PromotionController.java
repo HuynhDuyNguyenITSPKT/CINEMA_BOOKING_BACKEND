@@ -30,6 +30,7 @@ public class PromotionController {
         var pageResult = promotionService.getAllPromotions(page, size, isActive);
         var pagination = new PaginationResponse.Builder<PromotionResponse>()
                 .currentItems(pageResult.getContent())
+            .totalItems(pageResult.getTotalElements())
                 .totalPages(pageResult.getTotalPages())
                 .currentPage(pageResult.getNumber())
                 .build();
