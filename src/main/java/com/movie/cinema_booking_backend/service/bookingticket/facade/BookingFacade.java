@@ -7,6 +7,7 @@ import com.movie.cinema_booking_backend.request.PaymentRequest;
 import com.movie.cinema_booking_backend.response.BookingInitiateResponse;
 import com.movie.cinema_booking_backend.service.IBookingService;
 import com.movie.cinema_booking_backend.service.IPayment;
+import com.movie.cinema_booking_backend.service.ISeatLockService;
 import com.movie.cinema_booking_backend.service.bookingticket.proxy.SeatValidationProxy;
 import com.movie.cinema_booking_backend.service.bookingticket.singleton.SeatLockRegistry;
 import org.springframework.stereotype.Service;
@@ -32,31 +33,25 @@ import java.time.Instant;
 @Service
 public class BookingFacade {
 
-    private final SeatValidationProxy seatValidationProxy;
+    private final ISeatLockService seatLockService;
     private final IBookingService bookingService;
     private final IPayment paymentProxy; // Bean IPayment từ teammates
 
-    public BookingFacade(SeatValidationProxy seatValidationProxy,
+    public BookingFacade(ISeatLockService seatLockService,
                          IBookingService bookingService,
                          @org.springframework.beans.factory.annotation.Qualifier("paymentProxy") IPayment paymentProxy) {
-        this.seatValidationProxy = seatValidationProxy;
+        this.seatLockService = seatLockService;
         this.bookingService = bookingService;
         this.paymentProxy = paymentProxy;
     }
-
-    /**
-     * Bắt đầu luồng đặt vé toàn diện.
-     * Transactional: Nếu lấy URL MoMo/VNPay lỗi -> rollback việc tạo DB Booking.
-     */
     @Transactional
     public BookingInitiateResponse initiateBooking(BookingRequest request, String username) {
-        SeatLockRegistry seatLockRegistry = SeatLockRegistry.getInstance();
 
         // 1. PROXY: Validate 3 tầng (tồn tại, RAM lock, DB status)
-        seatValidationProxy.validateForBooking(request.getShowtimeId(), request.getSeatIds(), username);
+        seatLockService.validateForBooking(request.getShowtimeId(), request.getSeatIds(), username);
 
         // 2. SINGLETON: Khoá ghế trong bộ nhớ (TTL = 10 phút)
-        seatLockRegistry.tryLockAll(request.getShowtimeId(), request.getSeatIds(), username, Duration.ofMinutes(10));
+        seatLockService.lockSeats(request.getShowtimeId(), request.getSeatIds(), username, Duration.ofMinutes(10));
 
         try {
             // 3. TEMPLATE METHOD + BUILDER: Tạo Booking Draft & Tickets vào DB
@@ -80,7 +75,7 @@ public class BookingFacade {
                     .build();
         } catch (RuntimeException ex) {
             // DB transaction rollback khong tu dong rollback lock trong RAM.
-            seatLockRegistry.unlockAll(request.getShowtimeId(), request.getSeatIds(), username);
+            seatLockService.unlockSeats(request.getShowtimeId(), request.getSeatIds(), username);
             throw ex;
         }
     }

@@ -72,7 +72,8 @@ public enum ErrorCode {
     SEAT_TYPE_NOT_FOUND(2025, "Loại ghế không tồn tại",                               HttpStatus.NOT_FOUND),
     SEAT_TYPE_NAME_EXISTS(2026, "Tên loại ghế đã tồn tại",                            HttpStatus.BAD_REQUEST),
     SEAT_NOT_FOUND(2027, "Ghế không tồn tại",                                         HttpStatus.NOT_FOUND),
-    AUDITORIUM_HAS_TICKETS(2028, "Không thể tái cấu hình ghế vì phòng đã có vé tham chiếu", HttpStatus.CONFLICT),
+    AUDITORIUM_HAS_TICKETS(2028, "Không thể xoá phòng chiếu vì đã có dữ liệu ghế/vé liên quan", HttpStatus.CONFLICT),
+    AUDITORIUM_DELETE_CONFLICT(2029, "Không thể xoá phòng chiếu vì đã có dữ liệu suất chiếu liên quan", HttpStatus.CONFLICT),
 
     // ── Promotion & Extra Service ─────────────────────────────────────
     PROMOTION_NOT_FOUND(3001,           "Khuyến mãi không tồn tại",                        HttpStatus.NOT_FOUND),
@@ -97,6 +98,7 @@ public enum ErrorCode {
     AGE_RESTRICTION_NOT_MET(4022, "Khách hàng không đủ tuổi xem phim này", HttpStatus.BAD_REQUEST),
     COUPLE_SEATS_MUST_BE_EVEN(4023, "Vé Couple Sweetbox phải được đặt theo cặp (chẵn)", HttpStatus.BAD_REQUEST),
     COUPLE_BOOKING_ONLY_ALLOWS_SWEETBOX(4024, "Luồng Couple chỉ áp dụng cho ghế loại Sweetbox", HttpStatus.BAD_REQUEST),
+    BOOKING_ALREADY_PAID(4025, "Không thể huỷ vé đã thanh toán thành công", HttpStatus.CONFLICT),
     BOOKING_ALREADY_CANCELLED(4017, "Đơn đặt vé đã bị huỷ", HttpStatus.CONFLICT),
     PAYMENTSUCCESS(4018, "Thanh đã toán thành công rùi", HttpStatus.OK),
     PAYMENT_ALREADY_EXISTS_UNSUCCESS(4019, "Đã thanh toán chưa thành công", HttpStatus.CONFLICT),

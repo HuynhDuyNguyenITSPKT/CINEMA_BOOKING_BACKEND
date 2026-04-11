@@ -11,6 +11,8 @@ import java.util.List;
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, String> {
 
+    boolean existsByAuditoriumId(String auditoriumId);
+
     /**
      * Lấy tất cả ghế thuộc một phòng chiếu.
      * Dùng cho GET /api/auditoriums/{id}/seats (Phase 1) và regenerateSeats (Phase 0).

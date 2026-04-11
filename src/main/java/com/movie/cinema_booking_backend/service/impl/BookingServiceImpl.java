@@ -98,7 +98,7 @@ public class BookingServiceImpl implements IBookingService {
             throw new AppException(ErrorCode.BOOKING_ALREADY_CANCELLED);
         }
         if (booking.getStatus() == BookingStatus.SUCCESS) {
-            throw new AppException(ErrorCode.BOOKING_ALREADY_CANCELLED);
+            throw new AppException(ErrorCode.BOOKING_ALREADY_PAID);
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -245,6 +245,9 @@ public class BookingServiceImpl implements IBookingService {
 
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new AppException(ErrorCode.BOOKING_ALREADY_CANCELLED);
+        }
+        if (booking.getStatus() == BookingStatus.SUCCESS) {
+            throw new AppException(ErrorCode.BOOKING_ALREADY_PAID);
         }
 
         booking.setStatus(BookingStatus.CANCELLED);

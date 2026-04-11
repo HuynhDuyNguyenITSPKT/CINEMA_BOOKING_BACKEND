@@ -1,188 +1,108 @@
 package com.movie.cinema_booking_backend.service.bookingticket.proxy;
 
-import com.movie.cinema_booking_backend.entity.Seat;
-import com.movie.cinema_booking_backend.enums.TicketStatus;
-import com.movie.cinema_booking_backend.exception.AppException;
-import com.movie.cinema_booking_backend.exception.ErrorCode;
-import com.movie.cinema_booking_backend.repository.SeatRepository;
-import com.movie.cinema_booking_backend.repository.ShowtimeRepository;
-import com.movie.cinema_booking_backend.repository.TicketRepository;
 import com.movie.cinema_booking_backend.response.SeatResponse;
 import com.movie.cinema_booking_backend.service.ISeatService;
 import com.movie.cinema_booking_backend.service.bookingticket.singleton.SeatLockRegistry;
 import com.movie.cinema_booking_backend.service.impl.SeatServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
  * ═══════════════════════════════════════════════════════════
- *  DESIGN PATTERN: PROXY
+ *  DESIGN PATTERN: PROXY (GoF Classic Implementation)
  * ═══════════════════════════════════════════════════════════
  *
  * Subject Interface : ISeatService
- * Real Subject      : SeatServiceImpl   (query DB, không biết lock)
- * Proxy (đây)       : SeatValidationProxy (@Primary → Spring inject cái này)
+ * Real Subject      : SeatServiceImpl
+ * Proxy             : SeatValidationProxy (this class, @Primary)
  *
- * Proxy thêm 2 trách nhiệm mà SeatServiceImpl không nên biết:
- *   1. enrichWithLockStatus() — đánh dấu ghế LOCKED/BOOKED/AVAILABLE
- *      dựa trên SeatLockRegistry (RAM) và TicketRepository (DB).
- *   2. validateForBooking()   — 3 checks trước khi tạo booking.
- *
- * Tại sao @Primary?
- *   ISeatService có 2 bean: SeatServiceImpl (không Primary) và Proxy (Primary).
- *   Spring tự chọn @Primary khi inject theo type ISeatService.
- *   → SeatController tự dùng Proxy mà không cần sửa một dòng code nào.
- *
- * Tại sao inject SeatServiceImpl trực tiếp (không qua ISeatService)?
- *   Nếu inject ISeatService → Spring inject Proxy này lại vào chính nó
- *   → Circular dependency. Inject concrete class tránh vòng lặp.
+ * Proxy types combined:
+ *   • Virtual Proxy  : Cache seat-map results (5s TTL)
+ *   • Smart Proxy    : Enrich with real-time lock status from RAM
+ *   • Protection Proxy: Validate lock status before booking
  */
 @Primary
 @Service
+@RequiredArgsConstructor
 public class SeatValidationProxy implements ISeatService {
-
-    private static final Set<TicketStatus> OCCUPIED_TICKET_STATUSES =
-            EnumSet.of(TicketStatus.PROCESSING, TicketStatus.BOOKED, TicketStatus.USED);
-
     private final SeatServiceImpl realSeatService;
-    private final TicketRepository ticketRepository;
-    private final SeatRepository seatRepository;
-    private final ShowtimeRepository showtimeRepository;
+    private final SeatLockRegistry lockRegistry = SeatLockRegistry.getInstance();
+    private final Map<String, CacheEntry<List<SeatResponse>>> seatMapCache = new ConcurrentHashMap<>();
+    private static final long SEAT_MAP_CACHE_TTL_MILLIS = 5_000L;
 
-    public SeatValidationProxy(SeatServiceImpl realSeatService,
-                               TicketRepository ticketRepository,
-                               SeatRepository seatRepository,
-                               ShowtimeRepository showtimeRepository) {
-        this.realSeatService     = realSeatService;
-        this.ticketRepository    = ticketRepository;
-        this.seatRepository      = seatRepository;
-        this.showtimeRepository  = showtimeRepository;
-    }
-
-    // ─── ISeatService override ──────────────────────────────────────────────
-
-    /** Gọi real service rồi enrich status (dùng cho /auditoriums/{id}/seats). */
     @Override
     public List<SeatResponse> getSeatsByAuditorium(String auditoriumId) {
-        List<SeatResponse> seats = realSeatService.getSeatsByAuditorium(auditoriumId);
-        // Không có showtimeId → không thể check LOCKED/BOOKED → trả AVAILABLE
-        return seats.stream()
-                .map(s -> toAvailable(s))
-                .collect(Collectors.toList());
+        return realSeatService.getSeatsByAuditorium(auditoriumId);
     }
-
-    // ─── New: Seat Map by Showtime ──────────────────────────────────────────
-
-    /**
-     * Lấy sơ đồ ghế trong ngữ cảnh một suất chiếu cụ thể.
-     * Enrich status: BOOKED (DB) > LOCKED (RAM) > AVAILABLE.
-     *
-     * @param showtimeId ID suất chiếu.
-     * @param currentUserId ID user đang xem (để phân biệt ghế LOCKED của mình vs người khác).
-     */
+    @Override
     public List<SeatResponse> getSeatMapByShowtime(String showtimeId, String currentUserId) {
-        // 1. Validate showtime tồn tại
-        if (!showtimeRepository.existsById(showtimeId)) {
-            throw new AppException(ErrorCode.SHOWTIME_NOT_FOUND);
+        // 1. Check cache
+        String cacheKey = buildCacheKey(showtimeId, currentUserId);
+        List<SeatResponse> cached = getCachedSeatMap(cacheKey);
+
+        if (cached != null) {
+            // Cache hit → enrich with lock status and return
+            return enrichWithLockStatus(cached, showtimeId, currentUserId);
         }
 
-        // 2. Query ghế (JOIN FETCH SeatType tránh N+1)
-        List<Seat> seats = seatRepository.findByShowtimeIdWithSeatType(showtimeId);
+        // 2. Cache miss → delegate to RealSubject
+        List<SeatResponse> seats = realSeatService.getSeatMapByShowtime(showtimeId, currentUserId);
 
-        // 3. Lấy tập hợp seatId đã BOOKED từ DB (O(1) lookup sau đó)
-        Set<String> bookedSeatIds = ticketRepository
-                .findSeatIdsByShowtimeIdAndStatuses(showtimeId, OCCUPIED_TICKET_STATUSES);
+        // 3. Update cache
+        seatMapCache.put(cacheKey, new CacheEntry<>(seats, System.currentTimeMillis() + SEAT_MAP_CACHE_TTL_MILLIS));
 
-        // 4. Enrich từng ghế
+        // 4. Enrich with real-time lock status (Smart Proxy)
+        return enrichWithLockStatus(seats, showtimeId, currentUserId);
+    }
+    private String buildCacheKey(String showtimeId, String userId) {
+        return showtimeId + ":" + (userId != null ? userId : "anonymous");
+    }
+
+    private List<SeatResponse> getCachedSeatMap(String cacheKey) {
+        CacheEntry<List<SeatResponse>> entry = seatMapCache.get(cacheKey);
+        if (entry != null && !entry.isExpired()) {
+            System.out.println("[Proxy] Cache HIT: " + cacheKey);
+            return entry.value();
+        }
+        System.out.println("[Proxy] Cache MISS: " + cacheKey);
+        return null;
+    }
+    private List<SeatResponse> enrichWithLockStatus(List<SeatResponse> seats,
+                                                    String showtimeId,
+                                                    String currentUserId) {
         return seats.stream()
-                .map(seat -> enrichStatus(seat, showtimeId, bookedSeatIds, currentUserId))
+                .map(seat -> {
+                    // BOOKED from DB takes priority
+                    if ("BOOKED".equals(seat.getStatus())) {
+                        return seat;
+                    }
+                    // Check if locked by another user (real-time RAM check)
+                    if (lockRegistry.isLockedByOther(showtimeId, seat.getId(), currentUserId)) {
+                        return SeatResponse.builder()
+                                .id(seat.getId())
+                                .name(seat.getName())
+                                .rowIndex(seat.getRowIndex())
+                                .columnIndex(seat.getColumnIndex())
+                                .seatTypeId(seat.getSeatTypeId())
+                                .seatTypeName(seat.getSeatTypeName())
+                                .seatTypeSurcharge(seat.getSeatTypeSurcharge())
+                                .status("LOCKED")  // ✅ Proxy adds this status
+                                .build();
+                    }
+                    return seat;
+                })
                 .collect(Collectors.toList());
     }
 
-    // ─── Validation (dùng bởi BookingFacade Phase 4) ───────────────────────
-
-    /**
-     * Validate danh sách ghế trước khi tạo booking. 3 checks:
-     *   1. Ghế tồn tại trong auditorium của showtime.
-     *   2. Ghế không bị lock bởi user khác (RAM check).
-     *   3. Ghế chưa có Ticket BOOKED (DB check — defense in depth).
-     *
-     * Ném AppException ngay khi phát hiện ghế đầu tiên vi phạm.
-     */
-    public void validateForBooking(String showtimeId, List<String> seatIds, String userId) {
-        SeatLockRegistry lockRegistry = SeatLockRegistry.getInstance();
-        // Lấy tập hợp seatId hợp lệ trong showtime này
-        Set<String> validSeatIds = seatRepository
-                .findByShowtimeIdWithSeatType(showtimeId)
-                .stream()
-                .map(Seat::getId)
-                .collect(Collectors.toSet());
-
-        // Lấy tập hợp seatId đã BOOKED
-        Set<String> bookedSeatIds = ticketRepository
-                .findSeatIdsByShowtimeIdAndStatuses(showtimeId, OCCUPIED_TICKET_STATUSES);
-
-        for (String seatId : seatIds) {
-            // Check 1: ghế có thuộc phòng chiếu của showtime này không
-            if (!validSeatIds.contains(seatId)) {
-                throw new AppException(ErrorCode.SEAT_NOT_FOUND);
-            }
-            // Check 2: ghế có đang bị lock bởi user khác không
-            if (lockRegistry.isLockedByOther(showtimeId, seatId, userId)) {
-                throw new AppException(ErrorCode.SEAT_ALREADY_TAKEN);
-            }
-            // Check 3: ghế đã được đặt chưa (DB UniqueConstraint backup)
-            if (bookedSeatIds.contains(seatId)) {
-                throw new AppException(ErrorCode.SEAT_ALREADY_TAKEN);
-            }
+    private record CacheEntry<T>(T value, long expireAt) {
+        boolean isExpired() {
+            return System.currentTimeMillis() > expireAt;
         }
-    }
-    public void lockSeats(String showtimeId, List<String> seatIds, String userId, Duration ttl){
-        SeatLockRegistry.getInstance().tryLockAll(showtimeId, seatIds, userId, ttl);
-    }
-    public void unlockSeats(String showtimeId, List<String> seatIds, String userId){
-        SeatLockRegistry.getInstance().unlockAll(showtimeId, seatIds, userId);
-    }
-
-    // ─── Private helpers ────────────────────────────────────────────────────
-
-    private SeatResponse enrichStatus(Seat seat, String showtimeId,
-                                      Set<String> bookedSeatIds, String currentUserId) {
-        String status;
-        SeatLockRegistry lockRegistry = SeatLockRegistry.getInstance();
-        if (bookedSeatIds.contains(seat.getId())) {
-            status = "BOOKED";
-        } else if (lockRegistry.isLockedByOther(showtimeId, seat.getId(), currentUserId)) {
-            status = "LOCKED";
-        } else {
-            status = "AVAILABLE";
-        }
-
-        return SeatResponse.builder()
-                .id(seat.getId())
-                .name(seat.getName())
-                .rowIndex(seat.getRowIndex())
-                .columnIndex(seat.getColumnIndex())
-                .seatTypeId(seat.getSeatType() != null ? seat.getSeatType().getId() : null)
-                .seatTypeName(seat.getSeatType() != null ? seat.getSeatType().getName() : null)
-                .seatTypeSurcharge(seat.getSeatType() != null ? seat.getSeatType().getSurcharge() : 0f)
-                .status(status)
-                .build();
-    }
-
-    private SeatResponse toAvailable(SeatResponse s) {
-        return SeatResponse.builder()
-                .id(s.getId()).name(s.getName())
-                .rowIndex(s.getRowIndex()).columnIndex(s.getColumnIndex())
-                .seatTypeId(s.getSeatTypeId()).seatTypeName(s.getSeatTypeName())
-                .seatTypeSurcharge(s.getSeatTypeSurcharge())
-                .status("AVAILABLE")
-                .build();
     }
 }

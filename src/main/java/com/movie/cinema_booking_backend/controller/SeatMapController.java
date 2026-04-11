@@ -2,9 +2,12 @@ package com.movie.cinema_booking_backend.controller;
 
 import com.movie.cinema_booking_backend.request.SeatLockRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
+import com.movie.cinema_booking_backend.service.ISeatLockService;
+import com.movie.cinema_booking_backend.service.ISeatService;
 import com.movie.cinema_booking_backend.service.bookingticket.proxy.SeatValidationProxy;
 import com.movie.cinema_booking_backend.service.bookingticket.singleton.SeatLockRegistry;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -12,13 +15,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/showtimes")
 @Validated
+@RequiredArgsConstructor
 public class SeatMapController {
 
-    private final SeatValidationProxy seatProxy;
+    private final ISeatService seatService;
+    private final ISeatLockService seatLockService;
 
-    public SeatMapController(SeatValidationProxy seatProxy) {
-        this.seatProxy    = seatProxy;
-    }
 
     /**
      * GET /api/showtimes/{id}/seat-map
@@ -37,7 +39,7 @@ public class SeatMapController {
         return new ApiResponse.Builder<>()
                 .success(true)
                 .message("Lấy sơ đồ ghế thành công")
-                .data(seatProxy.getSeatMapByShowtime(id, userId))
+                .data(seatService.getSeatMapByShowtime(id, userId))
                 .build();
     }
 
@@ -54,7 +56,7 @@ public class SeatMapController {
                                     @Valid @RequestBody SeatLockRequest request,
                                     Authentication authentication) {
         String userId = authentication.getName();
-        seatProxy.lockSeats(id, request.getSeatIds(), userId,
+        seatLockService.lockSeats(id, request.getSeatIds(), userId,
                 SeatLockRegistry.DEFAULT_TTL);
         return new ApiResponse.Builder<>()
                 .success(true)
@@ -76,7 +78,7 @@ public class SeatMapController {
                                       @Valid @RequestBody SeatLockRequest request,
                                       Authentication authentication) {
         String userId = authentication.getName();
-        seatProxy.unlockSeats(id, request.getSeatIds(), userId);
+        seatLockService.unlockSeats(id, request.getSeatIds(), userId);
         return new ApiResponse.Builder<>()
                 .success(true)
                 .message("Unlock ghế thành công")
