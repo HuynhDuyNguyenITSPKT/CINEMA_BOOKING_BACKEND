@@ -9,8 +9,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -54,7 +52,7 @@ public class SecurityConfig {
      */
     private static final String[] PUBLIC_ENDPOINTS = {
         "/api/auth/**", "/api/extra-services/**", "/api/payment/**", "/api/public/cinema/**",
-        "/api/genres", "/oauth2/**",
+        "/api/genres",
         "/google4213d9ec89513d14.html", "/robots.txt", "/sitemap.xml", "/favicon.ico"
     };
 
@@ -67,16 +65,12 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-
-    private final OAuth2AuthenticationSuccessHandler oauth2SuccessHandler;
-
     public SecurityConfig(CustomJwtDecoder customJwtDecoder, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            CustomAccessDeniedHandler customAccessDeniedHandler, OAuth2AuthenticationSuccessHandler oauth2SuccessHandler
+            CustomAccessDeniedHandler customAccessDeniedHandler
     ) {
         this.customJwtDecoder = customJwtDecoder;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
-        this.oauth2SuccessHandler = oauth2SuccessHandler;
     }
 
     @Bean
@@ -90,9 +84,6 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .cors(Customizer.withDefaults())
-            .oauth2Login(oauth2 ->
-                oauth2.successHandler(oauth2SuccessHandler)
-            )
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt
                     .decoder(customJwtDecoder)

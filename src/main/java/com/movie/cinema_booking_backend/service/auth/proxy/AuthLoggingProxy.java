@@ -75,6 +75,18 @@ public class AuthLoggingProxy extends AbstractAuthProxy {
     }
 
     @Override
+    public AuthResponse loginWithGoogle(String tokenId) {
+        long start = System.nanoTime();
+        validateToken(tokenId);
+        log.info("[AuthProxy] Đăng nhập Google token={}", maskToken(tokenId));
+        try {
+            return next.loginWithGoogle(tokenId);
+        } finally {
+            logDuration("đăng nhập Google", start);
+        }
+    }
+
+    @Override
     public void logout(String token) throws ParseException {
         long start = System.nanoTime();
         validateToken(token);

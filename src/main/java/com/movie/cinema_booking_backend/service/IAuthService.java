@@ -17,6 +17,7 @@ public interface IAuthService {
     void verifyOtp(String email, String otp);
     void resendOtp(String email);
     AuthResponse login(AuthRequest req);
+    AuthResponse loginWithGoogle(String tokenId);
     void logout(String token) throws ParseException;
     AuthResponse refreshToken(String token) throws Exception;
     UserResponse getCurrentUser(Authentication authentication);
