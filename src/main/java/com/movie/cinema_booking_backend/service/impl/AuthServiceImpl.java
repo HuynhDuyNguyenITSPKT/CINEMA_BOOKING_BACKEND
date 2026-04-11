@@ -1,18 +1,29 @@
 package com.movie.cinema_booking_backend.service.impl;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.movie.cinema_booking_backend.entity.Account;
 import com.movie.cinema_booking_backend.entity.InvalidatedToken;
 import com.movie.cinema_booking_backend.entity.PendingRegistration;
 import com.movie.cinema_booking_backend.entity.PendingPasswordReset;
 import com.movie.cinema_booking_backend.entity.User;
+import com.movie.cinema_booking_backend.enums.Role;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.AccountRepository;
@@ -27,14 +38,15 @@ import com.movie.cinema_booking_backend.request.RegistrationRequest;
 import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
-import com.movie.cinema_booking_backend.service.IAuthService;
 import com.movie.cinema_booking_backend.service.IEmailService;
+import com.movie.cinema_booking_backend.service.IAuthService;
 import com.movie.cinema_booking_backend.service.auth.JwtTokenService;
 import com.movie.cinema_booking_backend.service.auth.factory.AuthEntityFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.AccountFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.PendingPasswordResetFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.PendingRegistrationFactory;
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.UserFactory;
+import com.movie.cinema_booking_backend.service.auth.observer.otp.OtpEventPublisher;
 import com.movie.cinema_booking_backend.service.auth.builder.AccessTokenDescriptorBuilder;
 import com.movie.cinema_booking_backend.service.auth.builder.RefreshTokenDescriptorBuilder;
 import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptor;
@@ -53,9 +65,13 @@ public class AuthServiceImpl implements IAuthService {
     private final PendingPasswordResetRepository pendingPasswordResetRepository;
     private final InvalidatedTokenRepository invalidatedRepo;
     private final PasswordEncoder passwordEncoder;
-    private final IEmailService emailService;
+    private final OtpEventPublisher otpEventPublisher;
     private final JwtTokenService jwtTokenService;
     private final TokenDescriptorDirector tokenDescriptorDirector;
+    private final IEmailService emailService;
+
+    @Value("${app.auth.google.client-id:}")
+    private String googleClientId;
 
     public AuthServiceImpl(
             AccountRepository accountRepository,
@@ -64,9 +80,10 @@ public class AuthServiceImpl implements IAuthService {
             PendingPasswordResetRepository pendingPasswordResetRepository,
             InvalidatedTokenRepository invalidatedRepo,
             PasswordEncoder passwordEncoder,
-                IEmailService emailService,
+            OtpEventPublisher otpEventPublisher,
             JwtTokenService jwtTokenService,
-            TokenDescriptorDirector tokenDescriptorDirector
+            TokenDescriptorDirector tokenDescriptorDirector,
+            IEmailService emailService
     ) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
@@ -74,9 +91,10 @@ public class AuthServiceImpl implements IAuthService {
         this.pendingPasswordResetRepository = pendingPasswordResetRepository;
         this.invalidatedRepo = invalidatedRepo;
         this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
+        this.otpEventPublisher = otpEventPublisher;
         this.jwtTokenService = jwtTokenService;
         this.tokenDescriptorDirector = tokenDescriptorDirector;
+        this.emailService = emailService;
     }
 
     @Override
@@ -114,7 +132,7 @@ public class AuthServiceImpl implements IAuthService {
         );
         pendingRepo.save(pending);
 
-        emailService.sendOtpEmail(request.getEmail(), otp);
+        otpEventPublisher.notifyOtpGenerated(request.getEmail(), otp);
     }
 
     @Override
@@ -156,7 +174,7 @@ public class AuthServiceImpl implements IAuthService {
         pending.setExpiryDate(LocalDateTime.now().plusMinutes(5));
         pending.setOtpGeneratedTime(LocalDateTime.now());
         pendingRepo.save(pending);
-        emailService.sendOtpEmail(email, newOtp);
+        otpEventPublisher.notifyOtpGenerated(email, newOtp);
     }
 
     @Override
@@ -170,6 +188,67 @@ public class AuthServiceImpl implements IAuthService {
             throw new AppException(ErrorCode.INVALID_PASSWORD);
 
         return buildAuthResponse(acc);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse loginWithGoogle(String tokenId) {
+        if (tokenId == null || tokenId.isBlank() || googleClientId == null || googleClientId.isBlank()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    new NetHttpTransport(),
+                    GsonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(tokenId);
+            if (idToken == null) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String fullName = (String) payload.get("name");
+
+            if (email == null || email.isBlank() || !Boolean.TRUE.equals(payload.getEmailVerified())) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            User user = userRepository.findByEmail(email).orElseGet(() -> {
+                User newUser = User.builder()
+                        .email(email)
+                        .fullName(fullName == null || fullName.isBlank() ? email : fullName)
+                        .phone(null)
+                        .dateOfBirth(LocalDate.now())
+                        .build();
+                return userRepository.save(newUser);
+            });
+
+            Account account = accountRepository.findByUserEmail(email).orElseGet(() -> {
+                String rawPassword = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+                Account newAccount = Account.builder()
+                        .username(email)
+                        .password(passwordEncoder.encode(rawPassword))
+                        .user(user)
+                        .role(Role.USER)
+                        .isActive(true)
+                        .build();
+                Account savedAccount = accountRepository.save(newAccount);
+                emailService.sendGeneratedPasswordEmail(email, rawPassword);
+                return savedAccount;
+            });
+
+            if (!account.isActive()) {
+                throw new AppException(ErrorCode.ACCOUNT_LOCKED);
+            }
+
+            return buildAuthResponse(account);
+        } catch (GeneralSecurityException | IOException ex) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
     }
 
     
@@ -246,7 +325,7 @@ public class AuthServiceImpl implements IAuthService {
             pendingPasswordResetRepository.save(existingPending);
         }
 
-        emailService.sendOtpEmail(email, otp);
+        otpEventPublisher.notifyOtpGenerated(email, otp);
     }
 
     @Override

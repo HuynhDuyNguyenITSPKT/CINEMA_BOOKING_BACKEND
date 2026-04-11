@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.movie.cinema_booking_backend.request.AuthRequest;
 import com.movie.cinema_booking_backend.request.ChangePasswordRequest;
 import com.movie.cinema_booking_backend.request.ForgotPasswordRequest;
-import com.movie.cinema_booking_backend.request.OAuth2CodeExchangeRequest;
+import com.movie.cinema_booking_backend.request.GoogleLoginRequest;
 import com.movie.cinema_booking_backend.request.OtpRequest;
 import com.movie.cinema_booking_backend.request.RegistrationRequest;
 import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
@@ -22,7 +22,6 @@ import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IAuthService;
-import com.movie.cinema_booking_backend.service.auth.OAuth2CodeExchangeService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,14 +32,13 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class AuthController {
     private final IAuthService authService;
-    private final OAuth2CodeExchangeService oAuth2CodeExchangeService;
 
     @PostMapping("/register")
     public ApiResponse<String> register(@Valid @RequestBody RegistrationRequest req) {
         authService.register(req);
         return new ApiResponse.Builder<String>()
                 .success(true)
-                .message("OTP Sent")
+                .message("OTP xác thực đã được gửi đến email của bạn. Vui lòng kiểm tra và xác thực để hoàn tất đăng ký.")
                 .data(req.getEmail())
                 .build();
     }
@@ -74,12 +72,12 @@ public class AuthController {
                 .build();
     }
 
-    @PostMapping("/oauth2/exchange")
-    public ApiResponse<AuthResponse> exchangeOAuth2Code(@Valid @RequestBody OAuth2CodeExchangeRequest req) {
-        AuthResponse result = oAuth2CodeExchangeService.exchangeCode(req.getCode());
+    @PostMapping("/google")
+    public ApiResponse<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        AuthResponse result = authService.loginWithGoogle(request.getTokenId());
         return new ApiResponse.Builder<AuthResponse>()
                 .success(true)
-                .message("Đăng nhập OAuth2 thành công.")
+                .message("Đăng nhập Google thành công.")
                 .data(result)
                 .build();
     }

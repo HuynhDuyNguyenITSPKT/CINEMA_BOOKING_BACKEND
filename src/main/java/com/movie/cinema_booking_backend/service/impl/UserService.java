@@ -16,8 +16,8 @@ import com.movie.cinema_booking_backend.request.UpdateProfileRequest;
 import com.movie.cinema_booking_backend.response.AdminUserAccountResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
 import com.movie.cinema_booking_backend.service.IUserService;
-import com.movie.cinema_booking_backend.service.auth.observer.AccountStatusChangedEvent;
-import com.movie.cinema_booking_backend.service.auth.observer.AccountStatusSubject;
+import com.movie.cinema_booking_backend.service.auth.observer.account.AccountStatusChangedEvent;
+import com.movie.cinema_booking_backend.service.auth.observer.account.AccountStatusSubject;
 
 import jakarta.transaction.Transactional;
 
@@ -73,15 +73,27 @@ public class UserService implements IUserService{
     }
 
     @Override
-    public Page<AdminUserAccountResponse> getUsersForAdmin(int page, int size, String keyword) {
-        String value = keyword == null ? "" : keyword.trim();
+    public Page<AdminUserAccountResponse> getUsersForAdmin(
+            int page,
+            int size,
+            String keyword,
+            String email,
+            String phone,
+            Boolean status
+    ) {
+        String keywordValue = keyword == null ? "" : keyword.trim();
+        String emailValue = email == null ? "" : email.trim();
+        String phoneValue = phone == null ? "" : phone.trim();
+
         return accountRepository
-                .findByUsernameContainingIgnoreCaseOrUser_FullNameContainingIgnoreCase(
-                        value,
-                        value,
+                .searchAccountsForAdmin(
+                        keywordValue,
+                        emailValue,
+                        phoneValue,
+                        status,
                         PageRequest.of(page, size)
                 )
-            .map(this::mapToUserAccountResponse);
+                .map(this::mapToUserAccountResponse);
     }
 
     @Override
@@ -106,7 +118,7 @@ public class UserService implements IUserService{
 
         if (statusChanged) {
             User savedUser = savedAccount.getUser();
-            accountStatusSubject.notifyObservers(new AccountStatusChangedEvent(
+            accountStatusSubject.notifyAccountStatusChanged(new AccountStatusChangedEvent(
                     savedAccount.getUsername(),
                     savedUser.getEmail(),
                     savedUser.getFullName(),

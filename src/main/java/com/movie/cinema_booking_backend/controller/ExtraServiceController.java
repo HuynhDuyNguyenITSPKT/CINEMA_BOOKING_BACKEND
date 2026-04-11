@@ -30,6 +30,7 @@ public class ExtraServiceController {
         var pageResult = extraServiceService.getUserExtraServices(page, size, category);
         var pagination = new PaginationResponse.Builder<ExtraServiceResponse>()
                 .currentItems(pageResult.getContent())
+                .totalItems(pageResult.getTotalElements())
                 .totalPages(pageResult.getTotalPages())
                 .currentPage(pageResult.getNumber())
                 .build();
@@ -49,6 +50,7 @@ public class ExtraServiceController {
         var pageResult = extraServiceService.getAllExtraServicesForAdmin(page, size, isActive, category);
         var pagination = new PaginationResponse.Builder<ExtraServiceResponse>()
                 .currentItems(pageResult.getContent())
+                .totalItems(pageResult.getTotalElements())
                 .totalPages(pageResult.getTotalPages())
                 .currentPage(pageResult.getNumber())
                 .build();

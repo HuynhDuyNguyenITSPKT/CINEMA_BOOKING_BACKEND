@@ -35,7 +35,7 @@ public class UserController {
         UserResponse updated = userService.updateProfile(authentication, request);
         return new ApiResponse.Builder<UserResponse>()
                 .success(true)
-                .message("Profile updated successfully")
+                .message("Cập nhật hồ sơ thành công")
                 .data(updated)
                 .build();
     }
@@ -45,22 +45,26 @@ public class UserController {
     public ApiResponse<PaginationResponse<AdminUserAccountResponse>> getUsersForAdmin(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String keyword) {
-        var pageResult = userService.getUsersForAdmin(page, size, keyword);
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") String email,
+            @RequestParam(defaultValue = "") String phone,
+            @RequestParam(required = false) Boolean status) {
+        var pageResult = userService.getUsersForAdmin(page, size, keyword, email, phone, status);
         var pagination = new PaginationResponse.Builder<AdminUserAccountResponse>()
                 .currentItems(pageResult.getContent())
                 .totalPages(pageResult.getTotalPages())
                 .currentPage(pageResult.getNumber())
+                .totalItems(pageResult.getTotalElements())
                 .build();
 
         return new ApiResponse.Builder<PaginationResponse<AdminUserAccountResponse>>()
                 .success(true)
-                .message("Users retrieved successfully")
+                .message("Lấy danh sách người dùng thành công")
                 .data(pagination)
                 .build();
     }
 
-    @PutMapping("/account/{userId}")
+    @PutMapping("/account/status/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<AdminUserAccountResponse> updateUserAccountByAdmin(
             @PathVariable Long userId,
@@ -68,7 +72,7 @@ public class UserController {
         AdminUserAccountResponse result = userService.updateUserAccountByAdmin(userId, request);
         return new ApiResponse.Builder<AdminUserAccountResponse>()
                 .success(true)
-                .message("User account updated successfully")
+                .message("Cập nhật tài khoản người dùng thành công")
                 .data(result)
                 .build();
     }

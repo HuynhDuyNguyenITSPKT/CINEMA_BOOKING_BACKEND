@@ -34,8 +34,15 @@ public class UserLazyLoadProxy extends AbstractUserProxy {
     }
 
     @Override
-    public Page<AdminUserAccountResponse> getUsersForAdmin(int page, int size, String keyword) {
-        String cacheKey = toPageCacheKey(page, size, keyword);
+    public Page<AdminUserAccountResponse> getUsersForAdmin(
+            int page,
+            int size,
+            String keyword,
+            String email,
+            String phone,
+            Boolean status
+    ) {
+        String cacheKey = toPageCacheKey(page, size, keyword, email, phone, status);
         log.info("Cache Key: " + cacheKey);
         Page<AdminUserAccountResponse> cached = adminPageCache.get(cacheKey);
         if (cached != null) {
@@ -43,7 +50,7 @@ public class UserLazyLoadProxy extends AbstractUserProxy {
             return cached;
         }
 
-        Page<AdminUserAccountResponse> loaded = next.getUsersForAdmin(page, size, keyword);
+        Page<AdminUserAccountResponse> loaded = next.getUsersForAdmin(page, size, keyword, email, phone, status);
         adminPageCache.put(cacheKey, loaded);
         log.info("[UserLazyLoadProxy] Cache rỗng cho key={}, đã tải dữ liệu phân trang", cacheKey);
         return loaded;
@@ -56,9 +63,17 @@ public class UserLazyLoadProxy extends AbstractUserProxy {
         return updated;
     }
 
-    private String toPageCacheKey(int page, int size, String keyword) {
-        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
-        return page + "|" + size + "|" + normalizedKeyword;
+    private String toPageCacheKey(int page, int size, String keyword, String email, String phone, Boolean status) {
+        String normalizedKeyword = normalize(keyword);
+        String normalizedEmail = normalize(email);
+        String normalizedPhone = normalize(phone);
+        String normalizedStatus = status == null ? "all" : status.toString();
+        return page + "|" + size + "|" + normalizedKeyword + "|" + normalizedEmail + "|" + normalizedPhone + "|"
+                + normalizedStatus;
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toLowerCase();
     }
 
     private void invalidateCaches() {
