@@ -58,6 +58,10 @@ public enum ErrorCode {
     MOVIE_NOT_FOUND(2001,       "Phim không tồn tại",      HttpStatus.NOT_FOUND),
     MOVIE_TITLE_EXISTS(2002,    "Tên phim đã tồn tại",     HttpStatus.BAD_REQUEST),
     INVALID_MOVIE_STATUS(2003,  "Trạng thái phim không hợp lệ. Chỉ hỗ trợ NOW_SHOWING hoặc COMING_SOON", HttpStatus.BAD_REQUEST),
+    MOVIE_REVIEW_NOT_FOUND(2030, "Bình luận phim không tồn tại", HttpStatus.NOT_FOUND),
+    MOVIE_REVIEW_ALREADY_EXISTS(2031, "Bạn đã bình luận phim này", HttpStatus.BAD_REQUEST),
+    MOVIE_REVIEW_FORBIDDEN(2032, "Bạn không có quyền sửa hoặc xóa bình luận này", HttpStatus.FORBIDDEN),
+    MOVIE_REVIEW_NOT_ALLOWED(2033, "Chỉ được bình luận phim đã đặt vé thành công", HttpStatus.BAD_REQUEST),
 
     // ── Genre ─────────────────────────────────────────────────────────
     GENRE_NOT_FOUND(2010,   "Thể loại không tồn tại",  HttpStatus.NOT_FOUND),

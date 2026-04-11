@@ -1,6 +1,7 @@
 package com.movie.cinema_booking_backend.repository;
 
 import com.movie.cinema_booking_backend.entity.Ticket;
+import com.movie.cinema_booking_backend.enums.BookingStatus;
 import com.movie.cinema_booking_backend.enums.TicketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -43,4 +44,17 @@ public interface TicketRepository extends JpaRepository<Ticket, String> {
     @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END " +
            "FROM Ticket t WHERE t.seat.auditorium.id = :auditoriumId")
     boolean existsAnyByAuditoriumId(@Param("auditoriumId") String auditoriumId);
+
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END " +
+           "FROM Ticket t " +
+           "WHERE t.booking.user.id = :userId " +
+           "AND t.showtime.movie.id = :movieId " +
+           "AND t.booking.status = :bookingStatus " +
+           "AND t.status IN :ticketStatuses")
+    boolean existsSuccessfulTicketForMovieReview(
+           @Param("userId") Long userId,
+           @Param("movieId") String movieId,
+           @Param("bookingStatus") BookingStatus bookingStatus,
+           @Param("ticketStatuses") Collection<TicketStatus> ticketStatuses
+    );
 }
