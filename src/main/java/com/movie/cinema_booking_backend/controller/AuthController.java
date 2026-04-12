@@ -64,7 +64,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(@Valid @RequestBody AuthRequest req) {
-        AuthResponse result = authService.login(req);
+        AuthResponse result = authService.login("password", req);
         return new ApiResponse.Builder<AuthResponse>()
                 .success(true)
                 .message("Đăng nhập thành công.")
@@ -74,7 +74,7 @@ public class AuthController {
 
     @PostMapping("/google")
     public ApiResponse<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
-        AuthResponse result = authService.loginWithGoogle(request.getTokenId());
+        AuthResponse result = authService.login("google", request.getTokenId());
         return new ApiResponse.Builder<AuthResponse>()
                 .success(true)
                 .message("Đăng nhập Google thành công.")

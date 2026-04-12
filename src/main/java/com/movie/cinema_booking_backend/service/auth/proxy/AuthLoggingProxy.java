@@ -64,25 +64,23 @@ public class AuthLoggingProxy extends AbstractAuthProxy {
     }
 
     @Override
-    public AuthResponse login(AuthRequest req) {
+    public AuthResponse login(String type, Object request) {
         long start = System.nanoTime();
-        log.info("[AuthProxy] Đăng nhập username={}", safe(req.getUsername()));
+        String normalizedType = normalizeType(type);
+
+        if ("password".equals(normalizedType) && request instanceof AuthRequest authRequest) {
+            log.info("[AuthProxy] Đăng nhập type={} username={}", normalizedType, safe(authRequest.getUsername()));
+        } else if ("google".equals(normalizedType) && request instanceof String token) {
+            validateToken(token);
+            log.info("[AuthProxy] Đăng nhập type={} token={}", normalizedType, maskToken(token));
+        } else {
+            log.info("[AuthProxy] Đăng nhập type={}", safe(normalizedType));
+        }
+
         try {
-            return next.login(req);
+            return next.login(type, request);
         } finally {
             logDuration("đăng nhập", start);
-        }
-    }
-
-    @Override
-    public AuthResponse loginWithGoogle(String tokenId) {
-        long start = System.nanoTime();
-        validateToken(tokenId);
-        log.info("[AuthProxy] Đăng nhập Google token={}", maskToken(tokenId));
-        try {
-            return next.loginWithGoogle(tokenId);
-        } finally {
-            logDuration("đăng nhập Google", start);
         }
     }
 
@@ -170,6 +168,10 @@ public class AuthLoggingProxy extends AbstractAuthProxy {
 
     private String safe(String value) {
         return value == null || value.isBlank() ? "<rỗng>" : value;
+    }
+
+    private String normalizeType(String type) {
+        return type == null ? "" : type.trim().toLowerCase();
     }
 
     private String maskToken(String token) {

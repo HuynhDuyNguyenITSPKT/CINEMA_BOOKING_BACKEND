@@ -1,0 +1,118 @@
+@startuml
+
+title Cinema Booking Backend - Auth Module Architecture
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+package "Controller" {
+  class AuthController
+}
+
+package "Auth Service Layer" {
+  interface IAuthService
+  abstract class AbstractAuthProxy <<Proxy>>
+  class AuthLoggingProxy <<Proxy>>
+  class AuthServiceImpl
+}
+
+package "Login Orchestration" {
+  class AuthLoginFacade <<Facade>>
+
+  enum LoginType
+  class LoginPayload
+
+  class LoginStrategyFactory <<Factory>>
+  interface LoginStrategy <<Strategy>>
+  class PasswordLoginStrategy <<Strategy>>
+  class GoogleLoginStrategy <<Strategy>>
+}
+
+package "Token Builder" {
+  class JwtTokenService
+  interface TokenDescriptorBuilder <<Builder>>
+  class AccessTokenDescriptorBuilder <<Builder>>
+  class RefreshTokenDescriptorBuilder <<Builder>>
+  class TokenDescriptor
+  class TokenDescriptorDirector <<Director>>
+}
+
+package "OTP + Entity Factory" {
+  class OtpGeneratorSingleton <<Singleton>>
+  class OtpEventPublisher <<Observer Publisher>>
+
+  interface AuthEntityAbstractFactory
+  class AuthEntityFactory <<Factory>>
+  class PendingRegistrationFactory
+  class UserFactory
+  class AccountFactory
+  class PendingPasswordResetFactory
+}
+
+package "Support" {
+  interface IEmailService
+  class AuthRequest
+  class AuthResponse
+}
+
+AuthController --> IAuthService
+
+IAuthService <|.. AbstractAuthProxy
+AbstractAuthProxy <|-- AuthLoggingProxy
+AuthLoggingProxy --> IAuthService : next
+IAuthService <|.. AuthServiceImpl
+AuthLoggingProxy ..> AuthServiceImpl : wrap real subject
+
+AuthServiceImpl --> AuthLoginFacade : login / loginWithGoogle
+AuthServiceImpl --> JwtTokenService : verifyToken()
+AuthServiceImpl --> OtpEventPublisher
+AuthServiceImpl --> OtpGeneratorSingleton
+AuthServiceImpl --> AuthEntityFactory
+
+AuthServiceImpl ..> PendingRegistrationFactory
+AuthServiceImpl ..> UserFactory
+AuthServiceImpl ..> AccountFactory
+AuthServiceImpl ..> PendingPasswordResetFactory
+
+AuthLoginFacade --> LoginStrategyFactory
+AuthLoginFacade --> TokenDescriptorDirector
+AuthLoginFacade ..> AccessTokenDescriptorBuilder
+AuthLoginFacade ..> RefreshTokenDescriptorBuilder
+AuthLoginFacade ..> AuthRequest
+AuthLoginFacade ..> AuthResponse
+
+LoginStrategyFactory --> LoginStrategy : getStrategy(type)
+LoginStrategyFactory --> LoginType
+LoginStrategy ..> LoginPayload
+
+LoginStrategy <|.. PasswordLoginStrategy
+LoginStrategy <|.. GoogleLoginStrategy
+GoogleLoginStrategy --> IEmailService
+
+TokenDescriptorDirector --> TokenDescriptorBuilder
+TokenDescriptorBuilder <|.. AccessTokenDescriptorBuilder
+TokenDescriptorBuilder <|.. RefreshTokenDescriptorBuilder
+AccessTokenDescriptorBuilder --> JwtTokenService
+RefreshTokenDescriptorBuilder --> JwtTokenService
+AccessTokenDescriptorBuilder --> TokenDescriptor
+RefreshTokenDescriptorBuilder --> TokenDescriptor
+
+AuthEntityFactory ..> AuthEntityAbstractFactory
+PendingRegistrationFactory ..|> AuthEntityAbstractFactory
+UserFactory ..|> AuthEntityAbstractFactory
+AccountFactory ..|> AuthEntityAbstractFactory
+PendingPasswordResetFactory ..|> AuthEntityAbstractFactory
+
+note bottom of AuthLoginFacade
+Facade unifies multiple login flows,
+selects strategy via factory, then issues JWT tokens
+using the existing Builder + Director flow.
+end note
+
+note bottom of AuthServiceImpl
+Repository and password implementation details are intentionally
+hidden to keep this diagram focused on design patterns.
+end note
+
+@enduml
