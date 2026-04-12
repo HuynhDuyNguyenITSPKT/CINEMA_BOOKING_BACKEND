@@ -18,6 +18,7 @@ import com.movie.cinema_booking_backend.request.MovieReviewRequest;
 import com.movie.cinema_booking_backend.request.MovieReviewUpdateRequest;
 import com.movie.cinema_booking_backend.response.MovieRatingStatsResponse;
 import com.movie.cinema_booking_backend.response.MovieReviewResponse;
+import com.movie.cinema_booking_backend.response.PaginationResponse;
 import com.movie.cinema_booking_backend.service.IMovieReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -149,6 +150,24 @@ public class MovieReviewService implements IMovieReviewService {
     }
 
     @Override
+    public PaginationResponse<MovieRatingStatsResponse> getTopRatedMovies(Long minComments, int page, int size) {
+        validatePagination(page, size);
+        long safeMinComments = normalizeMinComments(minComments);
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+        var items = movieReviewRepository.findTopRatedMovies(safeMinComments, pageRequest);
+        long totalItems = movieReviewRepository.countTopRatedMovies(safeMinComments);
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+
+        return PaginationResponse.<MovieRatingStatsResponse>builder()
+                .currentItems(items)
+                .totalItems(totalItems)
+                .totalPages(totalPages)
+                .currentPage(page)
+                .build();
+    }
+
+    @Override
     @Transactional
     public MovieReviewResponse createReviewByAdmin(AdminMovieReviewRequest request) {
         User user = getUserOrThrow(request.getUserId());
@@ -257,6 +276,25 @@ public class MovieReviewService implements IMovieReviewService {
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new AppException(ErrorCode.INVALID_REQUEST, "Khoảng thời gian không hợp lệ");
         }
+    }
+
+    private void validatePagination(int page, int size) {
+        if (page < 0) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "page phải lớn hơn hoặc bằng 0");
+        }
+        if (size <= 0) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "size phải lớn hơn 0");
+        }
+    }
+
+    private long normalizeMinComments(Long minComments) {
+        if (minComments == null) {
+            return 1L;
+        }
+        if (minComments < 1) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "minComments phải lớn hơn hoặc bằng 1");
+        }
+        return minComments;
     }
 
     private PageRequest buildPageRequest(int page, int size, String sortBy, String sortDir) {

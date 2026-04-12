@@ -65,4 +65,19 @@ public interface MovieReviewRepository extends JpaRepository<MovieReview, String
             "WHERE m.id = :movieId " +
             "GROUP BY m.id, m.title")
     Optional<MovieRatingStatsResponse> getMovieRatingStats(@Param("movieId") String movieId);
+
+    @Query("SELECT new com.movie.cinema_booking_backend.response.MovieRatingStatsResponse(" +
+            "m.id, m.title, AVG(r.rating), COUNT(r.id)) " +
+            "FROM MovieReview r JOIN r.movie m " +
+            "GROUP BY m.id, m.title " +
+            "HAVING COUNT(r.id) >= :minComments " +
+            "ORDER BY AVG(r.rating) DESC, COUNT(r.id) DESC, m.title ASC")
+    java.util.List<MovieRatingStatsResponse> findTopRatedMovies(
+            @Param("minComments") Long minComments,
+            Pageable pageable
+    );
+
+    @Query("SELECT COUNT(m.id) FROM Movie m " +
+            "WHERE (SELECT COUNT(r.id) FROM MovieReview r WHERE r.movie.id = m.id) >= :minComments")
+    long countTopRatedMovies(@Param("minComments") Long minComments);
 }
