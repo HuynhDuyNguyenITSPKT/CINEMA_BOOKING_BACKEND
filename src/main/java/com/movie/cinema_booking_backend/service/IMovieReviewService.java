@@ -5,6 +5,7 @@ import com.movie.cinema_booking_backend.request.MovieReviewRequest;
 import com.movie.cinema_booking_backend.request.MovieReviewUpdateRequest;
 import com.movie.cinema_booking_backend.response.MovieRatingStatsResponse;
 import com.movie.cinema_booking_backend.response.MovieReviewResponse;
+import com.movie.cinema_booking_backend.response.PaginationResponse;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
@@ -36,9 +37,11 @@ public interface IMovieReviewService {
             int size
     );
 
-    MovieRatingStatsResponse getMovieRatingStats(String movieId);
+        MovieRatingStatsResponse getMovieRatingStats(String movieId);
 
-    MovieReviewResponse createReviewByAdmin(AdminMovieReviewRequest request);
+        PaginationResponse<MovieRatingStatsResponse> getTopRatedMovies(Long minComments, int page, int size);
+
+        MovieReviewResponse createReviewByAdmin(AdminMovieReviewRequest request);
 
     MovieReviewResponse updateReviewByAdmin(String reviewId, MovieReviewUpdateRequest request);
 
