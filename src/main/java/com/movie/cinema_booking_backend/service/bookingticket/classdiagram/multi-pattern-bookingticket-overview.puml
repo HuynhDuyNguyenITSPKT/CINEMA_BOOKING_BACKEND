@@ -1,0 +1,44 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+title BookingTicket - Multi-Pattern Interaction Overview
+
+class BookingController <<Client>>
+class BookingFacade <<Facade>>
+interface ISeatService <<Subject>>
+class SeatValidationProxy <<Proxy>>
+class SeatServiceImpl <<RealSubject>>
+class SeatLockRegistry <<Singleton>>
+class SeatLockServiceImpl
+class BookingServiceImpl
+class BookingBuilderFactory
+class BookingDirector <<Director>>
+interface BookingBuilder <<Builder>>
+class PricingEngine <<ChainEngine>>
+interface PricingStep <<Handler>>
+
+BookingController --> BookingFacade : initiate booking
+BookingFacade --> SeatLockServiceImpl : validate + lock + unlock
+BookingFacade --> BookingServiceImpl : create draft
+BookingFacade --> ISeatService : seat map path
+
+ISeatService <|.. SeatValidationProxy
+ISeatService <|.. SeatServiceImpl
+SeatValidationProxy --> SeatServiceImpl : delegate
+SeatValidationProxy --> SeatLockRegistry : lock-aware status
+SeatLockServiceImpl --> SeatLockRegistry : getInstance()
+
+BookingServiceImpl --> BookingBuilderFactory : choose concrete builder
+BookingServiceImpl --> BookingDirector : construct
+BookingDirector --> BookingBuilder : ordered build steps
+BookingDirector --> PricingEngine : runPricing
+PricingEngine --> PricingStep : iterate ordered handlers
+
+note bottom
+Most coupled pattern zones:
+1) BookingFacade combines facade + proxy + singleton + builder + chain.
+2) BookingDirector bridges Builder and Chain.
+3) SeatValidationProxy relies on Singleton state for realtime lock check.
+end note
+@enduml
+

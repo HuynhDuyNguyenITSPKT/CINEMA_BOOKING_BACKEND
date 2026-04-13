@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * ═══════════════════════════════════════════════════════════
- *  SEAT LOCK SERVICE IMPLEMENTATION
+ * SEAT LOCK SERVICE IMPLEMENTATION
  * ═══════════════════════════════════════════════════════════
  *
  * Xử lý operations lock/unlock/validate seats.

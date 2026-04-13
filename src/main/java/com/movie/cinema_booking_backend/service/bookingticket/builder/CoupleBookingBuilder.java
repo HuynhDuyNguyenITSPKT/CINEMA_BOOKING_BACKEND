@@ -5,7 +5,7 @@ import com.movie.cinema_booking_backend.enums.BookingStatus;
 import com.movie.cinema_booking_backend.enums.TicketStatus;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
-import com.movie.cinema_booking_backend.repository.*;
+
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -18,10 +18,8 @@ import java.util.UUID;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CoupleBookingBuilder extends AbstractBookingBuilder {
 
-    public CoupleBookingBuilder(BookingRepository bookingRepo, SeatRepository seatRepo,
-                                ShowtimeRepository showtimeRepo, ExtraServiceRepository extraRepo,
-                                PromotionRepository promoRepo, AccountRepository accountRepo) {
-        super(bookingRepo, seatRepo, showtimeRepo, extraRepo, promoRepo, accountRepo);
+    public CoupleBookingBuilder() {
+        super();
     }
 
     @Override

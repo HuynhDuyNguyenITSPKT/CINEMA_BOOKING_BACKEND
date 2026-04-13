@@ -1,0 +1,48 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+title Facade Pattern - Booking Initiation Flow
+
+class BookingController <<Client>>
+
+class BookingFacade <<Facade>> {
+  - seatLockService : ISeatLockService
+  - bookingService : IBookingService
+  - paymentProxy : IPayment
+  + initiateBooking(request, username) : BookingInitiateResponse
+}
+
+interface ISeatLockService <<Subsystem>> {
+  + validateForBooking(showtimeId, seatIds, userId)
+  + lockSeats(showtimeId, seatIds, userId, ttl)
+  + unlockSeats(showtimeId, seatIds, userId)
+}
+interface IBookingService <<Subsystem>> {
+  + createBooking(request, username) : BookingResponse
+}
+interface IPayment <<Subsystem>> {
+  + createPaymentUrl(method, paymentRequest) : String
+}
+
+class SeatLockServiceImpl
+class BookingServiceImpl
+class PaymentProxy
+
+BookingController --> BookingFacade
+BookingFacade --> ISeatLockService : validate/lock/unlock
+BookingFacade --> IBookingService : create draft booking
+BookingFacade --> IPayment : create payment URL
+
+ISeatLockService <|.. SeatLockServiceImpl
+IBookingService <|.. BookingServiceImpl
+IPayment <|.. PaymentProxy
+
+note right of BookingFacade
+Facade coordinates multiple patterns internally:
+- Proxy for seat validation path
+- Singleton for in-memory lock registry
+- Builder + pricing chain in booking creation
+- Payment proxy/adapter on checkout
+end note
+@enduml
+

@@ -38,13 +38,12 @@ public class BookingDirector {
      * @param username Username đang đặt vé
      * @return Booking entity đã hoàn thiện (chưa persist)
      */
-    public Booking construct(BookingBuilder builder, BookingRequest request, String username) {
-        builder.reset(request, username);    // Step 1: Nhận input, clean state
-        builder.loadEntities();              // Step 2: Load từ DB
-        builder.validateRules();             // Step 3: Validate theo từng luật của class con
-        builder.runPricing(pricingEngine);   // Step 4: Tính tiền (Pipeline)
-        builder.buildEntities();             // Step 5: Đúc Entity
-        return builder.getResult();          // Step 6: Lấy sản phẩm
+    public Booking construct(BookingBuilder builder, BookingRequest request, BookingContext context, String username) {
+        builder.reset(request, context, username);    // Step 1: Nhận input, gán context
+        builder.validateRules();             // Step 2: Validate theo từng luật của class con
+        builder.runPricing(pricingEngine);   // Step 3: Tính tiền (Pipeline)
+        builder.buildEntities();             // Step 4: Đúc Entity
+        return builder.getResult();          // Step 5: Lấy sản phẩm
     }
 
     /**
@@ -52,11 +51,10 @@ public class BookingDirector {
      * Không buildEntities(), không persist — dùng cho Preview Price API.
      * Caller đọc calcResult từ AbstractBookingBuilder sau khi gọi.
      */
-    public void constructPreview(BookingBuilder builder, BookingRequest request, String username) {
-        builder.reset(request, username);  // Step 1
-        builder.loadEntities();            // Step 2
-        builder.validateRules();           // Step 3 (validate promotion, seat count...)
-        builder.runPricing(pricingEngine); // Step 4 — Chain of Responsibility chạy xong
-        // Step 5 & 6 bị bỏ qua: Không tạo entity, không lưu DB
+    public void constructPreview(BookingBuilder builder, BookingRequest request, BookingContext context, String username) {
+        builder.reset(request, context, username); // Step 1: Nhận input, gán context
+        builder.validateRules();           // Step 2 (validate promotion, seat count...)
+        builder.runPricing(pricingEngine); // Step 3 — Chain of Responsibility chạy xong
+        // Step 4 & 5 bị bỏ qua: Không tạo entity, không lưu DB
     }
 }

@@ -1,9 +1,6 @@
 package com.movie.cinema_booking_backend.service.bookingticket.builder;
 
 import com.movie.cinema_booking_backend.entity.*;
-import com.movie.cinema_booking_backend.exception.AppException;
-import com.movie.cinema_booking_backend.exception.ErrorCode;
-import com.movie.cinema_booking_backend.repository.*;
 import com.movie.cinema_booking_backend.request.BookingRequest;
 import com.movie.cinema_booking_backend.service.bookingticket.engine.PricingEngine;
 import com.movie.cinema_booking_backend.service.bookingticket.engine.dto.CalculationRequest;
@@ -11,9 +8,9 @@ import com.movie.cinema_booking_backend.service.bookingticket.engine.dto.Calcula
 import com.movie.cinema_booking_backend.service.bookingticket.engine.dto.CalculationRequest.SeatInfo;
 import com.movie.cinema_booking_backend.service.bookingticket.engine.dto.CalculationResult;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * ═══════════════════════════════════════════════════════════
@@ -29,13 +26,6 @@ import java.util.List;
  */
 public abstract class AbstractBookingBuilder implements BookingBuilder {
 
-    protected final BookingRepository    bookingRepo;
-    protected final SeatRepository       seatRepo;
-    protected final ShowtimeRepository   showtimeRepo;
-    protected final ExtraServiceRepository extraRepo;
-    protected final PromotionRepository  promoRepo;
-    protected final AccountRepository    accountRepo;
-
     // ─── State ───────────────────────────────────────────
     protected BookingRequest  request;
     protected String          username;
@@ -49,56 +39,22 @@ public abstract class AbstractBookingBuilder implements BookingBuilder {
     protected CalculationResult calcResult;
     protected Booking           booking;
 
-    protected AbstractBookingBuilder(BookingRepository bookingRepo, SeatRepository seatRepo,
-                                     ShowtimeRepository showtimeRepo, ExtraServiceRepository extraRepo,
-                                     PromotionRepository promoRepo, AccountRepository accountRepo) {
-        this.bookingRepo = bookingRepo;
-        this.seatRepo = seatRepo;
-        this.showtimeRepo = showtimeRepo;
-        this.extraRepo = extraRepo;
-        this.promoRepo = promoRepo;
-        this.accountRepo = accountRepo;
+    protected AbstractBookingBuilder() {
     }
 
     @Override
-    public void reset(BookingRequest request, String username) {
-        this.request      = request;
-        this.username     = username;
-        this.booking      = null;
-        this.calcResult   = null;
-    }
+    public void reset(BookingRequest request, BookingContext context, String username) {
+        this.request       = request;
+        this.username      = username;
+        this.booking       = null;
+        this.calcResult    = null;
 
-    @Override
-    public void loadEntities() {
-        this.showtime = showtimeRepo.findById(request.getShowtimeId())
-                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
-
-        this.user = accountRepo.findByUsername(username)
-                .map(Account::getUser)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-        this.seats = new ArrayList<>();
-        for (String seatId : request.getSeatIds()) {
-            Seat seat = seatRepo.findById(seatId)
-                    .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
-            if (!seat.getAuditorium().getId().equals(showtime.getAuditorium().getId())) {
-                throw new AppException(ErrorCode.SEAT_NOT_FOUND);
-            }
-            seats.add(seat);
-        }
-
-        String code = request.getPromotionCode();
-        this.promotion = (code != null && !code.isBlank())
-                ? promoRepo.getPromotionByCode(code).orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND))
-                : null;
-
-        this.extraServices = new ArrayList<>();
-        if (request.getExtras() != null) {
-            for (Long extraId : request.getExtras().keySet()) {
-                extraServices.add(extraRepo.findById(extraId)
-                        .orElseThrow(() -> new AppException(ErrorCode.EXTRA_SERVICE_NOT_FOUND)));
-            }
-        }
+        // Điền dữ liệu từ context (Lego pieces)
+        this.showtime      = context.showtime();
+        this.user          = context.user();
+        this.seats         = context.seats();
+        this.promotion     = context.promotion();
+        this.extraServices = context.extraServices();
     }
 
     // Các class con PHẢI overwrite hàm này

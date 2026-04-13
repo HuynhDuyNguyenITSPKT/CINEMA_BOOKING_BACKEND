@@ -1,7 +1,7 @@
 package com.movie.cinema_booking_backend.service;
 
 import com.movie.cinema_booking_backend.request.BookingRequest;
-import com.movie.cinema_booking_backend.request.AdminBookingRequest;
+import com.movie.cinema_booking_backend.request.AdminUpdateGroupSeatsRequest;
 import com.movie.cinema_booking_backend.response.BookingResponse;
 import com.movie.cinema_booking_backend.response.PricePreviewResponse;
 
@@ -24,13 +24,20 @@ public interface IBookingService {
     /** Lấy toàn bộ booking, có lọc theo status (Admin only). */
     List<BookingResponse> getAllBookings(String status);
 
-    /** Admin tạo booking ngoại lệ, bypass rules giới hạn ghế & giá tự động. */
-    BookingResponse adminCreateBooking(AdminBookingRequest request);
+    /**
+     * Admin cập nhật danh sách ghế cho đơn B2B và duyệt đơn.
+     * Gọi lại GroupBookingBuilder để tính lại giá + JPA diffing cập nhật Tickets.
+     * Tranisiton: PENDING_APPROVAL → RESERVED.
+     */
+    BookingResponse updateGroupBookingSeatsAndApprove(String bookingId, AdminUpdateGroupSeatsRequest request);
 
-    /** Duyệt đơn B2B (chỉ PENDING_APPROVAL -> RESERVED). */
+    /** Duyệt đơn B2B đơn giản (chỉ PENDING_APPROVAL -> RESERVED, không đổi ghế). */
     BookingResponse approveBooking(String bookingId);
 
     /** Admin hủy bất kỳ booking nào. */
     BookingResponse adminCancelBooking(String bookingId);
+
+    /** Dọn dẹp background (Cron Job): huỷ các ghế quá hạn thanh toán chưa hoàn thành */
+    void cancelExpiredReservedBookings();
 }
 

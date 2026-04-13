@@ -21,9 +21,7 @@ import com.movie.cinema_booking_backend.service.bookingticket.engine.PricingEngi
  */
 public interface BookingBuilder {
 
-    void reset(BookingRequest request, String username);
-
-    void loadEntities();
+    void reset(BookingRequest request, BookingContext context, String username);
 
     void validateRules();
 

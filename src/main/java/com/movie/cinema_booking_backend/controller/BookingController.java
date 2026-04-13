@@ -81,7 +81,7 @@ public class BookingController {
         return new ApiResponse.Builder<>()
                 .success(true)
                 .message("Huỷ đặt vé thành công")
-                .data(bookingService.cancelBooking(id, authentication.getName()))
+                .data(bookingFacade.cancelBooking(id, authentication.getName()))
                 .build();
     }
 

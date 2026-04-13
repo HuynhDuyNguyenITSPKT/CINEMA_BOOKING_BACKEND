@@ -82,8 +82,13 @@ public class PaymentFacade {
                 .build();
         
         paymentRepository.save(payment);
-        booking.setStatus(BookingStatus.PENDING);
-        bookingRepository.save(booking);
+        
+        // Không ghi đè trạng thái nếu đây là vé Khách Đoàn chờ duyệt
+        if (booking.getStatus() != BookingStatus.PENDING_APPROVAL) {
+            booking.setStatus(BookingStatus.PENDING);
+            bookingRepository.save(booking);
+        }
+        
         return 1;
     }
 

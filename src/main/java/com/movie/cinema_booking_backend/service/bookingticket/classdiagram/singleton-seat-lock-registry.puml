@@ -1,0 +1,50 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+title Singleton Pattern - Seat Lock Registry (Booking Ticket)
+
+class "Client" as Client
+class SeatLockServiceImpl
+class SeatValidationProxy
+class LockEvictionScheduler
+
+class SeatLockRegistry <<Singleton>> {
+  - SeatLockRegistry()
+  + {static} getInstance() : SeatLockRegistry
+  + tryLock(showtimeId, seatId, userId, ttl)
+  + tryLockAll(showtimeId, seatIds, userId, ttl)
+  + unlock(showtimeId, seatId, userId)
+  + unlockAll(showtimeId, seatIds, userId)
+  + isLockedByOther(showtimeId, seatId, userId) : boolean
+  + isLocked(showtimeId, seatId) : boolean
+  + evictExpired()
+  - buildKey(showtimeId, seatId) : String
+}
+
+class Holder <<static>> {
+  - {static} INSTANCE : SeatLockRegistry
+}
+
+record SeatLockEntry {
+  + userId : String
+  + expiresAt : Instant
+  + isExpired() : boolean
+}
+
+Client --> SeatLockServiceImpl
+Client --> SeatValidationProxy
+Client --> LockEvictionScheduler
+SeatLockServiceImpl --> SeatLockRegistry : getInstance()
+SeatValidationProxy --> SeatLockRegistry : getInstance()
+LockEvictionScheduler --> SeatLockRegistry : getInstance()
+SeatLockRegistry *-- SeatLockEntry : lockMap value
+SeatLockRegistry ..> Holder : lazy access
+
+note right of SeatLockRegistry
+Bill Pugh style singleton:
+- inner static Holder
+- thread-safe lazy init
+- no explicit synchronized
+end note
+@enduml
+

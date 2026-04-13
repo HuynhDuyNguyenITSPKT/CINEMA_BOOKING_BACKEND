@@ -1,0 +1,54 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+title Builder Pattern - Booking Construction Flow (GoF-aligned)
+
+class BookingServiceImpl <<Client>>
+class BookingBuilderFactory
+class BookingDirector <<Director>> {
+  + construct(builder, request, username) : Booking
+  + constructPreview(builder, request, username)
+}
+
+interface BookingBuilder <<Builder>> {
+  + reset(request, username)
+  + loadEntities()
+  + validateRules()
+  + runPricing(engine)
+  + buildEntities()
+  + getResult() : Booking
+}
+
+abstract class AbstractBookingBuilder <<AbstractBuilder>> {
+  # request : BookingRequest
+  # calcResult : CalculationResult
+  + runPricing(engine)
+  + getResult() : Booking
+}
+
+class StandardBookingBuilder <<ConcreteBuilder>>
+class CoupleBookingBuilder <<ConcreteBuilder>>
+class GroupBookingBuilder <<ConcreteBuilder>>
+class Booking <<Product>>
+class PricingEngine
+
+BookingServiceImpl --> BookingBuilderFactory : choose builder
+BookingServiceImpl --> BookingDirector : orchestrate build
+BookingBuilderFactory ..> StandardBookingBuilder
+BookingBuilderFactory ..> CoupleBookingBuilder
+BookingBuilderFactory ..> GroupBookingBuilder
+
+BookingDirector --> BookingBuilder : calls build steps in order
+BookingBuilder <|.. AbstractBookingBuilder
+AbstractBookingBuilder <|-- StandardBookingBuilder
+AbstractBookingBuilder <|-- CoupleBookingBuilder
+AbstractBookingBuilder <|-- GroupBookingBuilder
+BookingBuilder ..> Booking
+AbstractBookingBuilder ..> PricingEngine
+
+note bottom of BookingDirector
+Order in code:
+reset -> loadEntities -> validateRules -> runPricing -> buildEntities -> getResult
+end note
+@enduml
+

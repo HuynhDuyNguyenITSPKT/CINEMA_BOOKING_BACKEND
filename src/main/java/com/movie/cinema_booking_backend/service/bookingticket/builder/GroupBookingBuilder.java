@@ -5,7 +5,7 @@ import com.movie.cinema_booking_backend.enums.BookingStatus;
 import com.movie.cinema_booking_backend.enums.TicketStatus;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
-import com.movie.cinema_booking_backend.repository.*;
+
 import com.movie.cinema_booking_backend.service.bookingticket.engine.PricingEngine;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -20,10 +20,8 @@ import java.util.UUID;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class GroupBookingBuilder extends AbstractBookingBuilder {
 
-    public GroupBookingBuilder(BookingRepository bookingRepo, SeatRepository seatRepo,
-                               ShowtimeRepository showtimeRepo, ExtraServiceRepository extraRepo,
-                               PromotionRepository promoRepo, AccountRepository accountRepo) {
-        super(bookingRepo, seatRepo, showtimeRepo, extraRepo, promoRepo, accountRepo);
+    public GroupBookingBuilder() {
+        super();
     }
 
     @Override
@@ -39,22 +37,6 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
         }
     }
 
-    @Override
-    public void runPricing(PricingEngine engine) {
-        // Gọi Engine để tính base + surcharge + default promo + tax
-        super.runPricing(engine);
-
-        // EXTRA RULE: Khách đoàn được giảm thêm 5% trực tiếp lên final price (trước extras)
-        // (Đây là cách override tính giá linh hoạt ngay trong Builder mà không cần Policy)
-        BigDecimal totalBeforeExtras = calcResult.getFinalTotal().subtract(calcResult.getExtrasTotal());
-        BigDecimal groupDiscount = totalBeforeExtras.multiply(BigDecimal.valueOf(5))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
-        calcResult.setPromotionDiscount(calcResult.getPromotionDiscount().add(groupDiscount));
-
-        // Không sửa lại ticket list để hiển thị đúng bill ban đầu, chỉ giảm tồng
-        // Hoặc có thể viết thêm logic giảm điều vào từng vé ở đây
-    }
 
     @Override
     public void buildEntities() {
