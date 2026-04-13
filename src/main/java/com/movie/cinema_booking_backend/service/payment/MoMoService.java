@@ -50,6 +50,7 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    // Tạo payment tại MoMo: chuẩn hóa input, ký request, gọi API /create và trả payUrl.
     public String createPayment(Map<String, String> params) {
         String amount = normalizeAmount(params.get("amount"));
         String orderId = normalizeOrderId(params.get("orderId"));
@@ -119,14 +120,17 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
         return payUrl.toString();
     }
 
+    // Public wrapper cho template sign.
     public String sign(Map<String, String> params) {
         return signRequest(params);
     }
 
+    // Đảm bảo endpoint tạo payment luôn kết thúc bằng /create.
     private String buildCreateUrl() {
         return endpoint.endsWith("/create") ? endpoint : endpoint + "/create";
     }
 
+    // Validate amount hợp lệ và chuyển về chuỗi số nguyên dương.
     private String normalizeAmount(String amount) {
         if (amount == null || amount.isBlank()) {
             throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
@@ -142,6 +146,7 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
         }
     }
 
+    // Chuẩn hóa orderId theo whitelist ký tự MoMo cho phép.
     private String normalizeOrderId(String orderId) {
         if (orderId == null || orderId.isBlank()) {
             throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
@@ -153,6 +158,7 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
         return normalized.length() > 50 ? normalized.substring(0, 50) : normalized;
     }
 
+    // Chuẩn hóa nội dung đơn hàng, bỏ ký tự lạ và giới hạn độ dài.
     private String normalizeOrderInfo(String orderInfo) {
         if (orderInfo == null || orderInfo.isBlank()) {
             return "Thanh toan ve xem phim";
@@ -168,11 +174,13 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
         return normalized.length() > 255 ? normalized.substring(0, 255) : normalized;
     }
 
+    // Public wrapper cho template verify callback.
     public boolean verify(Map<String, String> params) {
         return verifyCallback(params);
     }
 
     @Override
+    // Dựng raw data ký create-payment theo đúng thứ tự field MoMo yêu cầu.
     protected String buildRawDataForSigning(Map<String, String> params) {
         return "accessKey=" + accessKey +
                 "&amount=" + params.get("amount") +
@@ -187,6 +195,7 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
     }
 
     @Override
+    // Dựng raw data verify callback MoMo (full callback hoặc fallback tối giản).
     protected String buildRawDataForVerification(Map<String, String> params) {
         if (params.containsKey("resultCode")) {
             return "accessKey=" + accessKey +
@@ -210,16 +219,19 @@ public class MoMoService extends AbstractPaymentSignatureTemplate {
     }
 
     @Override
+    // Lấy chữ ký callback MoMo gửi về.
     protected String extractReceivedSignature(Map<String, String> params) {
         return params.get("signature");
     }
 
     @Override
+    // Trả secret key cấu hình cho MoMo.
     protected String getSecretKey() {
         return secretKey;
     }
 
     @Override
+    // Thuật toán HMAC MoMo yêu cầu.
     protected String getHmacAlgorithm() {
         return "HmacSHA256";
     }

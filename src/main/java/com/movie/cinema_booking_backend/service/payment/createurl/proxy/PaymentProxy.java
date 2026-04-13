@@ -26,6 +26,7 @@ public class PaymentProxy implements IPayment{
     }
 
     @Override
+    // Proxy kiểm tra method + trạng thái payment trước khi delegate tạo link thật.
     public String createPaymentUrl(String method, PaymentRequest request){
         if (method == null || method.isEmpty()) {
             log.error("Phương thức thanh toán không hợp lệ: {}", method);

@@ -45,6 +45,7 @@ public class PaymentController {
         this.authService = authService;
     }
 
+    // API tạo link/payUrl theo phương thức thanh toán client chọn.
     @org.springframework.web.bind.annotation.PostMapping("/user/payment-url")
     public ApiResponse<?> getMethodName(@RequestParam String method, @RequestBody PaymentRequest paymentRequest, Authentication authentication) {
         UserResponse currentUser = authService.getCurrentUser(authentication);
@@ -57,6 +58,7 @@ public class PaymentController {
                 .build();
     }
 
+    // Endpoint callback từ gateway: xử lý kết quả và redirect về frontend.
     @GetMapping("/callback/{method}")
         public ResponseEntity<Void> paymentCallback(
             @PathVariable String method,

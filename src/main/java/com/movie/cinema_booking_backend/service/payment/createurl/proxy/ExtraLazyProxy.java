@@ -26,11 +26,13 @@ public class ExtraLazyProxy implements IExtraServiceService {
 	}
 
 	@Override
+	// Delegate trực tiếp cho luồng user (không cache).
 	public Page<ExtraServiceResponse> getUserExtraServices(int page, int size, ServiceCategory category) {
 		return delegate.getUserExtraServices(page, size, category);
 	}
 
 	@Override
+	// Danh sách admin có cache TTL để giảm tải DB ở truy vấn lặp.
 	public Page<ExtraServiceResponse> getAllExtraServicesForAdmin(int page, int size, Boolean isActive, ServiceCategory category) {
 		String cacheKey = buildAdminListCacheKey(page, size, isActive, category);
 		CacheEntry<Page<ExtraServiceResponse>> cached = adminListCache.get(cacheKey);
@@ -46,11 +48,13 @@ public class ExtraLazyProxy implements IExtraServiceService {
 	}
 
 	@Override
+	// Lấy chi tiết 1 dịch vụ thêm.
 	public ExtraServiceResponse getExtraServiceById(Long id) {
 		return delegate.getExtraServiceById(id);
 	}
 
 	@Override
+	// Tạo mới rồi clear cache list admin để tránh dữ liệu cũ.
 	public ExtraServiceResponse createExtraService(ExtraServiceRequest request) {
 		ExtraServiceResponse created = delegate.createExtraService(request);
 		clearAdminListCache();
@@ -58,6 +62,7 @@ public class ExtraLazyProxy implements IExtraServiceService {
 	}
 
 	@Override
+	// Cập nhật rồi clear cache list admin.
 	public ExtraServiceResponse updateExtraService(Long id, ExtraServiceRequest request) {
 		ExtraServiceResponse updated = delegate.updateExtraService(id, request);
 		clearAdminListCache();
@@ -65,20 +70,24 @@ public class ExtraLazyProxy implements IExtraServiceService {
 	}
 
 	@Override
+	// Xóa rồi clear cache list admin.
 	public void deleteExtraService(Long id) {
 		delegate.deleteExtraService(id);
 		clearAdminListCache();
 	}
 
+	// Build key cache theo đầy đủ tiêu chí phân trang/lọc.
 	private String buildAdminListCacheKey(int page, int size, Boolean isActive, ServiceCategory category) {
 		return page + ":" + size + ":" + Objects.toString(isActive, "null") + ":" + Objects.toString(category, "null");
 	}
 
+	// Invalidate toàn bộ cache danh sách admin.
 	private void clearAdminListCache() {
 		adminListCache.clear();
 	}
 
 	private record CacheEntry<T>(T value, long expireAt) {
+		// Kiểm tra entry đã quá hạn chưa.
 		boolean isExpired() {
 			return System.currentTimeMillis() > expireAt;
 		}

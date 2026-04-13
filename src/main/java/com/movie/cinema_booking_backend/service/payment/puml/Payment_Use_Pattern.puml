@@ -1,0 +1,130 @@
+@startuml
+
+title Cinema Booking Backend - Payment Full 5 Patterns (One Direction)
+
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+' ============================
+' 1) FACADE (ENTRY)
+' ============================
+package "1) Facade Entry" {
+  class BookingFacade <<Facade>> {
+    +initiateBooking(request: BookingRequest, username: String): BookingInitiateResponse
+  }
+
+  interface IPayment {
+    +createPaymentUrl(method: String, request: PaymentRequest): String
+  }
+}
+
+' ============================
+' 2) PROXY
+' ============================
+package "2) Proxy Layer" {
+  class PaymentProxy <<Proxy>> {
+    -paymentService: IPayment
+    -paymentFacade: PaymentFacade
+    +createPaymentUrl(method: String, request: PaymentRequest): String
+  }
+
+  class PaymentFacade {
+    +createPayment(paymentMethod: String, message: String, bookingId: String): int
+    +processPaymentCallback(method: String, params: Map<String, String>): PaymentCallbackResponse
+  }
+}
+
+' ============================
+' 3) STRATEGY
+' ============================
+package "3) Strategy Core" {
+  class PaymentService <<Context>> {
+    -strategy: Map<String, IAdapterPay>
+    +createPaymentUrl(method: String, request: PaymentRequest): String
+  }
+
+  interface IAdapterPay <<Strategy>> {
+    +getType(): String
+    +createPaymentUrl(request: PaymentRequest): String
+  }
+}
+
+' ============================
+' 4) ADAPTER
+' ============================
+package "4) Adapter for Gateway" {
+  class Adapter_MOMO <<Adapter>> {
+    -moMoService: MoMoService
+    +getType(): String
+    +createPaymentUrl(request: PaymentRequest): String
+  }
+
+  class Adapter_VNPAY <<Adapter>> {
+    -vnPayService: VNPayService
+    +getType(): String
+    +createPaymentUrl(request: PaymentRequest): String
+  }
+
+  class MoMoService {
+    +createPayment(params: Map<String, String>): String
+    +sign(params: Map<String, String>): String
+    +verify(params: Map<String, String>): boolean
+  }
+
+  class VNPayService {
+    +createPaymentUrl(request: PaymentRequest): String
+    +hash(params: Map<String, String>): String
+    +verify(params: Map<String, String>): boolean
+  }
+}
+
+' ============================
+' 5) TEMPLATE METHOD
+' ============================
+package "5) Template Method for Signature" {
+  abstract class AbstractPaymentSignatureTemplate <<Template Method>> {
+    +signRequest(params: Map<String, String>): String
+    +verifyCallback(params: Map<String, String>): boolean
+    #buildRawDataForSigning(params: Map<String, String>): String
+    #buildRawDataForVerification(params: Map<String, String>): String
+    #extractReceivedSignature(params: Map<String, String>): String
+    #getSecretKey(): String
+    #getHmacAlgorithm(): String
+  }
+}
+
+' FLOW (one vertical direction)
+BookingFacade --> IPayment : gọi paymentProxy.createPaymentUrl(...)
+IPayment <|.. PaymentProxy
+IPayment <|.. PaymentService
+
+PaymentProxy --> PaymentFacade : kiểm tra/tracking payment
+PaymentProxy --> PaymentService : delegate tạo payment URL
+
+PaymentService --> IAdapterPay : chọn strategy theo method
+IAdapterPay <|.. Adapter_MOMO
+IAdapterPay <|.. Adapter_VNPAY
+
+Adapter_MOMO --> MoMoService : convert request -> gateway format
+Adapter_VNPAY --> VNPayService : convert request -> gateway format
+
+AbstractPaymentSignatureTemplate <|-- MoMoService
+AbstractPaymentSignatureTemplate <|-- VNPayService
+
+note right of BookingFacade
+Điểm vào nghiệp vụ đặt vé + thanh toán.
+BookingFacade gọi IPayment (bean thực tế: PaymentProxy).
+end note
+
+note right of PaymentService
+Strategy xử lý mở rộng method thanh toán
+không cần sửa logic của client gọi.
+end note
+
+note right of AbstractPaymentSignatureTemplate
+Template Method chuẩn hóa ký/verify callback,
+MOMO và VNPAY chỉ override phần biến đổi dữ liệu.
+end note
+
+@enduml
