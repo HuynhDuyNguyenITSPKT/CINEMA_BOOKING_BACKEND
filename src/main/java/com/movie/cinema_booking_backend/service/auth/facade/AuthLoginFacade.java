@@ -8,7 +8,9 @@ import com.movie.cinema_booking_backend.service.auth.builder.RefreshTokenDescrip
 import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptor;
 import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptorBuilder;
 import com.movie.cinema_booking_backend.service.auth.builder.TokenDescriptorDirector;
-import com.movie.cinema_booking_backend.service.auth.login.factory.LoginStrategyFactory;
+import com.movie.cinema_booking_backend.service.auth.login.LoginContext;
+import com.movie.cinema_booking_backend.service.auth.login.strategy.GoogleLoginStrategy;
+import com.movie.cinema_booking_backend.service.auth.login.strategy.PasswordLoginStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,14 +18,19 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AuthLoginFacade {
 
-    private final LoginStrategyFactory loginStrategyFactory;
     private final JwtTokenService jwtTokenService;
     private final TokenDescriptorDirector tokenDescriptorDirector;
+    private final PasswordLoginStrategy passwordLoginStrategy;
+    private final GoogleLoginStrategy googleLoginStrategy;
 
     public AuthResponse login(String type, Object request) {
-        Account account = loginStrategyFactory
-                .get(type)
-                .authenticate(request);
+        LoginContext context = new LoginContext();
+        if ("google".equals(type)) {
+            context.setStrategy(googleLoginStrategy);
+        } else {
+            context.setStrategy(passwordLoginStrategy);
+        }
+        Account account = context.authenticate(request);
         return issueAuthTokens(account);
     }
 
