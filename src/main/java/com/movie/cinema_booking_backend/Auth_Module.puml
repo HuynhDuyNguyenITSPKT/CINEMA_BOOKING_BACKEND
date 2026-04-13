@@ -7,35 +7,80 @@ skinparam packageStyle rectangle
 skinparam classAttributeIconSize 0
 
 package "Controller" {
-  class AuthController
+  class AuthController {
+    +login(req: AuthRequest): ApiResponse<AuthResponse>
+    +googleLogin(req: GoogleLoginRequest): ApiResponse<AuthResponse>
+  }
 }
 
 package "Auth Service Layer" {
-  interface IAuthService
-  abstract class AbstractAuthProxy <<Proxy>>
-  class AuthLoggingProxy <<Proxy>>
-  class AuthServiceImpl
+  interface IAuthService {
+    +login(type: String, request: Object): AuthResponse
+    +logout(token: String): void
+    +refreshToken(token: String): AuthResponse
+  }
+
+  abstract class AbstractAuthProxy <<Proxy>> {
+    #next: IAuthService
+  }
+
+  class AuthLoggingProxy <<Proxy>> {
+    +login(type: String, request: Object): AuthResponse
+  }
+
+  class AuthServiceImpl {
+    +login(type: String, request: Object): AuthResponse
+    +verifyToken(token: String): SignedJWT
+  }
 }
 
 package "Login Orchestration" {
-  class AuthLoginFacade <<Facade>>
+  class LoginContext {
+    -strategy: LoginStrategy
+    +setStrategy(strategy: LoginStrategy): void
+    +authenticate(request: Object): Account
+  }
 
-  enum LoginType
-  class LoginPayload
+  class AuthLoginFacade <<Facade>> {
+    +login(type: String, request: Object): AuthResponse
+    +issueAuthTokens(account: Account): AuthResponse
+  }
 
-  class LoginStrategyFactory <<Factory>>
-  interface LoginStrategy <<Strategy>>
-  class PasswordLoginStrategy <<Strategy>>
-  class GoogleLoginStrategy <<Strategy>>
+  interface LoginStrategy <<Strategy>> {
+    +authenticate(request: Object): Account
+  }
+
+  class PasswordLoginStrategy <<Strategy>> {
+    +authenticate(request: Object): Account
+  }
+
+  class GoogleLoginStrategy <<Strategy>> {
+    +authenticate(request: Object): Account
+  }
 }
 
 package "Token Builder" {
-  class JwtTokenService
-  interface TokenDescriptorBuilder <<Builder>>
+  class JwtTokenService {
+    +generateToken(descriptor: TokenDescriptor): String
+    +verifyToken(token: String): SignedJWT
+  }
+
+  interface TokenDescriptorBuilder <<Builder>> {
+    +reset(username: String, scope: String): void
+    +buildDurationSeconds(): void
+    +buildType(): void
+    +buildToken(): void
+    +getResult(): TokenDescriptor
+  }
+
   class AccessTokenDescriptorBuilder <<Builder>>
   class RefreshTokenDescriptorBuilder <<Builder>>
   class TokenDescriptor
-  class TokenDescriptorDirector <<Director>>
+
+  class TokenDescriptorDirector <<Director>> {
+    +makeAccessToken(builder: TokenDescriptorBuilder, username: String, scope: String): void
+    +makeRefreshToken(builder: TokenDescriptorBuilder, username: String, scope: String): void
+  }
 }
 
 package "OTP + Entity Factory" {
@@ -51,12 +96,15 @@ package "OTP + Entity Factory" {
 }
 
 package "Support" {
-  interface IEmailService
+  class ApiResponse~T~
   class AuthRequest
+  class GoogleLoginRequest
   class AuthResponse
+  class Account
+  interface IEmailService
 }
 
-AuthController --> IAuthService
+AuthController --> IAuthService : login("password"/"google", request)
 
 IAuthService <|.. AbstractAuthProxy
 AbstractAuthProxy <|-- AuthLoggingProxy
@@ -64,7 +112,7 @@ AuthLoggingProxy --> IAuthService : next
 IAuthService <|.. AuthServiceImpl
 AuthLoggingProxy ..> AuthServiceImpl : wrap real subject
 
-AuthServiceImpl --> AuthLoginFacade : login / loginWithGoogle
+AuthServiceImpl --> AuthLoginFacade : login(type, request)
 AuthServiceImpl --> JwtTokenService : verifyToken()
 AuthServiceImpl --> OtpEventPublisher
 AuthServiceImpl --> OtpGeneratorSingleton
@@ -75,19 +123,20 @@ AuthServiceImpl ..> UserFactory
 AuthServiceImpl ..> AccountFactory
 AuthServiceImpl ..> PendingPasswordResetFactory
 
-AuthLoginFacade --> LoginStrategyFactory
+AuthLoginFacade --> LoginContext : setStrategy / authenticate
+AuthLoginFacade ..> PasswordLoginStrategy : when type="password"
+AuthLoginFacade ..> GoogleLoginStrategy : when type="google"
 AuthLoginFacade --> TokenDescriptorDirector
 AuthLoginFacade ..> AccessTokenDescriptorBuilder
 AuthLoginFacade ..> RefreshTokenDescriptorBuilder
-AuthLoginFacade ..> AuthRequest
 AuthLoginFacade ..> AuthResponse
 
-LoginStrategyFactory --> LoginStrategy : getStrategy(type)
-LoginStrategyFactory --> LoginType
-LoginStrategy ..> LoginPayload
+LoginContext --> LoginStrategy : strategy
 
 LoginStrategy <|.. PasswordLoginStrategy
 LoginStrategy <|.. GoogleLoginStrategy
+PasswordLoginStrategy ..> AuthRequest : request = AuthRequest
+GoogleLoginStrategy ..> GoogleLoginRequest : tokenId source
 GoogleLoginStrategy --> IEmailService
 
 TokenDescriptorDirector --> TokenDescriptorBuilder
@@ -104,10 +153,10 @@ UserFactory ..|> AuthEntityAbstractFactory
 AccountFactory ..|> AuthEntityAbstractFactory
 PendingPasswordResetFactory ..|> AuthEntityAbstractFactory
 
-note bottom of AuthLoginFacade
-Facade unifies multiple login flows,
-selects strategy via factory, then issues JWT tokens
-using the existing Builder + Director flow.
+note bottom of LoginContext
+Request contract in current flow:
+- type = "password" => request is AuthRequest
+- type = "google" => request is tokenId (String)
 end note
 
 note bottom of AuthServiceImpl
