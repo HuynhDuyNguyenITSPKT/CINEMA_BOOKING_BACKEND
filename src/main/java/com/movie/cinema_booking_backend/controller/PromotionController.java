@@ -42,6 +42,25 @@ public class PromotionController {
                 .build();
     }
 
+    @GetMapping("/public/promotions")
+    public ApiResponse<?> getAllPublicPromotions(@RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "10") int size,
+                                           @RequestParam(required = false) Boolean isActive) {
+        var pageResult = promotionService.getAllPromotions(page, size, isActive);
+        var pagination = new PaginationResponse.Builder<PromotionResponse>()
+                .currentItems(pageResult.getContent())
+            .totalItems(pageResult.getTotalElements())
+                .totalPages(pageResult.getTotalPages())
+                .currentPage(pageResult.getNumber())
+                .build();
+
+        return new ApiResponse.Builder<>()
+                .success(true)
+                .message("Lấy danh sách khuyến mãi thành công")
+                .data(pagination)
+                .build();
+    }
+
     @GetMapping("/admin/promotions/{id}")
     public ApiResponse<?> getPromotionById(@PathVariable String id) {
         return new ApiResponse.Builder<>()

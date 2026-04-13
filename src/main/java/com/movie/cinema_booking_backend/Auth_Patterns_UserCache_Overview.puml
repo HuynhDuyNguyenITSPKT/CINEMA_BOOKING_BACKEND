@@ -1,0 +1,143 @@
+@startuml
+
+title Cinema Booking Backend - Auth Patterns and User Cache Overview
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+package "Auth API" {
+  class AuthController {
+    +login(req: AuthRequest): ApiResponse<AuthResponse>
+    +googleLogin(req: GoogleLoginRequest): ApiResponse<AuthResponse>
+  }
+}
+
+package "Auth Service Layer" {
+  interface IAuthService {
+    +login(type: String, request: Object): AuthResponse
+    +logout(token: String): void
+    +refreshToken(token: String): AuthResponse
+  }
+
+  abstract class AbstractAuthProxy <<Proxy>> {
+    #next: IAuthService
+  }
+
+  class AuthLoggingProxy <<Proxy>>
+  class AuthServiceImpl
+}
+
+package "Auth Login Patterns" {
+  class AuthLoginFacade <<Facade>> {
+    +login(type: String, request: Object): AuthResponse
+    +issueAuthTokens(account: Account): AuthResponse
+  }
+
+  class LoginContext <<Context>> {
+    -strategy: LoginStrategy
+    +setStrategy(strategy: LoginStrategy): void
+    +authenticate(request: Object): Account
+  }
+
+  interface LoginStrategy <<Strategy>> {
+    +authenticate(request: Object): Account
+  }
+
+  class PasswordLoginStrategy <<Concrete Strategy>>
+  class GoogleLoginStrategy <<Concrete Strategy>>
+}
+
+package "Auth Token Patterns" {
+  class JwtTokenService
+
+  interface TokenDescriptorBuilder <<Builder>>
+  class AccessTokenDescriptorBuilder <<Builder>>
+  class RefreshTokenDescriptorBuilder <<Builder>>
+  class TokenDescriptor
+  class TokenDescriptorDirector <<Director>>
+}
+
+package "Auth Other Patterns" {
+  class OtpGeneratorSingleton <<Singleton>>
+  class OtpEventPublisher <<Observer Publisher>>
+}
+
+package "User API and Cache" {
+  class UserController
+
+  interface IUserService {
+    +updateProfile(authentication, request): UserResponse
+    +getUsersForAdmin(page, size, keyword, email, phone, status): PageAdminUserAccountResponse
+    +updateUserAccountByAdmin(userId, request): AdminUserAccountResponse
+  }
+
+  abstract class AbstractUserProxy <<Proxy>> {
+    #next: IUserService
+  }
+
+  class UserLoggingProxy <<Proxy>>
+  class UserLazyLoadProxy <<Proxy + Cache>>
+  class UserService
+
+  class UserAdminPageCache <<In-Memory Cache>> {
+    +get(key): PageAdminUserAccountResponse
+    +put(key, value): void
+    +clear(): void
+  }
+}
+
+AuthController --> IAuthService : login("password"/"google", request)
+
+IAuthService <|.. AbstractAuthProxy
+AbstractAuthProxy <|-- AuthLoggingProxy
+IAuthService <|.. AuthServiceImpl
+AuthLoggingProxy --> IAuthService : next
+AuthLoggingProxy ..> AuthServiceImpl : wrap real subject
+
+AuthServiceImpl --> AuthLoginFacade : login(type, request)
+AuthServiceImpl --> JwtTokenService : verifyToken()
+AuthServiceImpl --> OtpGeneratorSingleton
+AuthServiceImpl --> OtpEventPublisher
+
+AuthLoginFacade --> LoginContext : setStrategy / authenticate
+LoginContext --> LoginStrategy : strategy
+LoginStrategy <|.. PasswordLoginStrategy
+LoginStrategy <|.. GoogleLoginStrategy
+
+AuthLoginFacade --> TokenDescriptorDirector
+TokenDescriptorDirector --> TokenDescriptorBuilder
+TokenDescriptorBuilder <|.. AccessTokenDescriptorBuilder
+TokenDescriptorBuilder <|.. RefreshTokenDescriptorBuilder
+AccessTokenDescriptorBuilder --> JwtTokenService
+RefreshTokenDescriptorBuilder --> JwtTokenService
+AccessTokenDescriptorBuilder --> TokenDescriptor
+RefreshTokenDescriptorBuilder --> TokenDescriptor
+
+UserController --> IUserService
+
+IUserService <|.. AbstractUserProxy
+AbstractUserProxy <|-- UserLoggingProxy
+AbstractUserProxy <|-- UserLazyLoadProxy
+IUserService <|.. UserService
+
+UserLoggingProxy --> IUserService : next (UserLazyLoadProxy)
+UserLazyLoadProxy --> IUserService : next (UserService)
+UserLazyLoadProxy --> UserAdminPageCache : get/put/clear
+
+note right of AuthLoginFacade
+Auth login flow:
+1) login(type, request)
+2) Context executes selected Strategy
+3) Account returned
+4) issueAuthTokens(account) returns AuthResponse
+end note
+
+note right of UserLazyLoadProxy
+User cache scope:
+- Cache target: getUsersForAdmin(...)
+- Cache key: page|size|keyword|email|phone|status
+- Invalidate on: updateProfile, updateUserAccountByAdmin
+end note
+
+@enduml
