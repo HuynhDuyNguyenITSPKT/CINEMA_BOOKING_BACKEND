@@ -46,4 +46,11 @@ public class SeatLockServiceImpl implements ISeatLockService {
         lockRegistry.unlockAll(showtimeId, seatIds, userId);
         System.out.println("[SeatLockService] Seats unlocked successfully");
     }
+
+    @Override
+    public void forceUnlockSeats(String showtimeId, List<String> seatIds) {
+        System.out.println("[SeatLockService] Force unlocking seats " + seatIds + " for showtime " + showtimeId);
+        lockRegistry.unlockAllForce(showtimeId, seatIds);
+        System.out.println("[SeatLockService] Force unlock completed");
+    }
 }

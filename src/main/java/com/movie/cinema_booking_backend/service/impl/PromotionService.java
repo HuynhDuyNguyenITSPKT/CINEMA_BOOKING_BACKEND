@@ -10,6 +10,7 @@ import com.movie.cinema_booking_backend.service.IPromotionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -103,6 +104,15 @@ public class PromotionService implements IPromotionService {
     public void deletePromotion(String id) {
         Promotion promotion = findByIdOrThrow(id);
         promotionRepository.delete(promotion);
+    }
+
+    @Override
+    @Transactional
+    public boolean decrementUsage(String code) {
+        if (code == null || code.isBlank()) {
+            return false;
+        }
+        return promotionRepository.decrementQuantityIfAvailable(code.trim()) > 0;
     }
 
     private Promotion findByIdOrThrow(String id) {

@@ -7,6 +7,9 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -18,4 +21,14 @@ public interface PromotionRepository extends JpaRepository<Promotion, String> {
     boolean existsByCodeAndIdNot(String code, String id);
 
     Optional<Promotion> getPromotionByCode(String code);
+
+    @Modifying
+    @Query("""
+            update Promotion p
+            set p.quantity = p.quantity - 1
+            where p.code = :code
+              and p.quantity > 0
+              and p.isActive = true
+            """)
+    int decrementQuantityIfAvailable(@Param("code") String code);
 }

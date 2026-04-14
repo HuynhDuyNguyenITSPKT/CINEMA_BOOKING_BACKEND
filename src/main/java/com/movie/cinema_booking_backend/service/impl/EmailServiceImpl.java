@@ -1,5 +1,12 @@
 package com.movie.cinema_booking_backend.service.impl;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.movie.cinema_booking_backend.exception.AppException;
+import com.movie.cinema_booking_backend.exception.ErrorCode;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -10,6 +17,11 @@ import org.springframework.stereotype.Service;
 import com.movie.cinema_booking_backend.service.IEmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -205,6 +217,76 @@ public class EmailServiceImpl implements IEmailService {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendTicketQrEmail(String to, String bookingId, String movieName, String amount, List<String> ticketIds) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            return;
+        }
+
+        MimeMessage message = mailSender.createMimeMessage();
+
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("[Cinema Booking] Ve QR - Don " + bookingId);
+
+            StringBuilder ticketsHtml = new StringBuilder();
+            for (String ticketId : ticketIds) {
+                String qrContent = "CB_TICKET:" + ticketId;
+                String qrDataUri = generateQrDataUri(qrContent);
+
+                ticketsHtml.append("""
+                    <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin-bottom:12px;">
+                        <p style="margin:0 0 8px 0;"><b>Ma ve:</b> %s</p>
+                        <img src="%s" alt="QR %s" width="180" height="180" style="display:block;"/>
+                        <p style="margin:8px 0 0 0;font-size:12px;color:#666;">Noi dung QR: %s</p>
+                    </div>
+                    """.formatted(ticketId, qrDataUri, ticketId, qrContent));
+            }
+
+            String htmlTemplate = """
+                <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
+                    <div style="max-width: 680px; margin: auto; background: white; border-radius: 10px; padding: 20px;">
+                        <h2 style="color: #0d6efd;">Ve dien tu cua ban</h2>
+                        <p>Thanh toan don <b>%s</b> da thanh cong.</p>
+                        <p><b>Phim:</b> %s</p>
+                        <p><b>Tong tien:</b> %s</p>
+                        <p style="margin-top: 16px;"><b>Danh sach QR ve:</b></p>
+                        %s
+                        <hr>
+                        <p style="font-size: 12px; color: gray;">Vui long giu kin ma QR va dua ma nay cho nhan vien rap khi check-in.</p>
+                    </div>
+                </div>
+                """;
+
+            String html = htmlTemplate.formatted(
+                    bookingId,
+                    movieName == null || movieName.isBlank() ? "N/A" : movieName,
+                    amount,
+                    ticketsHtml
+            );
+
+            helper.setText(html, true);
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private String generateQrDataUri(String content) {
+        try {
+            BitMatrix matrix = new MultiFormatWriter().encode(content, BarcodeFormat.QR_CODE, 220, 220);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(matrix, "PNG", outputStream);
+            String base64 = Base64.getEncoder().encodeToString(outputStream.toByteArray());
+            return "data:image/png;base64," + base64;
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }
