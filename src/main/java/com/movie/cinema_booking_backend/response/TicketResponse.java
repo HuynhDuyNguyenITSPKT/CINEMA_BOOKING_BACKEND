@@ -13,7 +13,7 @@ public class TicketResponse {
     private String seatId;
     private String seatName;
     private String seatTypeName;
-    private BigDecimal price;
+    private BigDecimal finalPrice;
     private TicketStatus status;
     private String qrCodeUrl;
 }

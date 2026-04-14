@@ -5,7 +5,7 @@ import com.movie.cinema_booking_backend.enums.BookingStatus;
 import com.movie.cinema_booking_backend.enums.TicketStatus;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
-import com.movie.cinema_booking_backend.repository.*;
+
 import com.movie.cinema_booking_backend.service.bookingticket.engine.PricingEngine;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -20,10 +20,8 @@ import java.util.UUID;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class GroupBookingBuilder extends AbstractBookingBuilder {
 
-    public GroupBookingBuilder(BookingRepository bookingRepo, SeatRepository seatRepo,
-                               ShowtimeRepository showtimeRepo, ExtraServiceRepository extraRepo,
-                               PromotionRepository promoRepo, AccountRepository accountRepo) {
-        super(bookingRepo, seatRepo, showtimeRepo, extraRepo, promoRepo, accountRepo);
+    public GroupBookingBuilder() {
+        super();
     }
 
     @Override
@@ -39,22 +37,6 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
         }
     }
 
-    @Override
-    public void runPricing(PricingEngine engine) {
-        // Gọi Engine để tính base + surcharge + default promo + tax
-        super.runPricing(engine);
-
-        // EXTRA RULE: Khách đoàn được giảm thêm 5% trực tiếp lên final price (trước extras)
-        // (Đây là cách override tính giá linh hoạt ngay trong Builder mà không cần Policy)
-        BigDecimal totalBeforeExtras = calcResult.getFinalTotal().subtract(calcResult.getExtrasTotal());
-        BigDecimal groupDiscount = totalBeforeExtras.multiply(BigDecimal.valueOf(5))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
-        calcResult.setPromotionDiscount(calcResult.getPromotionDiscount().add(groupDiscount));
-
-        // Không sửa lại ticket list để hiển thị đúng bill ban đầu, chỉ giảm tồng
-        // Hoặc có thể viết thêm logic giảm điều vào từng vé ở đây
-    }
 
     @Override
     public void buildEntities() {
@@ -62,7 +44,7 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
                 .id(UUID.randomUUID().toString())
                 .user(user)
                 .status(BookingStatus.PENDING_APPROVAL) // B2B: Lưu lại nhưng Chờ Admin Duyệt
-                .totalAmount(calcResult.getFinalTotal()) // Chú ý: Ở hệ thống thực tế Group có thể ghi đè totalAmount
+                .grandTotalPrice(calcResult.getFinalTotal()) // Chú ý: Ở hệ thống thực tế Group có thể ghi đè grandTotalPrice
                 .createdAt(LocalDateTime.now())
                 .note("[GROUP - B2B] " + (request.getNote() != null ? request.getNote() : ""))
                 .build();
@@ -71,7 +53,7 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
             BigDecimal price = calcResult.getTicketPrices().getOrDefault(seat.getId(), BigDecimal.ZERO);
             Ticket ticket = Ticket.builder()
                     .id(UUID.randomUUID().toString())
-                    .showtime(showtime).seat(seat).price(price).status(TicketStatus.PROCESSING)
+                    .showtime(showtime).seat(seat).finalPrice(price).status(TicketStatus.PROCESSING)
                     .build();
             booking.addTicket(ticket);
         }
@@ -81,7 +63,7 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
                 int qty = request.getExtras().get(ex.getId());
                 booking.addBookingExtra(BookingExtra.builder()
                         .extraService(ex).quantity(qty)
-                        .totalPrice(ex.getPrice().multiply(BigDecimal.valueOf(qty))).build());
+                        .totalPrice(ex.getUnitPrice().multiply(BigDecimal.valueOf(qty))).build());
             }
         }
     }

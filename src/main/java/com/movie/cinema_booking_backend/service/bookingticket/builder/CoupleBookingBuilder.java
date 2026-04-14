@@ -5,7 +5,7 @@ import com.movie.cinema_booking_backend.enums.BookingStatus;
 import com.movie.cinema_booking_backend.enums.TicketStatus;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
-import com.movie.cinema_booking_backend.repository.*;
+
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -18,10 +18,8 @@ import java.util.UUID;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CoupleBookingBuilder extends AbstractBookingBuilder {
 
-    public CoupleBookingBuilder(BookingRepository bookingRepo, SeatRepository seatRepo,
-                                ShowtimeRepository showtimeRepo, ExtraServiceRepository extraRepo,
-                                PromotionRepository promoRepo, AccountRepository accountRepo) {
-        super(bookingRepo, seatRepo, showtimeRepo, extraRepo, promoRepo, accountRepo);
+    public CoupleBookingBuilder() {
+        super();
     }
 
     @Override
@@ -47,7 +45,7 @@ public class CoupleBookingBuilder extends AbstractBookingBuilder {
                 .id(UUID.randomUUID().toString())
                 .user(user)
                 .status(BookingStatus.RESERVED) // Trạng thái: Giữ chỗ chờ thanh toán
-                .totalAmount(calcResult.getFinalTotal())
+                .grandTotalPrice(calcResult.getFinalTotal())
                 .createdAt(LocalDateTime.now())
                 .note("[COUPLE] " + (request.getNote() != null ? request.getNote() : ""))
                 .build();
@@ -56,16 +54,15 @@ public class CoupleBookingBuilder extends AbstractBookingBuilder {
             BigDecimal price = calcResult.getTicketPrices().getOrDefault(seat.getId(), BigDecimal.ZERO);
             Ticket ticket = Ticket.builder()
                     .id(UUID.randomUUID().toString())
-                    .showtime(showtime).seat(seat).price(price).status(TicketStatus.PROCESSING)
+                    .showtime(showtime).seat(seat).finalPrice(price).status(TicketStatus.PROCESSING)
                     .build();
 
             // Nếu có khuyến mãi, gán vào vé
             if (promotion != null && calcResult.getPromotionDiscount().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal discountPerTicket = calcResult.getPromotionDiscount()
                         .divide(BigDecimal.valueOf(seats.size()), 0, java.math.RoundingMode.HALF_UP);
-                        
+
                 TicketPromotion tp = TicketPromotion.builder()
-                        .id(new TicketPromotionId(ticket.getId(), promotion.getId()))
                         .ticket(ticket)
                         .promotion(promotion)
                         .discountAmount(discountPerTicket)
@@ -82,7 +79,7 @@ public class CoupleBookingBuilder extends AbstractBookingBuilder {
                 int qty = request.getExtras().get(ex.getId());
                 booking.addBookingExtra(BookingExtra.builder()
                         .extraService(ex).quantity(qty)
-                        .totalPrice(ex.getPrice().multiply(BigDecimal.valueOf(qty))).build());
+                        .totalPrice(ex.getUnitPrice().multiply(BigDecimal.valueOf(qty))).build());
             }
         }
     }

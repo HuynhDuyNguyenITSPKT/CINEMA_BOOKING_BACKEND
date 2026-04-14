@@ -1,0 +1,45 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+title Chain of Responsibility - Pricing Engine Pipeline
+
+class BookingDirector <<Client>>
+
+class PricingEngine {
+  - steps : List<PricingStep>
+  + calculate(request) : CalculationResult
+}
+
+interface PricingStep <<Handler>> {
+  + process(request, result)
+}
+
+class BasePriceStep <<ConcreteHandler>>
+class SurchargeStep <<ConcreteHandler>>
+class PromotionStep <<ConcreteHandler>>
+class TaxStep <<ConcreteHandler>>
+class ExtrasStep <<ConcreteHandler>>
+class CalculationRequest
+class CalculationResult
+
+BookingDirector --> PricingEngine
+PricingEngine --> PricingStep : iterates ordered handlers
+PricingStep <|.. BasePriceStep
+PricingStep <|.. SurchargeStep
+PricingStep <|.. PromotionStep
+PricingStep <|.. TaxStep
+PricingStep <|.. ExtrasStep
+PricingStep ..> CalculationRequest
+PricingStep ..> CalculationResult
+
+BasePriceStep ..> SurchargeStep : @Order(1) -> @Order(2)
+SurchargeStep ..> PromotionStep : @Order(2) -> @Order(3)
+PromotionStep ..> TaxStep : @Order(3) -> @Order(4)
+TaxStep ..> ExtrasStep : @Order(4) -> @Order(5)
+
+note right of PricingEngine
+Current chain is orchestrated by engine + Spring @Order,
+not by explicit Handler.next/setNext() links.
+end note
+@enduml
+

@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 
 /**
  * ─── Trạm 1: Base Price ───────────────────────────────────
- * Tính tổng giá gốc: basePrice × số ghế.
+ * Tính tổng giá gốc: baseTicketPrice × số ghế.
  * Kết quả lưu vào result.baseSubtotal – đây là phần DUY NHẤT
  * mà Promotion được phép giảm giá.
  */
@@ -20,7 +20,7 @@ public class BasePriceStep implements PricingStep {
 
     @Override
     public void process(CalculationRequest request, CalculationResult result) {
-        BigDecimal subtotal = request.basePrice()
+        BigDecimal subtotal = request.baseTicketPrice()
                 .multiply(BigDecimal.valueOf(request.seats().size()));
         result.setBaseSubtotal(subtotal);
     }

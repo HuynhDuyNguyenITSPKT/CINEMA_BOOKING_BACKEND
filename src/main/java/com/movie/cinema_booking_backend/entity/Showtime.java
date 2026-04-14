@@ -16,7 +16,8 @@ public class Showtime {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    private int basePrice;
+    @Column(name = "base_price")
+    private int baseTicketPrice;
 
     @Column(nullable = false)
     private LocalDateTime startTime;
@@ -30,7 +31,7 @@ public class Showtime {
     @EqualsAndHashCode.Exclude
     private Movie movie;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "auditorium_id", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

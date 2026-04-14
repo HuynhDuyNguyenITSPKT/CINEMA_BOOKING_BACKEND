@@ -6,7 +6,7 @@ import com.movie.cinema_booking_backend.enums.TicketStatus;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.*;
-import com.movie.cinema_booking_backend.request.AdminBookingRequest;
+import com.movie.cinema_booking_backend.request.AdminUpdateGroupSeatsRequest;
 import com.movie.cinema_booking_backend.request.BookingRequest;
 import com.movie.cinema_booking_backend.response.*;
 import com.movie.cinema_booking_backend.service.IBookingService;
@@ -39,7 +39,10 @@ public class BookingServiceImpl implements IBookingService {
     private final BookingRepository     bookingRepository;
     private final SeatRepository        seatRepository;
     private final ShowtimeRepository    showtimeRepository;
-    private final AccountRepository     accountRepository;
+    private final AccountRepository      accountRepository;
+    private final TicketRepository       ticketRepository;
+    private final PromotionRepository    promotionRepository;
+    private final ExtraServiceRepository extraServiceRepository;
 
     // ═══════════════════════════════════════════════════════════
     //  CREATE
@@ -48,11 +51,14 @@ public class BookingServiceImpl implements IBookingService {
     @Override
     @Transactional
     public BookingResponse createBooking(BookingRequest request, String username) {
+        // Chuẩn bị context (Lego pieces) thay cho Builder
+        BookingContext context = prepareContext(request, username);
+
         // Factory chọn đúng Builder (Standard, Couple, Group) dựa trên type truyền vào
         BookingBuilder builder = factory.getBuilder(request.getBookingType());
 
         // Director điều phối toàn bộ luồng
-        Booking booking = director.construct(builder, request, username);
+        Booking booking = director.construct(builder, request, context, username);
 
         // Persist Booking + cascade save Tickets + BookingExtras
         bookingRepository.save(booking);
@@ -119,9 +125,10 @@ public class BookingServiceImpl implements IBookingService {
     @Override
     @Transactional(readOnly = true)
     public PricePreviewResponse calculatePreviewPrice(BookingRequest request, String username) {
+        BookingContext context = prepareContext(request, username);
         BookingBuilder builderRaw = factory.getBuilder(request.getBookingType());
         // Construct chỉ đến bước runPricing (không buildEntities, không save)
-        director.constructPreview(builderRaw, request, username);
+        director.constructPreview(builderRaw, request, context, username);
 
         AbstractBookingBuilder builder = (AbstractBookingBuilder) builderRaw;
         var calcResult = builder.getCalcResult();
@@ -162,58 +169,95 @@ public class BookingServiceImpl implements IBookingService {
     }
 
     /**
-     * Admin tạo booking ngoại lệ:
-     * - Không qua validateRules() (bypass max seat limit)
-     * - Nếu có manualTotalAmount thì override giá hệ thống
+     * Admin cập nhật ghế cho đơn B2B và duyệt đơn.
+     *
+     * Luồng (2-Phase Finalization):
+     *  1. Tải đơn PENDING_APPROVAL từ DB.
+     *  2. Gọi GroupBookingBuilder (qua Director) để khởi tạo Booking "bản vẽ" mới
+     *     với danh sách ghế Admin đã chốt. Builder chạy Pipeline:
+     *     GroupDiscountStep(-5%) → TaxStep(+10%) → chia đều giá/ticket.
+     *  3. JPA Diffing: So sánh Tickets cũ vs Tickets mới.
+     *     - Ticket bị loại: orphanRemoval=true → DELETE → Ghế xanh lại ngay lập tức.
+     *     - Ticket mới: addTicket() → INSERT.
+     *  4. Chuyển trạng thái sang RESERVED (sẵn sàng thanh toán online).
+     *
+     * Builder Pattern KHÔNG bị vi phạm: Builder chỉ tạo Object trên RAM.
+     * Việc đồng bộ DB là trách nhiệm của Service Layer (tầng Orchestration).
      */
     @Override
     @Transactional
-    public BookingResponse adminCreateBooking(AdminBookingRequest request) {
-        Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
-                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+    public BookingResponse updateGroupBookingSeatsAndApprove(String bookingId, AdminUpdateGroupSeatsRequest request) {
+        // 1. Load đơn cần duyệt
+        Booking dbBooking = bookingRepository.findByIdWithDetails(bookingId)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
 
-        Long userId;
-        try {
-            userId = Long.valueOf(request.getUserId());
-        } catch (NumberFormatException ex) {
+        if (dbBooking.getStatus() != BookingStatus.PENDING_APPROVAL) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        User user = accountRepository.findByUserId(userId)
-                .map(Account::getUser)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        // 2. Tải Showtime (có thể là showtime mới nếu admin đổi)
+        String targetShowtimeId = request.getShowtimeId() != null
+                ? request.getShowtimeId()
+                : (dbBooking.getTickets().isEmpty() ? null
+                    : dbBooking.getTickets().get(0).getShowtime().getId());
 
-        List<Seat> seats = request.getSeatIds().stream()
-                .map(id -> seatRepository.findById(id)
-                        .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND)))
-                .collect(Collectors.toList());
-
-        // Dùng giá override nếu Admin chỉ định, nếu không tính tự động theo basePrice
-        BigDecimal total = request.getManualTotalAmount() != null
-                ? request.getManualTotalAmount()
-                : BigDecimal.valueOf(showtime.getBasePrice()).multiply(BigDecimal.valueOf(seats.size()));
-
-        Booking booking = Booking.builder()
-                .id(UUID.randomUUID().toString())
-                .user(user)
-                .status(BookingStatus.RESERVED)
-                .totalAmount(total)
-                .createdAt(LocalDateTime.now())
-                .note("[ADMIN OVERRIDE] " + (request.getNote() != null ? request.getNote() : ""))
-                .build();
-
-        for (Seat seat : seats) {
-            BigDecimal seatPrice = total.divide(BigDecimal.valueOf(seats.size()), 2, RoundingMode.HALF_UP);
-            Ticket ticket = Ticket.builder()
-                    .id(UUID.randomUUID().toString())
-                    .showtime(showtime).seat(seat).price(seatPrice)
-                    .status(TicketStatus.PROCESSING)
-                    .build();
-            booking.addTicket(ticket);
+        if (targetShowtimeId == null) {
+            throw new AppException(ErrorCode.SHOWTIME_NOT_FOUND);
         }
 
-        bookingRepository.save(booking);
-        return toResponse(booking);
+        // 3. Chuẩn bị BookingRequest để nạp vào Builder
+        BookingRequest syntheticRequest = new BookingRequest();
+        syntheticRequest.setShowtimeId(targetShowtimeId);
+        syntheticRequest.setSeatIds(request.getSeatIds());
+        syntheticRequest.setBookingType("GROUP");
+        syntheticRequest.setNote("[GROUP - B2B] " + (request.getAdminNote() != null ? request.getAdminNote() : "Duyệt bởi Admin"));
+
+        // 4. Gọi Builder qua Director — Builder xây Booking mới trên RAM với giá đã tính
+        String username = dbBooking.getUser().getAccount().getUsername();
+        BookingContext context = prepareContext(syntheticRequest, username);
+        BookingBuilder builder = factory.getBuilder("GROUP");
+        Booking builtBooking = director.construct(builder, syntheticRequest, context, username);
+
+        // 5. JPA Diffing — Đồng bộ Tickets vào dbBooking (không tạo row mới)
+        java.util.Set<String> newSeatIds = new java.util.HashSet<>(request.getSeatIds());
+
+        // Xóa các Ticket không còn trong danh sách mới
+        // orphanRemoval = true trên @OneToMany(tickets) sẽ tự DELETE khỏi DB
+        dbBooking.getTickets().removeIf(t ->
+                t.getSeat() == null || !newSeatIds.contains(t.getSeat().getId()));
+
+        // Cập nhật giá những ghế còn lại, thêm ghế mới nếu cần
+        java.util.Map<String, Ticket> builtMap = new java.util.HashMap<>();
+        builtBooking.getTickets().forEach(t -> builtMap.put(t.getSeat().getId(), t));
+
+        java.util.Set<String> existingSeatIds = dbBooking.getTickets().stream()
+                .filter(t -> t.getSeat() != null)
+                .map(t -> t.getSeat().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
+        // Update giá các ghế giữ lại
+        dbBooking.getTickets().forEach(t -> {
+            if (t.getSeat() != null && builtMap.containsKey(t.getSeat().getId())) {
+                t.setFinalPrice(builtMap.get(t.getSeat().getId()).getFinalPrice());
+                t.setStatus(TicketStatus.PROCESSING);
+            }
+        });
+
+        // Thêm ghế mới
+        builtBooking.getTickets().stream()
+                .filter(t -> t.getSeat() != null && !existingSeatIds.contains(t.getSeat().getId()))
+                .forEach(t -> {
+                    t.setBooking(dbBooking);
+                    dbBooking.getTickets().add(t);
+                });
+
+        // 6. Chốt tổng tiền và chuyển trạng thái
+        dbBooking.setGrandTotalPrice(builtBooking.getGrandTotalPrice());
+        dbBooking.setNote(builtBooking.getNote());
+        dbBooking.setStatus(BookingStatus.RESERVED);
+
+        bookingRepository.save(dbBooking);
+        return toResponse(dbBooking);
     }
 
     /**
@@ -257,6 +301,24 @@ public class BookingServiceImpl implements IBookingService {
         return toResponse(booking);
     }
 
+    @Override
+    @Transactional
+    public void cancelExpiredReservedBookings() {
+        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(15);
+        List<Booking> expiredBookings = bookingRepository.findByStatusAndCreatedAtBefore(BookingStatus.PENDING, cutoffTime);
+        
+        for (Booking booking : expiredBookings) {
+            booking.setStatus(BookingStatus.CANCELLED);
+            booking.getTickets().forEach(t -> t.setStatus(TicketStatus.CANCELLED));
+        }
+        
+        if (!expiredBookings.isEmpty()) {
+            bookingRepository.saveAll(expiredBookings);
+            // Logger có thể được thêm vào đây để ghi log console
+            System.out.println("[CronJob] Đã huỷ " + expiredBookings.size() + " đơn đặt vé quá hạn thanh toán.");
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════
     //  Helpers
     // ═══════════════════════════════════════════════════════════
@@ -280,7 +342,7 @@ public class BookingServiceImpl implements IBookingService {
                         .seatName(t.getSeat() != null ? t.getSeat().getName() : null)
                         .seatTypeName(t.getSeat() != null && t.getSeat().getSeatType() != null
                                 ? t.getSeat().getSeatType().getName() : null)
-                        .price(t.getPrice())
+                        .finalPrice(t.getFinalPrice())
                         .status(t.getStatus())
                         .qrCodeUrl(t.getQrCodeUrl())
                         .build())
@@ -298,7 +360,7 @@ public class BookingServiceImpl implements IBookingService {
         return BookingResponse.builder()
                 .id(booking.getId())
                 .status(booking.getStatus())
-                .totalAmount(booking.getTotalAmount())
+                .grandTotalPrice(booking.getGrandTotalPrice())
                 .createdAt(booking.getCreatedAt())
                 .note(booking.getNote())
                 .showtimeId(showtime  != null ? showtime.getId()          : null)
@@ -308,5 +370,54 @@ public class BookingServiceImpl implements IBookingService {
                 .tickets(tickets)
                 .extras(extras)
                 .build();
+    }
+
+    /**
+     * Chuẩn bị dữ liệu (Data Fetching + DB Guard) cho Builder.
+     */
+    private BookingContext prepareContext(BookingRequest request, String username) {
+        Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
+                .orElseThrow(() -> new AppException(ErrorCode.SHOWTIME_NOT_FOUND));
+
+        User user = accountRepository.findByUsername(username)
+                .map(Account::getUser)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        List<Seat> seats = new java.util.ArrayList<>();
+        for (String seatId : request.getSeatIds()) {
+            Seat seat = seatRepository.findById(seatId)
+                    .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
+            if (!seat.getAuditorium().getId().equals(showtime.getAuditorium().getId())) {
+                throw new AppException(ErrorCode.SEAT_NOT_FOUND);
+            }
+            seats.add(seat);
+        }
+
+        // ─── DB Guard: chặn double-booking ──────────────────────────────────────
+        java.util.Set<String> occupiedSeatIds = ticketRepository.findSeatIdsByShowtimeIdAndStatuses(
+                request.getShowtimeId(),
+                java.util.EnumSet.of(TicketStatus.PROCESSING, TicketStatus.BOOKED, TicketStatus.USED)
+        );
+        for (Seat seat : seats) {
+            if (occupiedSeatIds.contains(seat.getId())) {
+                throw new AppException(ErrorCode.SEAT_ALREADY_TAKEN);
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────────
+
+        String code = request.getPromotionCode();
+        Promotion promotion = (code != null && !code.isBlank())
+                ? promotionRepository.getPromotionByCode(code).orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND))
+                : null;
+
+        List<ExtraService> extraServices = new java.util.ArrayList<>();
+        if (request.getExtras() != null) {
+            for (Long extraId : request.getExtras().keySet()) {
+                extraServices.add(extraServiceRepository.findById(extraId)
+                        .orElseThrow(() -> new AppException(ErrorCode.EXTRA_SERVICE_NOT_FOUND)));
+            }
+        }
+
+        return new BookingContext(showtime, user, seats, promotion, extraServices);
     }
 }

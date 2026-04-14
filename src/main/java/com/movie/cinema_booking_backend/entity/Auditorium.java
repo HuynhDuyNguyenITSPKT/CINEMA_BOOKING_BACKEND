@@ -41,7 +41,7 @@ public class Auditorium {
     @Builder.Default
     private AuditoriumStatus status = AuditoriumStatus.ACTIVE;
 
-    @OneToMany(mappedBy = "auditorium")
+    @OneToMany(mappedBy = "auditorium", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

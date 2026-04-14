@@ -20,6 +20,7 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
     List<Booking> findByUser_Account_Username(String username);
     List<Booking> findByStatus(BookingStatus status);
         List<Booking> findByStatusIn(List<BookingStatus> statuses);
+        List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, LocalDateTime createdAt);
         List<Booking> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
         List<Booking> findByStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
             BookingStatus status,

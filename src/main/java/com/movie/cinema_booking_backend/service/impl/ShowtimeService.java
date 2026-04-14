@@ -50,9 +50,9 @@ public class ShowtimeService implements IShowtimeService {
             throw new AppException(ErrorCode.OVERLAPPING_SHOWTIME);
         }
 
-        int basePrice = pricingStrategyContext.getPrice(request.getStandardPrice(), request.getStartTime());
+        int baseTicketPrice = pricingStrategyContext.getPrice(request.getStandardPrice(), request.getStartTime());
 
-        Showtime showtime = showtimeFactory.createEntity(movie, auditorium, request.getStartTime(), endTime, basePrice);
+        Showtime showtime = showtimeFactory.createEntity(movie, auditorium, request.getStartTime(), endTime, baseTicketPrice);
         showtime = showtimeRepository.save(showtime);
 
         return showtimeFactory.createResponse(showtime);
@@ -95,13 +95,13 @@ public class ShowtimeService implements IShowtimeService {
             throw new AppException(ErrorCode.OVERLAPPING_SHOWTIME);
         }
 
-        int basePrice = pricingStrategyContext.getPrice(request.getStandardPrice(), request.getStartTime());
+        int baseTicketPrice = pricingStrategyContext.getPrice(request.getStandardPrice(), request.getStartTime());
 
         showtime.setMovie(movie);
         showtime.setAuditorium(auditorium);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(endTime);
-        showtime.setBasePrice(basePrice);
+        showtime.setBaseTicketPrice(baseTicketPrice);
 
         showtime = showtimeRepository.save(showtime);
         return showtimeFactory.createResponse(showtime);

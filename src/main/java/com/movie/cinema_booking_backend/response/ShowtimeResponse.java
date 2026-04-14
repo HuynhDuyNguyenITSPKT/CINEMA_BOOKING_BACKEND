@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ShowtimeResponse {
     private String id;
-    private int basePrice;
+    private int baseTicketPrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String movieId;

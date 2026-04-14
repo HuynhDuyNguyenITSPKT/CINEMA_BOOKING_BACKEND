@@ -18,7 +18,7 @@ public class ExtraServiceRequest {
 
     @NotNull(message = "Giá không được để trống")
     @DecimalMin(value = "0.0", inclusive = true, message = "Giá phải lớn hơn hoặc bằng 0")
-    private BigDecimal price;
+    private BigDecimal unitPrice;
 
     private String description;
 

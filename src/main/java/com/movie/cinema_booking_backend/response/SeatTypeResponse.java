@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class SeatTypeResponse {
     private String id;
     private String name;
-    private float surcharge;
+    private float surchargeAmount;
 }

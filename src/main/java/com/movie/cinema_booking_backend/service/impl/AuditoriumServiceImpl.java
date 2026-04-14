@@ -123,10 +123,6 @@ public class AuditoriumServiceImpl implements IAuditoriumService {
             throw new AppException(ErrorCode.AUDITORIUM_DELETE_CONFLICT);
         }
 
-        // Remove seats first to satisfy FK seats.auditorium_id -> auditoriums.id.
-        if (seatRepository.existsByAuditoriumId(id)) {
-            seatRepository.deleteAll(seatRepository.findByAuditoriumId(id));
-        }
 
         try {
             auditoriumRepository.delete(auditorium);

@@ -1,0 +1,43 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+title Proxy Pattern - Seat Validation Proxy
+
+class BookingController <<Client>>
+
+interface ISeatService <<Subject>> {
+  + getSeatsByAuditorium(auditoriumId) : List<SeatResponse>
+  + getSeatMapByShowtime(showtimeId, currentUserId) : List<SeatResponse>
+}
+
+class SeatValidationProxy <<Proxy>> {
+  - realSeatService : SeatServiceImpl
+  - lockRegistry : SeatLockRegistry
+  - seatMapCache : Map<String, CacheEntry<List<SeatResponse>>>
+  + getSeatsByAuditorium(auditoriumId)
+  + getSeatMapByShowtime(showtimeId, currentUserId)
+}
+
+class SeatServiceImpl <<RealSubject>> {
+  + getSeatsByAuditorium(auditoriumId)
+  + getSeatMapByShowtime(showtimeId, currentUserId)
+}
+
+class SeatLockRegistry
+class "CacheEntry<T>" as CacheEntry
+
+BookingController --> ISeatService
+ISeatService <|.. SeatValidationProxy
+ISeatService <|.. SeatServiceImpl
+SeatValidationProxy --> SeatServiceImpl : delegates core query
+SeatValidationProxy --> SeatLockRegistry : enrich lock status
+SeatValidationProxy *-- CacheEntry : virtual proxy cache
+
+note right of SeatValidationProxy
+Combined proxy roles in one class:
+- Protection: checks lock ownership
+- Virtual: 5-second seat-map cache
+- Smart: enriches LOCKED status in realtime
+end note
+@enduml
+

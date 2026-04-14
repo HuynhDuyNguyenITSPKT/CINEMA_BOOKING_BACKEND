@@ -53,7 +53,7 @@ public class SeatTypeServiceImpl implements ISeatTypeService {
 
         SeatType seatType = SeatType.builder()
                 .name(request.getName())
-                .surcharge(request.getSurcharge())
+                .surchargeAmount(request.getSurchargeAmount())
                 .build();
 
         return toResponse(seatTypeRepository.save(seatType));
@@ -69,7 +69,7 @@ public class SeatTypeServiceImpl implements ISeatTypeService {
         }
 
         seatType.setName(request.getName());
-        seatType.setSurcharge(request.getSurcharge());
+        seatType.setSurchargeAmount(request.getSurchargeAmount());
 
         return toResponse(seatTypeRepository.save(seatType));
     }
@@ -92,7 +92,7 @@ public class SeatTypeServiceImpl implements ISeatTypeService {
         return SeatTypeResponse.builder()
                 .id(seatType.getId())
                 .name(seatType.getName())
-                .surcharge(seatType.getSurcharge())
+                .surchargeAmount(seatType.getSurchargeAmount())
                 .build();
     }
 
@@ -103,7 +103,7 @@ public class SeatTypeServiceImpl implements ISeatTypeService {
         return SeatTypeAdminResponse.builder()
                 .id(seatType.getId())
                 .name(seatType.getName())
-                .surcharge(seatType.getSurcharge())
+                .surchargeAmount(seatType.getSurchargeAmount())
                 .usedSeatCount(usedSeatCount)
                 .deletable(usedSeatCount == 0)
                 .build();

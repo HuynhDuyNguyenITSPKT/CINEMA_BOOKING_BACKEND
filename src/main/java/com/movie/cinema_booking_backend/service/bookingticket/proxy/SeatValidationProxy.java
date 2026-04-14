@@ -15,17 +15,16 @@ import java.util.stream.Collectors;
 
 /**
  * ═══════════════════════════════════════════════════════════
- *  DESIGN PATTERN: PROXY (GoF Classic Implementation)
+ * DESIGN PATTERN: PROXY (GoF Classic Implementation)
  * ═══════════════════════════════════════════════════════════
  *
  * Subject Interface : ISeatService
- * Real Subject      : SeatServiceImpl
- * Proxy             : SeatValidationProxy (this class, @Primary)
+ * Real Subject : SeatServiceImpl
+ * Proxy : SeatValidationProxy (this class, @Primary)
  *
  * Proxy types combined:
- *   • Virtual Proxy  : Cache seat-map results (5s TTL)
- *   • Smart Proxy    : Enrich with real-time lock status from RAM
- *   • Protection Proxy: Validate lock status before booking
+ * • Virtual Proxy : Cache seat-map results (5s TTL)
+ * • Smart Proxy : Enrich with real-time lock status from RAM
  */
 @Primary
 @Service
@@ -40,6 +39,7 @@ public class SeatValidationProxy implements ISeatService {
     public List<SeatResponse> getSeatsByAuditorium(String auditoriumId) {
         return realSeatService.getSeatsByAuditorium(auditoriumId);
     }
+
     @Override
     public List<SeatResponse> getSeatMapByShowtime(String showtimeId, String currentUserId) {
         // 1. Check cache
@@ -60,6 +60,7 @@ public class SeatValidationProxy implements ISeatService {
         // 4. Enrich with real-time lock status (Smart Proxy)
         return enrichWithLockStatus(seats, showtimeId, currentUserId);
     }
+
     private String buildCacheKey(String showtimeId, String userId) {
         return showtimeId + ":" + (userId != null ? userId : "anonymous");
     }
@@ -73,9 +74,10 @@ public class SeatValidationProxy implements ISeatService {
         System.out.println("[Proxy] Cache MISS: " + cacheKey);
         return null;
     }
+
     private List<SeatResponse> enrichWithLockStatus(List<SeatResponse> seats,
-                                                    String showtimeId,
-                                                    String currentUserId) {
+            String showtimeId,
+            String currentUserId) {
         return seats.stream()
                 .map(seat -> {
                     // BOOKED from DB takes priority
@@ -92,7 +94,7 @@ public class SeatValidationProxy implements ISeatService {
                                 .seatTypeId(seat.getSeatTypeId())
                                 .seatTypeName(seat.getSeatTypeName())
                                 .seatTypeSurcharge(seat.getSeatTypeSurcharge())
-                                .status("LOCKED")  // ✅ Proxy adds this status
+                                .status("LOCKED") // ✅ Proxy adds this status
                                 .build();
                     }
                     return seat;

@@ -21,7 +21,8 @@ public class SeatType {
     @Column(length = 255, nullable = false, unique = true)
     private String name;
 
-    private float surcharge;
+    @Column(name = "surcharge")
+    private float surchargeAmount;
 
     @OneToMany(mappedBy = "seatType")
     @Builder.Default

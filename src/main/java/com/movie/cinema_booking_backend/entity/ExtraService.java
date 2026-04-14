@@ -24,8 +24,8 @@ public class ExtraService {
     @Column(nullable = false)
     private String imageUrl;
 
-    @Column(nullable = false)
-    private BigDecimal price;
+    @Column(name = "price", nullable = false)
+    private BigDecimal unitPrice;
 
     @Column(columnDefinition = "TEXT")
     private String description;

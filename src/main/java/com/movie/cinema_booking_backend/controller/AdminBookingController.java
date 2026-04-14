@@ -1,20 +1,20 @@
 package com.movie.cinema_booking_backend.controller;
 
-import com.movie.cinema_booking_backend.request.AdminBookingRequest;
+import com.movie.cinema_booking_backend.request.AdminUpdateGroupSeatsRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.service.IBookingService;
-import jakarta.validation.Valid;
+import com.movie.cinema_booking_backend.service.bookingticket.facade.BookingFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * AdminBookingController — Endpoint CRUD Booking dành riêng cho Admin.
+ * AdminBookingController — Endpoints Booking dành cho Admin.
  *
- * Endpoints:
- *  GET    /api/admin/bookings              — Xem tất cả booking (lọc theo status)
- *  POST   /api/admin/bookings              — Tạo booking ngoại lệ (bypass rules & giá)
- *  PUT    /api/admin/bookings/{id}/approve — Duyệt đơn B2B (chỉ PENDING_APPROVAL)
- *  PUT    /api/admin/bookings/{id}/cancel  — Hủy bất kỳ booking nào
+ * Luồng B2B hoàn chỉnh:
+ *  GET    /api/admin/bookings                     — Danh sách (lọc theo status)
+ *  PUT    /api/admin/bookings/{id}/update-seats   — Admin chỉnh sửa ghế + duyệt đơn B2B
+ *  PUT    /api/admin/bookings/{id}/approve        — Duyệt nhanh (giữ nguyên ghế)
+ *  PUT    /api/admin/bookings/{id}/cancel         — Hủy bất kỳ đơn nào
  */
 @RestController
 @RequestMapping("/api/admin/bookings")
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminBookingController {
 
     private final IBookingService bookingService;
+    private final BookingFacade bookingFacade;
 
     @GetMapping
     public ApiResponse<?> getAllBookings(@RequestParam(required = false) String status) {
@@ -33,35 +34,38 @@ public class AdminBookingController {
     }
 
     /**
-     * POST /api/admin/bookings
+     * PUT /api/admin/bookings/{id}/update-seats
      *
-     * Admin tạo booking ngoại lệ:
-     * - Bypass max seat limit (8 ghế của Standard)
-     * - Nếu manualTotalAmount != null: Override tổng tiền theo giá thỏa thuận
-     * - Dùng cho: bao rạp sự kiện, khách VIP, khách đòi giá riêng
+     * Admin xác nhận danh sách ghế cuối cùng sau khi thương lượng với khách.
+     * Hệ thống gọi GroupBookingBuilder để tạo "bản vẽ" mới với Pipeline tính giá:
+     *  - GroupDiscountStep: Giảm 5% B2B
+     *  - TaxStep: Cộng 10% VAT
+     * Sau đó JPA Diffing đồng bộ Tickets (xóa ghế bỏ, thêm ghế mới).
+     * Trạng thái chuyển từ PENDING_APPROVAL → RESERVED.
      */
-    @PostMapping
-    public ApiResponse<?> adminCreateBooking(@Valid @RequestBody AdminBookingRequest request) {
+    @PutMapping("/{id}/update-seats")
+    public ApiResponse<?> updateGroupSeatsAndApprove(
+            @PathVariable("id") String id,
+            @RequestBody AdminUpdateGroupSeatsRequest request) {
         return new ApiResponse.Builder<>()
                 .success(true)
-                .message("Tạo đặt vé thành công")
-                .data(bookingService.adminCreateBooking(request))
+                .message("Cập nhật ghế và duyệt đơn B2B thành công")
+                .data(bookingService.updateGroupBookingSeatsAndApprove(id, request))
                 .build();
     }
 
     /**
      * PUT /api/admin/bookings/{id}/approve
      *
-     * Duyệt đơn Khách Đoàn B2B.
-     * Backend chặn cứng: Chỉ đơn có status = PENDING_APPROVAL mới được duyệt.
-     * Tránh Admin nhầm lẫn approve vé Standard/Couple.
+     * Duyệt nhanh đơn B2B khi không cần đổi ghế.
+     * Chỉ chuyển trạng thái PENDING_APPROVAL → RESERVED.
      */
     @PutMapping("/{id}/approve")
     public ApiResponse<?> approveBooking(@PathVariable("id") String id) {
         return new ApiResponse.Builder<>()
                 .success(true)
                 .message("Duyệt đặt vé thành công")
-                .data(bookingService.approveBooking(id))
+                .data(bookingFacade.approveBooking(id))
                 .build();
     }
 
@@ -70,7 +74,7 @@ public class AdminBookingController {
         return new ApiResponse.Builder<>()
                 .success(true)
                 .message("Huỷ đặt vé thành công")
-                .data(bookingService.adminCancelBooking(id))
+                .data(bookingFacade.adminCancelBooking(id))
                 .build();
     }
 }

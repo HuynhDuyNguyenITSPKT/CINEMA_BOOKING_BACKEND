@@ -79,7 +79,7 @@ public class Promotion {
         }
         if (this.minOrderValue != null && this.minOrderValue.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal rawTotal = booking.getTickets().stream()
-                    .map(Ticket::getPrice)
+                    .map(Ticket::getFinalPrice)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             if (rawTotal.compareTo(this.minOrderValue) < 0) {
                 return false;

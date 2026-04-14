@@ -16,6 +16,7 @@ import com.movie.cinema_booking_backend.entity.Booking;
 import com.movie.cinema_booking_backend.entity.BookingExtra;
 import com.movie.cinema_booking_backend.entity.Showtime;
 import com.movie.cinema_booking_backend.entity.Ticket;
+import com.movie.cinema_booking_backend.entity.TicketPromotion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -117,7 +118,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 default -> booking.getCreatedAt().toLocalDate().toString();
             };
 
-            groupedRevenue.merge(periodKey, nvl(booking.getTotalAmount()), BigDecimal::add);
+            groupedRevenue.merge(periodKey, nvl(booking.getGrandTotalPrice()), BigDecimal::add);
         }
 
         List<Map<String, Object>> points = groupedRevenue.entrySet().stream()
@@ -158,7 +159,7 @@ public class DashboardServiceImpl implements IDashboardService {
 
         BigDecimal ticketRevenue = tickets.stream()
             .filter(this::isSoldTicket)
-            .map(Ticket::getPrice)
+            .map(Ticket::getFinalPrice)
             .filter(price -> price != null)
             .reduce(BigDecimal.ZERO, BigDecimal::add)
             .setScale(2, RoundingMode.HALF_UP);
@@ -271,7 +272,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 return created;
             });
             agg.soldTickets += 1;
-            agg.revenue = agg.revenue.add(nvl(ticket.getPrice()));
+            agg.revenue = agg.revenue.add(nvl(ticket.getFinalPrice()));
         }
 
         Comparator<MovieAgg> comparator = safeMetric.equals("TICKETS")
@@ -454,8 +455,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 return !startTime.isBefore(now) && startTime.isBefore(nextWeek);
                 });
             })
-            .map(Booking::getTotalAmount)
-            .filter(amount -> amount != null)
+            .map(booking -> nvl(booking.getGrandTotalPrice()))
             .reduce(BigDecimal.ZERO, BigDecimal::add)
             .setScale(2, RoundingMode.HALF_UP);
 
@@ -467,7 +467,7 @@ public class DashboardServiceImpl implements IDashboardService {
 
         Map<String, BigDecimal> weeklyRevenue = new HashMap<>();
         for (Booking booking : historicalBookings) {
-            weeklyRevenue.merge(toIsoWeekKey(booking.getCreatedAt()), nvl(booking.getTotalAmount()), BigDecimal::add);
+            weeklyRevenue.merge(toIsoWeekKey(booking.getCreatedAt()), nvl(booking.getGrandTotalPrice()), BigDecimal::add);
         }
 
         BigDecimal historicalWeeklyAverage;
@@ -643,14 +643,10 @@ public class DashboardServiceImpl implements IDashboardService {
                 List<Ticket> bookingTickets = ticketsByBooking.getOrDefault(booking.getId(), List.of());
                 Set<String> promoCodes = new HashSet<>();
                 for (Ticket ticket : bookingTickets) {
-                if (ticket.getPromotions() == null) {
-                    continue;
-                }
-                ticket.getPromotions().forEach(tp -> {
-                    if (tp.getPromotion() != null && tp.getPromotion().getCode() != null) {
-                    promoCodes.add(tp.getPromotion().getCode());
+                    TicketPromotion tp = ticket.getPromotion();
+                    if (tp != null && tp.getPromotion() != null && tp.getPromotion().getCode() != null) {
+                        promoCodes.add(tp.getPromotion().getCode());
                     }
-                });
                 }
 
                 BigDecimal extraAmount = extrasByBooking.getOrDefault(booking.getId(), List.of()).stream()
@@ -664,7 +660,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 tx.put("createdAt", booking.getCreatedAt());
                 tx.put("customerName", booking.getUser() != null ? booking.getUser().getFullName() : "");
                 tx.put("customerEmail", booking.getUser() != null ? booking.getUser().getEmail() : "");
-                tx.put("totalAmount", nvl(booking.getTotalAmount()).setScale(2, RoundingMode.HALF_UP));
+                tx.put("grandTotalPrice", nvl(booking.getGrandTotalPrice()).setScale(2, RoundingMode.HALF_UP));
                 tx.put("status", booking.getStatus());
                 tx.put("promotionCode", String.join("|", promoCodes));
                 tx.put("extraServiceAmount", extraAmount);
@@ -688,14 +684,14 @@ public class DashboardServiceImpl implements IDashboardService {
         List<Map<String, Object>> rows = (List<Map<String, Object>>) data.getOrDefault("transactions", List.of());
 
         StringBuilder csv = new StringBuilder();
-        csv.append("Booking ID,Created At,Customer Name,Customer Email,Total Amount,Status,Promotion Code,Extra Service Amount\n");
+        csv.append("Booking ID,Created At,Customer Name,Customer Email,Grand Total Price,Status,Promotion Code,Extra Service Amount\n");
 
         for (Map<String, Object> row : rows) {
             csv.append(escapeCsv(row.get("bookingId"))).append(',')
                     .append(escapeCsv(row.get("createdAt"))).append(',')
                     .append(escapeCsv(row.get("customerName"))).append(',')
                     .append(escapeCsv(row.get("customerEmail"))).append(',')
-                    .append(escapeCsv(row.get("totalAmount"))).append(',')
+                    .append(escapeCsv(row.get("grandTotalPrice"))).append(',')
                     .append(escapeCsv(row.get("status"))).append(',')
                     .append(escapeCsv(row.get("promotionCode"))).append(',')
                     .append(escapeCsv(row.get("extraServiceAmount")))
@@ -746,7 +742,7 @@ public class DashboardServiceImpl implements IDashboardService {
             Map<String, Object> sale = new LinkedHashMap<>();
             sale.put("bookingId", booking.getId());
             sale.put("createdAt", booking.getCreatedAt());
-            sale.put("totalAmount", nvl(booking.getTotalAmount()).setScale(2, RoundingMode.HALF_UP));
+            sale.put("grandTotalPrice", nvl(booking.getGrandTotalPrice()).setScale(2, RoundingMode.HALF_UP));
             sale.put("customerName", booking.getUser() != null ? booking.getUser().getFullName() : "");
             return sale;
         }).collect(Collectors.toList());
@@ -781,7 +777,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 start,
                 end
             ).stream()
-            .map(Booking::getTotalAmount)
+            .map(Booking::getGrandTotalPrice)
             .filter(amount -> amount != null)
             .reduce(BigDecimal.ZERO, BigDecimal::add)
             .setScale(2, RoundingMode.HALF_UP);

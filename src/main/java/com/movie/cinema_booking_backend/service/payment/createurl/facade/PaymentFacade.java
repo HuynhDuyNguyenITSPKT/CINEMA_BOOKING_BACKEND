@@ -85,8 +85,13 @@ public class PaymentFacade {
                 .build();
         
         paymentRepository.save(payment);
-        booking.setStatus(BookingStatus.PENDING);
-        bookingRepository.save(booking);
+        
+        // Không ghi đè trạng thái nếu đây là vé Khách Đoàn chờ duyệt
+        if (booking.getStatus() != BookingStatus.PENDING_APPROVAL) {
+            booking.setStatus(BookingStatus.PENDING);
+            bookingRepository.save(booking);
+        }
+        
         return 1;
     }
 
@@ -123,7 +128,7 @@ public class PaymentFacade {
             booking.getTickets().forEach(t -> t.setStatus(TicketStatus.BOOKED));
         } else {
             booking.setStatus(BookingStatus.CANCELLED);
-            booking.getTickets().forEach(t -> t.cancel());
+            booking.getTickets().forEach(t -> t.setStatus(TicketStatus.CANCELLED));
         }
         bookingRepository.save(booking);
 
@@ -263,7 +268,7 @@ public class PaymentFacade {
         }
 
         String bookingId = booking.getId();
-        String amount = booking.getTotalAmount() == null ? "0" : booking.getTotalAmount().toPlainString();
+        String amount = booking.getGrandTotalPrice() == null ? "0" : booking.getGrandTotalPrice().toPlainString();
 
         try {
             if ("THANH_TOAN_THANH_CONG".equals(paymentState)) {

@@ -22,7 +22,7 @@ import java.math.RoundingMode;
  *   booking.tax.vat-percent=0     (để tắt nếu giá đã bao gồm VAT)
  */
 @Component
-@Order(4)
+@Order(5)
 public class TaxStep implements PricingStep {
 
     @Value("${booking.tax.vat-percent:10}")

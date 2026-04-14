@@ -16,7 +16,7 @@ import java.math.BigDecimal;
  * (giá retail đã bao gồm VAT theo quy định).
  */
 @Component
-@Order(5)
+@Order(6)
 public class ExtrasStep implements PricingStep {
 
     @Override
@@ -25,7 +25,7 @@ public class ExtrasStep implements PricingStep {
 
         for (CalculationRequest.ExtraLineItem item : request.extras()) {
             total = total.add(
-                    item.extraService().getPrice()
+                    item.extraService().getUnitPrice()
                             .multiply(BigDecimal.valueOf(item.quantity()))
             );
         }
