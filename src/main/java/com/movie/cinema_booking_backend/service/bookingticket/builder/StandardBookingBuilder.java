@@ -44,7 +44,7 @@ public class StandardBookingBuilder extends AbstractBookingBuilder {
                 .id(UUID.randomUUID().toString())
                 .user(user)
                 .status(BookingStatus.RESERVED) // Trạng thái: Giữ chỗ chờ thanh toán
-                .totalAmount(calcResult.getFinalTotal())
+                .grandTotalPrice(calcResult.getFinalTotal())
                 .createdAt(LocalDateTime.now())
                 .note(request.getNote())
                 .build();
@@ -55,7 +55,7 @@ public class StandardBookingBuilder extends AbstractBookingBuilder {
                     .id(UUID.randomUUID().toString())
                     .showtime(showtime)
                     .seat(seat)
-                    .price(price)
+                    .finalPrice(price)
                     .status(TicketStatus.PROCESSING)
                     .build();
 
@@ -63,9 +63,8 @@ public class StandardBookingBuilder extends AbstractBookingBuilder {
             if (promotion != null && calcResult.getPromotionDiscount().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal discountPerTicket = calcResult.getPromotionDiscount()
                         .divide(BigDecimal.valueOf(seats.size()), 0, java.math.RoundingMode.HALF_UP);
-                        
+
                 TicketPromotion tp = TicketPromotion.builder()
-                        .id(new TicketPromotionId(ticket.getId(), promotion.getId()))
                         .ticket(ticket)
                         .promotion(promotion)
                         .discountAmount(discountPerTicket)
@@ -82,7 +81,7 @@ public class StandardBookingBuilder extends AbstractBookingBuilder {
                 int qty = request.getExtras().get(ex.getId());
                 BookingExtra be = BookingExtra.builder()
                         .extraService(ex).quantity(qty)
-                        .totalPrice(ex.getPrice().multiply(BigDecimal.valueOf(qty)))
+                        .totalPrice(ex.getUnitPrice().multiply(BigDecimal.valueOf(qty)))
                         .build();
                 booking.addBookingExtra(be);
             }

@@ -66,7 +66,7 @@ public class SeatServiceImpl implements ISeatService {
                 .columnIndex(seat.getColumnIndex())
                 .seatTypeId(seat.getSeatType() != null ? seat.getSeatType().getId() : null)
                 .seatTypeName(seat.getSeatType() != null ? seat.getSeatType().getName() : null)
-                .seatTypeSurcharge(seat.getSeatType() != null ? seat.getSeatType().getSurcharge() : 0f)
+                .seatTypeSurcharge(seat.getSeatType() != null ? seat.getSeatType().getSurchargeAmount() : 0f)
                 .status(null)
                 .build();
     }
@@ -78,7 +78,7 @@ public class SeatServiceImpl implements ISeatService {
                 .columnIndex(seat.getColumnIndex())
                 .seatTypeId(seat.getSeatType() != null ? seat.getSeatType().getId() : null)
                 .seatTypeName(seat.getSeatType() != null ? seat.getSeatType().getName() : null)
-                .seatTypeSurcharge(seat.getSeatType() != null ? seat.getSeatType().getSurcharge() : 0f)
+                .seatTypeSurcharge(seat.getSeatType() != null ? seat.getSeatType().getSurchargeAmount() : 0f)
                 .status(status)
                 .build();
     }

@@ -25,7 +25,7 @@ public class ExtrasStep implements PricingStep {
 
         for (CalculationRequest.ExtraLineItem item : request.extras()) {
             total = total.add(
-                    item.extraService().getPrice()
+                    item.extraService().getUnitPrice()
                             .multiply(BigDecimal.valueOf(item.quantity()))
             );
         }

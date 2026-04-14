@@ -63,7 +63,7 @@ public class ExtraServiceService implements IExtraServiceService {
         ExtraService extraService = ExtraService.builder()
                 .name(request.getName())
                 .imageUrl(request.getImageUrl())
-                .price(request.getPrice())
+                .unitPrice(request.getUnitPrice())
                 .description(request.getDescription())
                 .category(request.getCategory())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
@@ -82,7 +82,7 @@ public class ExtraServiceService implements IExtraServiceService {
 
         extraService.setName(request.getName());
         extraService.setImageUrl(request.getImageUrl());
-        extraService.setPrice(request.getPrice());
+        extraService.setUnitPrice(request.getUnitPrice());
         extraService.setDescription(request.getDescription());
         extraService.setCategory(request.getCategory());
         extraService.setIsActive(request.getIsActive() != null ? request.getIsActive() : extraService.getIsActive());
@@ -106,7 +106,7 @@ public class ExtraServiceService implements IExtraServiceService {
                 .id(extraService.getId())
                 .name(extraService.getName())
                 .imageUrl(extraService.getImageUrl())
-                .price(extraService.getPrice())
+                .unitPrice(extraService.getUnitPrice())
                 .description(extraService.getDescription())
                 .category(extraService.getCategory())
                 .isActive(extraService.getIsActive())

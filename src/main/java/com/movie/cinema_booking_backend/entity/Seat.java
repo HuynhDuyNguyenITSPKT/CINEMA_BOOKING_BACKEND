@@ -37,8 +37,8 @@ public class Seat {
     @Builder.Default
     private SeatStatus status = SeatStatus.AVAILABLE;
 
-    @ManyToOne
-    @JoinColumn(name = "auditorium_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "auditorium_id", nullable = false)
     @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -49,4 +49,4 @@ public class Seat {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private SeatType seatType;
-}
+}

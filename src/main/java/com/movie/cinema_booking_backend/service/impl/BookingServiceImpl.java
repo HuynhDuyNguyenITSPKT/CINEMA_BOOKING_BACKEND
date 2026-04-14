@@ -238,7 +238,7 @@ public class BookingServiceImpl implements IBookingService {
         // Update giá các ghế giữ lại
         dbBooking.getTickets().forEach(t -> {
             if (t.getSeat() != null && builtMap.containsKey(t.getSeat().getId())) {
-                t.setPrice(builtMap.get(t.getSeat().getId()).getPrice());
+                t.setFinalPrice(builtMap.get(t.getSeat().getId()).getFinalPrice());
                 t.setStatus(TicketStatus.PROCESSING);
             }
         });
@@ -252,7 +252,7 @@ public class BookingServiceImpl implements IBookingService {
                 });
 
         // 6. Chốt tổng tiền và chuyển trạng thái
-        dbBooking.setTotalAmount(builtBooking.getTotalAmount());
+        dbBooking.setGrandTotalPrice(builtBooking.getGrandTotalPrice());
         dbBooking.setNote(builtBooking.getNote());
         dbBooking.setStatus(BookingStatus.RESERVED);
 
@@ -342,7 +342,7 @@ public class BookingServiceImpl implements IBookingService {
                         .seatName(t.getSeat() != null ? t.getSeat().getName() : null)
                         .seatTypeName(t.getSeat() != null && t.getSeat().getSeatType() != null
                                 ? t.getSeat().getSeatType().getName() : null)
-                        .price(t.getPrice())
+                        .finalPrice(t.getFinalPrice())
                         .status(t.getStatus())
                         .qrCodeUrl(t.getQrCodeUrl())
                         .build())
@@ -360,7 +360,7 @@ public class BookingServiceImpl implements IBookingService {
         return BookingResponse.builder()
                 .id(booking.getId())
                 .status(booking.getStatus())
-                .totalAmount(booking.getTotalAmount())
+                .grandTotalPrice(booking.getGrandTotalPrice())
                 .createdAt(booking.getCreatedAt())
                 .note(booking.getNote())
                 .showtimeId(showtime  != null ? showtime.getId()          : null)

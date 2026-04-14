@@ -11,7 +11,7 @@ public interface IShowtimeFactory {
 
     Showtime createEntity(Movie movie, Auditorium auditorium,
                           LocalDateTime startTime, LocalDateTime endTime,
-                          int basePrice);
+                          int baseTicketPrice);
 
     ShowtimeResponse createResponse(Showtime showtime);
 }

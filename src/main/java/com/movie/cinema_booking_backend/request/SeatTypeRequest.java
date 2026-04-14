@@ -17,5 +17,5 @@ public class SeatTypeRequest {
      * VD: STANDARD = 0, VIP = 50_000, COUPLE = 80_000
      */
     @Min(value = 0, message = "Phụ phí không được âm")
-    private float surcharge;
+    private float surchargeAmount;
 }

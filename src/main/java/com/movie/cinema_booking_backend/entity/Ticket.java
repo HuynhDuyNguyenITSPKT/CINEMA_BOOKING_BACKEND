@@ -7,9 +7,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "tickets")
@@ -34,9 +31,9 @@ public class Ticket {
     @JoinColumn(name = "seat_id", nullable = false)
     private Seat seat;
 
-    @Column(nullable = false)
+   @Column(name = "price", nullable = false)
     @Builder.Default
-    private BigDecimal price = BigDecimal.ZERO;
+    private BigDecimal finalPrice = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -80,18 +77,30 @@ public class Ticket {
     @Column(length = 500)
     private String qrCodeUrl;
 
-    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
-    @Builder.Default
-    private List<TicketPromotion> promotions = new ArrayList<>();
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private TicketPromotion promotion;
 
     public void addPromotion(TicketPromotion ticketPromotion) {
-        this.promotions.add(ticketPromotion);
-        ticketPromotion.setTicket(this);
+        this.promotion = ticketPromotion;
+        if (ticketPromotion != null) {
+            ticketPromotion.setTicket(this);
+        }
     }
 
     public void removePromotion(TicketPromotion ticketPromotion) {
-        this.promotions.remove(ticketPromotion);
-        ticketPromotion.setTicket(null);
+        if (this.promotion == ticketPromotion) {
+            this.promotion.setTicket(null);
+            this.promotion = null;
+        }
+    }
+
+    public void removePromotion() {
+        if (this.promotion != null) {
+            this.promotion.setTicket(null);
+            this.promotion = null;
+        }
     }
 }

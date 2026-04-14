@@ -89,7 +89,7 @@ public abstract class AbstractBookingBuilder implements BookingBuilder {
     protected CalculationRequest buildCalculationRequest() {
         List<SeatInfo> seatInfos = seats.stream().map(s -> new SeatInfo(
                 s.getId(),
-                s.getSeatType() != null ? BigDecimal.valueOf(s.getSeatType().getSurcharge()) : BigDecimal.ZERO
+                s.getSeatType() != null ? BigDecimal.valueOf(s.getSeatType().getSurchargeAmount()) : BigDecimal.ZERO
         )).toList();
 
         List<ExtraLineItem> extraItems = new ArrayList<>();
@@ -104,7 +104,7 @@ public abstract class AbstractBookingBuilder implements BookingBuilder {
 
         return new CalculationRequest(
                 request.getBookingType(),
-                BigDecimal.valueOf(showtime.getBasePrice()),
+                BigDecimal.valueOf(showtime.getBaseTicketPrice()),
                 seatInfos,
                 promotion,
                 extraItems

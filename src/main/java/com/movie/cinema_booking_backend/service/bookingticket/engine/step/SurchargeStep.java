@@ -29,11 +29,11 @@ public class SurchargeStep implements PricingStep {
 
     @Override
     public void process(CalculationRequest request, CalculationResult result) {
-        BigDecimal base       = request.basePrice();
+        BigDecimal base       = request.baseTicketPrice();
         BigDecimal surchTotal = BigDecimal.ZERO;
 
         for (CalculationRequest.SeatInfo seat : request.seats()) {
-            BigDecimal surcharge = seat.surcharge();
+            BigDecimal surcharge = seat.surchargeAmount();
             surchTotal = surchTotal.add(surcharge);
 
             // Giá tạm = base + surcharge (PromotionStep sẽ trừ discount từ phần base)

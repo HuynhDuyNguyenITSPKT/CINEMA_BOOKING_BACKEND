@@ -15,7 +15,7 @@ public class ShowtimeFactory implements IShowtimeFactory {
     @Override
     public Showtime createEntity(Movie movie, Auditorium auditorium,
                                  LocalDateTime startTime, LocalDateTime endTime,
-                                 int basePrice) {
+                                 int baseTicketPrice) {
         if (movie == null) {
             throw new IllegalArgumentException("Movie không thể null khi tạo Showtime");
         }
@@ -27,7 +27,7 @@ public class ShowtimeFactory implements IShowtimeFactory {
                 .auditorium(auditorium)
                 .startTime(startTime)
                 .endTime(endTime)
-                .basePrice(basePrice)
+                .baseTicketPrice(baseTicketPrice)
                 .build();
     }
 
@@ -44,7 +44,7 @@ public class ShowtimeFactory implements IShowtimeFactory {
                 .auditoriumName(showtime.getAuditorium().getName())
                 .startTime(showtime.getStartTime())
                 .endTime(showtime.getEndTime())
-                .basePrice(showtime.getBasePrice())
+                .baseTicketPrice(showtime.getBaseTicketPrice())
                 .build();
     }
 }

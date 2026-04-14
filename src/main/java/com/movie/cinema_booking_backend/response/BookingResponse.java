@@ -13,7 +13,7 @@ import java.util.List;
 public class BookingResponse {
     private String id;
     private BookingStatus status;
-    private BigDecimal totalAmount;
+    private BigDecimal grandTotalPrice;
     private LocalDateTime createdAt;
     private String note;
 

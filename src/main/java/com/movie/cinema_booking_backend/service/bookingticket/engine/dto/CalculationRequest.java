@@ -22,8 +22,8 @@ public record CalculationRequest(
         // Loại booking → PolicyFactory chọn đúng Policy
         String bookingType,
 
-        // Giá gốc từ Showtime (int basePrice → chuyển sang BigDecimal)
-        BigDecimal basePrice,
+        // Giá gốc từ Showtime (int baseTicketPrice → chuyển sang BigDecimal)
+        BigDecimal baseTicketPrice,
 
         // Danh sách ghế, mỗi ghế chứa surcharge riêng
         List<SeatInfo> seats,
@@ -37,7 +37,7 @@ public record CalculationRequest(
 ) {
 
     /** Thông tin một ghế cần cho việc tính giá */
-    public record SeatInfo(String seatId, BigDecimal surcharge) {}
+    public record SeatInfo(String seatId, BigDecimal surchargeAmount) {}
 
     /** Một dòng extra service + số lượng */
     public record ExtraLineItem(ExtraService extraService, int quantity) {}

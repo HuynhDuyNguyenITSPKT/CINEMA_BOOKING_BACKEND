@@ -12,7 +12,7 @@ public class ExtraServiceResponse {
     private Long id;
     private String name;
     private String imageUrl;
-    private BigDecimal price;
+    private BigDecimal unitPrice;
     private String description;
     private ServiceCategory category;
     private Boolean isActive;

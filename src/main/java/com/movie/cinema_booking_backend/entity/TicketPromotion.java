@@ -15,18 +15,17 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class TicketPromotion {
-    @EmbeddedId
-    private TicketPromotionId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("ticketId")
-    @JoinColumn(name = "ticket_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_id", nullable = false, unique = true)
     @JsonIgnore
     private Ticket ticket;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("promotionId")
-    @JoinColumn(name = "promotion_id")
+    @JoinColumn(name = "promotion_id", nullable = false)
     @JsonIgnore
     private Promotion promotion;
 

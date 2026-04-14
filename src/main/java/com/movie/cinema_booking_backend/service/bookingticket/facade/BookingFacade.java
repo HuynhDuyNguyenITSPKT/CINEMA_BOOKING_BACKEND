@@ -64,7 +64,7 @@ public class BookingFacade {
             if (bookingDraft.getStatus() != com.movie.cinema_booking_backend.enums.BookingStatus.PENDING_APPROVAL) {
                 PaymentRequest payReq = PaymentRequest.builder()
                         .bookingId(bookingDraft.getId())
-                        .amount(bookingDraft.getTotalAmount().longValue())
+                        .amount(bookingDraft.getGrandTotalPrice().longValue())
                         .description("Mua ve xem phim " + (bookingDraft.getMovieName() != null ? bookingDraft.getMovieName() : ""))
                         .build();
 

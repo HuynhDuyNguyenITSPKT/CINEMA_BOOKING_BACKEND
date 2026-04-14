@@ -29,8 +29,8 @@ public class Booking {
 
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
-    private BigDecimal totalAmount;
+    @Column(name = "total_amount", nullable = false)
+    private BigDecimal grandTotalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -39,7 +39,7 @@ public class Booking {
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    @OneToOne(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "booking", fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Payment payment;

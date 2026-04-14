@@ -44,7 +44,7 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
                 .id(UUID.randomUUID().toString())
                 .user(user)
                 .status(BookingStatus.PENDING_APPROVAL) // B2B: Lưu lại nhưng Chờ Admin Duyệt
-                .totalAmount(calcResult.getFinalTotal()) // Chú ý: Ở hệ thống thực tế Group có thể ghi đè totalAmount
+                .grandTotalPrice(calcResult.getFinalTotal()) // Chú ý: Ở hệ thống thực tế Group có thể ghi đè grandTotalPrice
                 .createdAt(LocalDateTime.now())
                 .note("[GROUP - B2B] " + (request.getNote() != null ? request.getNote() : ""))
                 .build();
@@ -53,7 +53,7 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
             BigDecimal price = calcResult.getTicketPrices().getOrDefault(seat.getId(), BigDecimal.ZERO);
             Ticket ticket = Ticket.builder()
                     .id(UUID.randomUUID().toString())
-                    .showtime(showtime).seat(seat).price(price).status(TicketStatus.PROCESSING)
+                    .showtime(showtime).seat(seat).finalPrice(price).status(TicketStatus.PROCESSING)
                     .build();
             booking.addTicket(ticket);
         }
@@ -63,7 +63,7 @@ public class GroupBookingBuilder extends AbstractBookingBuilder {
                 int qty = request.getExtras().get(ex.getId());
                 booking.addBookingExtra(BookingExtra.builder()
                         .extraService(ex).quantity(qty)
-                        .totalPrice(ex.getPrice().multiply(BigDecimal.valueOf(qty))).build());
+                        .totalPrice(ex.getUnitPrice().multiply(BigDecimal.valueOf(qty))).build());
             }
         }
     }
