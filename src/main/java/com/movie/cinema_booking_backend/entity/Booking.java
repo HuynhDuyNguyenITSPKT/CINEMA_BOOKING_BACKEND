@@ -83,4 +83,21 @@ public class Booking {
             payment.setBooking(this);
         }
     }
+
+    // --- State Transition Helpers ---
+    public void approve() {
+        this.status = this.status.approve();
+    }
+
+    public void initiatePayment() {
+        this.status = this.status.initiatePayment();
+    }
+
+    public void pay() {
+        this.status = this.status.pay();
+    }
+
+    public void cancel() {
+        this.status = this.status.cancel();
+    }
 }
