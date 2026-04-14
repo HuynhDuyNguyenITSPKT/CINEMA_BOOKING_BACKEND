@@ -36,6 +36,7 @@ import com.movie.cinema_booking_backend.service.auth.factory.concrete.PendingReg
 import com.movie.cinema_booking_backend.service.auth.factory.concrete.UserFactory;
 import com.movie.cinema_booking_backend.service.auth.observer.otp.OtpEventPublisher;
 import com.movie.cinema_booking_backend.service.auth.singleton.OtpGeneratorSingleton;
+import com.movie.cinema_booking_backend.service.user.cache.UserAdminPageCache;
 import com.nimbusds.jwt.SignedJWT;
 
 import jakarta.transaction.Transactional;
@@ -51,6 +52,7 @@ public class AuthServiceImpl implements IAuthService {
     private final OtpEventPublisher otpEventPublisher;
     private final JwtTokenService jwtTokenService;
     private final AuthLoginFacade authLoginFacade;
+    private final UserAdminPageCache userAdminPageCache;
 
     public AuthServiceImpl(
             AccountRepository accountRepository,
@@ -61,7 +63,8 @@ public class AuthServiceImpl implements IAuthService {
             PasswordEncoder passwordEncoder,
             OtpEventPublisher otpEventPublisher,
             JwtTokenService jwtTokenService,
-            AuthLoginFacade authLoginFacade
+            AuthLoginFacade authLoginFacade,
+            UserAdminPageCache userAdminPageCache
     ) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
@@ -72,6 +75,7 @@ public class AuthServiceImpl implements IAuthService {
         this.otpEventPublisher = otpEventPublisher;
         this.jwtTokenService = jwtTokenService;
         this.authLoginFacade = authLoginFacade;
+        this.userAdminPageCache = userAdminPageCache;
     }
 
     @Override
@@ -135,6 +139,7 @@ public class AuthServiceImpl implements IAuthService {
 
         Account account = AuthEntityFactory.getEntity(new AccountFactory(pending, savedUser));
         accountRepository.save(account);
+        userAdminPageCache.clear();
 
         pendingRepo.delete(pending);
     }
