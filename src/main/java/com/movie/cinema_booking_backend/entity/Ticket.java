@@ -2,7 +2,7 @@ package com.movie.cinema_booking_backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.movie.cinema_booking_backend.enums.TicketStatus;
-import com.movie.cinema_booking_backend.service.bookingticket.state.*;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,39 +39,24 @@ public class Ticket {
     @Column(nullable = false)
     private TicketStatus status;
 
-    @Transient // Không lưu DB
-    @JsonIgnore
-    private TicketState ticketState;
-
-    @PostLoad
-    private void initTicketState() {
-        if (this.status != null) {
-            this.ticketState = switch (this.status) {
-                case PROCESSING -> new ProcessingState();
-                case BOOKED -> new BookedState();
-                case USED -> new UsedState();
-                case CANCELLED -> new CancelledState();
-                default -> new ProcessingState();
-            };
-        }
-    }
-
-    // Khi set status bằng tay (ví dụ lúc tạo), cũng update logic State
+    // Khi set status bằng tay (ví dụ lúc tạo)
     public void setStatus(TicketStatus status) {
         this.status = status;
-        initTicketState();
     }
 
-    /** Uỷ quyền hành động check-in cho State hiện tại */
+    /** Uỷ quyền hành động xác nhận thanh toán cho State Enum hiện tại */
+    public void confirmPayment() {
+        this.status = this.status.confirmPayment();
+    }
+
+    /** Uỷ quyền hành động check-in cho State Enum hiện tại */
     public void checkIn() {
-        if (ticketState == null) initTicketState();
-        ticketState.checkIn(this);
+        this.status = this.status.checkIn();
     }
 
-    /** Uỷ quyền hành động huỷ vé cho State hiện tại */
+    /** Uỷ quyền hành động huỷ vé cho State Enum hiện tại */
     public void cancel() {
-        if (ticketState == null) initTicketState();
-        ticketState.cancel(this);
+        this.status = this.status.cancel();
     }
 
     @Column(length = 500)

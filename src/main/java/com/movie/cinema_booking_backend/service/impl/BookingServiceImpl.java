@@ -254,7 +254,7 @@ public class BookingServiceImpl implements IBookingService {
         // 6. Chốt tổng tiền và chuyển trạng thái
         dbBooking.setGrandTotalPrice(builtBooking.getGrandTotalPrice());
         dbBooking.setNote(builtBooking.getNote());
-        dbBooking.setStatus(BookingStatus.RESERVED);
+        dbBooking.approve();
 
         bookingRepository.save(dbBooking);
         return toResponse(dbBooking);
@@ -274,7 +274,7 @@ public class BookingServiceImpl implements IBookingService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        booking.setStatus(BookingStatus.RESERVED);
+        booking.approve();
         booking.getTickets().forEach(t -> t.setStatus(TicketStatus.PROCESSING));
         bookingRepository.save(booking);
 
@@ -294,8 +294,8 @@ public class BookingServiceImpl implements IBookingService {
             throw new AppException(ErrorCode.BOOKING_ALREADY_PAID);
         }
 
-        booking.setStatus(BookingStatus.CANCELLED);
-        booking.getTickets().forEach(t -> t.setStatus(TicketStatus.CANCELLED));
+        booking.cancel();
+        booking.getTickets().forEach(t -> t.cancel());
         bookingRepository.save(booking);
 
         return toResponse(booking);
@@ -308,8 +308,8 @@ public class BookingServiceImpl implements IBookingService {
         List<Booking> expiredBookings = bookingRepository.findByStatusAndCreatedAtBefore(BookingStatus.PENDING, cutoffTime);
         
         for (Booking booking : expiredBookings) {
-            booking.setStatus(BookingStatus.CANCELLED);
-            booking.getTickets().forEach(t -> t.setStatus(TicketStatus.CANCELLED));
+            booking.cancel();
+            booking.getTickets().forEach(t -> t.cancel());
         }
         
         if (!expiredBookings.isEmpty()) {

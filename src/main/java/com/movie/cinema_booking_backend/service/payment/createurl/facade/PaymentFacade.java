@@ -88,7 +88,7 @@ public class PaymentFacade {
         
         // Không ghi đè trạng thái nếu đây là vé Khách Đoàn chờ duyệt
         if (booking.getStatus() != BookingStatus.PENDING_APPROVAL) {
-            booking.setStatus(BookingStatus.PENDING);
+            booking.initiatePayment();
             bookingRepository.save(booking);
         }
         
@@ -124,11 +124,11 @@ public class PaymentFacade {
         String paymentState = resolvePaymentState(verified, normalizedMethod, gatewayCode);
 
         if ("THANH_TOAN_THANH_CONG".equals(paymentState)) {
-            booking.setStatus(BookingStatus.SUCCESS);
-            booking.getTickets().forEach(t -> t.setStatus(TicketStatus.BOOKED));
+            booking.pay();
+            booking.getTickets().forEach(t -> t.confirmPayment());
         } else {
-            booking.setStatus(BookingStatus.CANCELLED);
-            booking.getTickets().forEach(t -> t.setStatus(TicketStatus.CANCELLED));
+            booking.cancel();
+            booking.getTickets().forEach(t -> t.cancel());
         }
         bookingRepository.save(booking);
 
