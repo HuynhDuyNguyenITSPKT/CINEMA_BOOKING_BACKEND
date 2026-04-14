@@ -12,6 +12,8 @@ import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.AccountRepository;
 import com.movie.cinema_booking_backend.repository.UserRepository;
 import com.movie.cinema_booking_backend.service.IEmailService;
+import com.movie.cinema_booking_backend.service.user.cache.UserAdminPageCache;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +33,7 @@ public class GoogleLoginStrategy implements LoginStrategy {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final IEmailService emailService;
+    private final UserAdminPageCache userAdminPageCache;
 
     @Value("${app.auth.google.client-id:}")
     private String googleClientId;
@@ -69,6 +72,7 @@ public class GoogleLoginStrategy implements LoginStrategy {
                         .phone(null)
                         .dateOfBirth(LocalDate.now())
                         .build();
+                userAdminPageCache.clear();
                 return userRepository.save(newUser);
             });
 
