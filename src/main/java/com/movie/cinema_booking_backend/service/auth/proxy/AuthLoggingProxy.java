@@ -18,16 +18,18 @@ import com.movie.cinema_booking_backend.request.RegistrationRequest;
 import com.movie.cinema_booking_backend.request.ResetPasswordRequest;
 import com.movie.cinema_booking_backend.response.AuthResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
+import com.movie.cinema_booking_backend.service.IAuthService;
 import com.movie.cinema_booking_backend.service.impl.AuthServiceImpl;
 
 @Service
 @Primary
-public class AuthLoggingProxy extends AbstractAuthProxy {
+public class AuthLoggingProxy implements IAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthLoggingProxy.class);
+    private final IAuthService next;
 
     public AuthLoggingProxy(AuthServiceImpl realSubject) {
-        super(realSubject);
+        this.next = realSubject;
     }
 
     @Override

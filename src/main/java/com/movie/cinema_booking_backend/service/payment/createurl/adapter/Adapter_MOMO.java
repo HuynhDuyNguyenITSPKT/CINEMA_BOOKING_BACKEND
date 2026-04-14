@@ -18,11 +18,13 @@ public class Adapter_MOMO implements IAdapterPay {
     }
 
     @Override
+    // Khai báo type để PaymentService map strategy.
     public String getType() {
         return "momo";
     }
 
     @Override
+    // Chuyển PaymentRequest chung sang params MoMo rồi gọi service gateway.
     public String createPaymentUrl(PaymentRequest request) {
 
         Map<String, String> momoParams = new HashMap<>();
