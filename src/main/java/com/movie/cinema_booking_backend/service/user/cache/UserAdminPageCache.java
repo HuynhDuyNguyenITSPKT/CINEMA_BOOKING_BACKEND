@@ -1,4 +1,4 @@
-package com.movie.cinema_booking_backend.service.cache;
+package com.movie.cinema_booking_backend.service.user.cache;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

@@ -9,8 +9,8 @@ import com.movie.cinema_booking_backend.request.AdminAccountUpdateRequest;
 import com.movie.cinema_booking_backend.request.UpdateProfileRequest;
 import com.movie.cinema_booking_backend.response.AdminUserAccountResponse;
 import com.movie.cinema_booking_backend.response.UserResponse;
-import com.movie.cinema_booking_backend.service.cache.UserAdminPageCache;
 import com.movie.cinema_booking_backend.service.impl.UserService;
+import com.movie.cinema_booking_backend.service.user.cache.UserAdminPageCache;
 
 import org.springframework.security.core.Authentication;
 
