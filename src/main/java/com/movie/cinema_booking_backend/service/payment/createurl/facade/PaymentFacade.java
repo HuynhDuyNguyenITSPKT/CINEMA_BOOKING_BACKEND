@@ -5,10 +5,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.movie.cinema_booking_backend.service.bookingticket.facade.BookingFacade;
+import com.movie.cinema_booking_backend.service.bookingticket.observer.BookingEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +35,7 @@ public class PaymentFacade {
     private final VNPayService vnPayService;
     private final MoMoService moMoService;
     private final IEmailService emailService;
-    private final BookingFacade bookingFacade;
+    private final BookingEventPublisher bookingEventPublisher;
     private final Map<String, String> creatorEmailByBookingId = new ConcurrentHashMap<>();
 
     public PaymentFacade(
@@ -45,13 +44,13 @@ public class PaymentFacade {
             VNPayService vnPayService,
             MoMoService moMoService,
             IEmailService emailService,
-            @Lazy BookingFacade bookingFacade) {
+            BookingEventPublisher bookingEventPublisher) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.vnPayService = vnPayService;
         this.moMoService = moMoService;
         this.emailService = emailService;
-        this.bookingFacade = bookingFacade;
+        this.bookingEventPublisher = bookingEventPublisher;
     }
 
     // API tạo payment record trước khi gọi gateway tạo link.
@@ -131,7 +130,7 @@ public class PaymentFacade {
         if ("THANH_TOAN_THANH_CONG".equals(paymentState)) {
             booking.pay();
             booking.getTickets().forEach(t -> t.confirmPayment());
-            bookingFacade.notifyPaymentSuccess(booking); // Kích hoạt Observer Pattern
+            bookingEventPublisher.publishSuccess(booking);
         } else {
             booking.cancel();
             booking.getTickets().forEach(t -> t.cancel());

@@ -14,10 +14,9 @@ import java.math.RoundingMode;
  * Tính riêng phụ thu ghế (VIP, Sweetbox, 3D...).
  *
  * ╔══════════════════════════════════════════════════════════╗
- * ║ RULE NGHIỆP VỤ – Fix lỗi kiến trúc cũ:                 ║
- * ║ Surcharge KHÔNG được giảm giá. Promotion chỉ được       ║
- * ║ áp dụng trên baseSubtotal (set ở Trạm 1).              ║
- * ║ Đây là lỗi gây thất thoát doanh thu ở hệ thống cũ.    ║
+ * ║ Surcharge được lưu riêng trong surchargesTotal.         ║
+ * ║ PromotionStep gộp cả base + surcharges làm discount     ║
+ * ║ base, nhất quán với giá "Tiền Vé" hiển thị trên UI.    ║
  * ╚══════════════════════════════════════════════════════════╝
  *
  * Đồng thời khởi tạo giá tạm của từng vé = base + surcharge
@@ -36,7 +35,7 @@ public class SurchargeStep implements PricingStep {
             BigDecimal surcharge = seat.surchargeAmount();
             surchTotal = surchTotal.add(surcharge);
 
-            // Giá tạm = base + surcharge (PromotionStep sẽ trừ discount từ phần base)
+            // Giá tạm = base + surcharge (PromotionStep sẽ trừ discount trên tổng này)
             BigDecimal rawPrice = base.add(surcharge).setScale(2, RoundingMode.HALF_UP);
             result.putTicketPrice(seat.seatId(), rawPrice);
         }

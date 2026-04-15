@@ -11,6 +11,7 @@ import com.movie.cinema_booking_backend.service.IPayment;
 import com.movie.cinema_booking_backend.service.ISeatLockService;
 import com.movie.cinema_booking_backend.service.bookingticket.proxy.SeatValidationProxy;
 import com.movie.cinema_booking_backend.service.bookingticket.singleton.SeatLockRegistry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,17 +37,14 @@ public class BookingFacade {
 
     private final ISeatLockService seatLockService;
     private final IBookingService bookingService;
-    private final IPayment paymentProxy; // Bean IPayment từ teammates
-    private final com.movie.cinema_booking_backend.service.bookingticket.observer.BookingPaymentSubject bookingPaymentSubject;
+    private final IPayment paymentProxy;
 
     public BookingFacade(ISeatLockService seatLockService,
                          IBookingService bookingService,
-                         @org.springframework.beans.factory.annotation.Qualifier("paymentProxy") IPayment paymentProxy,
-                         com.movie.cinema_booking_backend.service.bookingticket.observer.BookingPaymentSubject bookingPaymentSubject) {
+                         @Qualifier("paymentProxy") IPayment paymentProxy) {
         this.seatLockService = seatLockService;
         this.bookingService = bookingService;
         this.paymentProxy = paymentProxy;
-        this.bookingPaymentSubject = bookingPaymentSubject;
     }
     @Transactional
     public BookingInitiateResponse initiateBooking(BookingRequest request, String username) {
@@ -137,66 +135,4 @@ public class BookingFacade {
         return response;
     }
 
-    /**
-     * Entry point cho PaymentFacade gọi sau khi DB đã lưu trạng thái SUCCESS.
-     * Pattern: Observer (GoF - Pull Model)
-     */
-    public void notifyPaymentSuccess(Booking booking) {
-        if (booking == null) {
-            return;
-        }
-
-        java.util.List<String> seatIds = booking.getTickets() != null
-                ? booking.getTickets().stream()
-                .map(t -> t.getSeat() != null ? t.getSeat().getId() : null)
-                .filter(java.util.Objects::nonNull)
-                .toList()
-                : java.util.Collections.emptyList();
-
-        java.util.List<String> ticketIds = booking.getTickets() != null
-                ? booking.getTickets().stream()
-                .map(com.movie.cinema_booking_backend.entity.Ticket::getId)
-                .filter(java.util.Objects::nonNull)
-                .toList()
-                : java.util.Collections.emptyList();
-
-        String showtimeId = booking.getTickets() != null && !booking.getTickets().isEmpty()
-                && booking.getTickets().get(0).getShowtime() != null
-                ? booking.getTickets().get(0).getShowtime().getId()
-                : null;
-
-        String movieName = booking.getTickets() != null && !booking.getTickets().isEmpty()
-                && booking.getTickets().get(0).getShowtime() != null
-                && booking.getTickets().get(0).getShowtime().getMovie() != null
-                ? booking.getTickets().get(0).getShowtime().getMovie().getTitle()
-                : null;
-
-        String userEmail = booking.getUser() != null ? booking.getUser().getEmail() : null;
-
-        String promotionCode = booking.getTickets() == null ? null
-                : booking.getTickets().stream()
-                .map(com.movie.cinema_booking_backend.entity.Ticket::getPromotion)
-                .filter(java.util.Objects::nonNull)
-                .map(com.movie.cinema_booking_backend.entity.TicketPromotion::getPromotion)
-                .filter(java.util.Objects::nonNull)
-                .map(com.movie.cinema_booking_backend.entity.Promotion::getCode)
-                .filter(code -> code != null && !code.isBlank())
-                .findFirst()
-                .orElse(null);
-
-        com.movie.cinema_booking_backend.service.bookingticket.observer.BookingSuccessEvent event =
-                new com.movie.cinema_booking_backend.service.bookingticket.observer.BookingSuccessEvent(
-                        booking.getId(),
-                        userEmail,
-                        movieName,
-                        showtimeId,
-                        seatIds,
-                        ticketIds,
-                        booking.getGrandTotalPrice(),
-                        promotionCode
-                );
-
-        // Kích hoạt thay đổi trạng thái của Subject
-        bookingPaymentSubject.setPaymentSuccessState(event);
-    }
 }

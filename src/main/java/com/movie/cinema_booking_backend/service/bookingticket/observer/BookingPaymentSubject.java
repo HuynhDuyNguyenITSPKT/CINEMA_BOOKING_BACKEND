@@ -43,18 +43,11 @@ public class BookingPaymentSubject implements IBookingSubject {
         }
     }
 
-    /**
-     * Bị gọi bởi PaymentFacade (thông qua BookingFacade).
-     * Khi hàm này kích hoạt, State thay đổi và tự động báo cho Observers.
-     */
     public void setPaymentSuccessState(BookingSuccessEvent state) {
         this.state = state;
         notifyObservers();
     }
 
-    /**
-     * Hàm dành riêng cho Observers PULL data ra ngoài.
-     */
     public BookingSuccessEvent getState() {
         return state;
     }

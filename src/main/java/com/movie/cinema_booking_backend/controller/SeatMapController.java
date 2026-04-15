@@ -4,8 +4,8 @@ import com.movie.cinema_booking_backend.request.SeatLockRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.service.ISeatLockService;
 import com.movie.cinema_booking_backend.service.ISeatService;
-import com.movie.cinema_booking_backend.service.bookingticket.proxy.SeatValidationProxy;
 import com.movie.cinema_booking_backend.service.bookingticket.singleton.SeatLockRegistry;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -34,7 +34,11 @@ public class SeatMapController {
      */
     @GetMapping("/{id}/seat-map")
     public ApiResponse<?> getSeatMap(@PathVariable("id") String id,
-                                     Authentication authentication) {
+                                     Authentication authentication,
+                                     HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
         String userId = authentication != null ? authentication.getName() : "anonymous";
         return new ApiResponse.Builder<>()
                 .success(true)
@@ -82,6 +86,24 @@ public class SeatMapController {
         return new ApiResponse.Builder<>()
                 .success(true)
                 .message("Unlock ghế thành công")
+                .build();
+    }
+
+    /**
+     * POST /api/showtimes/{id}/seats/unlock-on-exit
+     *
+     * Dành cho page reload/close: client dùng fetch keepalive để cố gắng gửi request
+     * trước khi tab bị hủy.
+     */
+    @PostMapping("/{id}/seats/unlock-on-exit")
+    public ApiResponse<?> unlockSeatsOnExit(@PathVariable("id") String id,
+                                            @Valid @RequestBody SeatLockRequest request,
+                                            Authentication authentication) {
+        String userId = authentication.getName();
+        seatLockService.unlockSeats(id, request.getSeatIds(), userId);
+        return new ApiResponse.Builder<>()
+                .success(true)
+                .message("Unlock ghế khi thoát trang thành công")
                 .build();
     }
 }

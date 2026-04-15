@@ -14,10 +14,10 @@ import java.util.Map;
  * Booking entity và danh sách Ticket với giá chính xác.
  *
  * Cấu trúc tách biệt:
- *   baseSubtotal      – chỉ base price (phần được phép giảm giá)
- *   surchargesTotal   – phụ thu ghế VIP/Sweetbox (KHÔNG giảm giá)
- *   promotionDiscount – discount tính trên baseSubtotal
- *   taxAmount         – VAT 10% tính trên (base - discount + surcharge)
+ *   baseSubtotal      – chỉ base price (từng vé × số ghế)
+ *   surchargesTotal   – phụ thu ghế VIP/Sweetbox
+ *   promotionDiscount – discount tính trên (baseSubtotal + surchargesTotal)
+ *   taxAmount         – VAT 10% tính trên (base + surcharge - discount)
  *   extrasTotal       – đồ ăn/uống (không thuế, không giảm giá)
  */
 public class CalculationResult {
