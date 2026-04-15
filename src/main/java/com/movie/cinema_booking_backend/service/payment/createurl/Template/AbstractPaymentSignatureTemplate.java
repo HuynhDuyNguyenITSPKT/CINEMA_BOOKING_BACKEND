@@ -10,13 +10,11 @@ import java.util.Map;
 
 public abstract class AbstractPaymentSignatureTemplate {
 
-    // Bước ký dùng chung: build raw data theo gateway rồi tạo HMAC.
     protected final String signRequest(Map<String, String> params) {
         String rawData = buildRawDataForSigning(params);
         return hmac(rawData);
     }
 
-    // Bước verify callback dùng chung: so sánh chữ ký nhận được với chữ ký tính lại.
     protected final boolean verifyCallback(Map<String, String> params) {
         String receivedSignature = extractReceivedSignature(params);
         if (receivedSignature == null || receivedSignature.trim().isEmpty()) {
@@ -38,7 +36,6 @@ public abstract class AbstractPaymentSignatureTemplate {
 
     protected abstract String getHmacAlgorithm();
 
-    // Hàm HMAC nội bộ, trả về chuỗi hex lowercase.
     private String hmac(String data) {
         try {
             Mac mac = Mac.getInstance(getHmacAlgorithm());

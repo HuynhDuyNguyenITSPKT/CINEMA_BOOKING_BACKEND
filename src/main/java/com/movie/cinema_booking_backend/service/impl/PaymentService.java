@@ -17,7 +17,6 @@ public class PaymentService implements IPayment {
 
     private final Map<String, IAdapterPay> strategy;
 
-    // Build bảng strategy từ type -> adapter khi khởi tạo bean.
     public PaymentService(List<IAdapterPay> adapters) {
         this.strategy = adapters.stream()
                 .collect(Collectors.toMap(
@@ -27,14 +26,13 @@ public class PaymentService implements IPayment {
     }
 
     @Override
-    // Chọn adapter theo method và delegate tạo link thanh toán.
     public String createPaymentUrl(String method, PaymentRequest request) {
         IAdapterPay adapter = strategy.get(method.toLowerCase());
         if (adapter == null) {
             throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
         }
         return adapter.createPaymentUrl(request);
-    }   
+    }
 
 
 }

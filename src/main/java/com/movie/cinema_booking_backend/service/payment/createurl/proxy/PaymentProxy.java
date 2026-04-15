@@ -26,7 +26,6 @@ public class PaymentProxy implements IPayment{
     }
 
     @Override
-    // Proxy kiểm tra method + trạng thái payment trước khi delegate tạo link thật.
     public String createPaymentUrl(String method, PaymentRequest request){
         if (method == null || method.isEmpty()) {
             log.error("Phương thức thanh toán không hợp lệ: {}", method);
@@ -39,16 +38,16 @@ public class PaymentProxy implements IPayment{
                 isValid = true;
                 break;
             }
-        } // Kiểm tra nếu phương thức không hợp lệ
+        }
 
         if (!isValid) {
             log.error("Phương thức thanh toán không được hỗ trợ: {}", method);
             throw new IllegalArgumentException("Phương thức thanh toán không được hỗ trợ");
         }
 
-        method = method.toUpperCase(); // Chuẩn hóa phương thức thành chữ hoa
+        method = method.toUpperCase();
 
-        method = method.trim(); // Loại bỏ khoảng trắng thừa
+        method = method.trim();
 
         log.info("Tạo URL thanh toán cho phương thức: {}", method);
         
