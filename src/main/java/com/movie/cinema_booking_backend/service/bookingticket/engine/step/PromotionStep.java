@@ -11,16 +11,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-/**
- * ─── Trạm 3: Promotion & Discount ─────────────────────────
- * (1) Tính discountableAmount = baseSubtotal + surchargesTotal
- *     (nhất quán với giá hiển thị "Tiền Vé" trên giao diện người dùng).
- * (2) Tính discount trên discountableAmount theo loại PERCENTAGE hoặc FIXED_AMOUNT.
- * (3) Phân bổ discount xuống từng vé (fix rounding: vé cuối chịu phần dư).
- *
- * Lý do đưa surcharges vào base discount: Người dùng thấy tổng giá vé là
- * base + surcharges → họ kỳ vọng % giảm áp dụng trên con số đó.
- */
 @Component
 @Order(3)
 public class PromotionStep implements PricingStep {
@@ -28,11 +18,9 @@ public class PromotionStep implements PricingStep {
     @Override
     public void process(CalculationRequest request, CalculationResult result) {
         if (request.promotion() == null || !request.promotion().isActive()) {
-            return; // No promo, do nothing
+            return;
         }
 
-        // Áp dụng discount trên TỔNG giá vé (base + surcharges) để nhất quán
-        // với số tiền "Tiền Vé" hiển thị trên giao diện người dùng.
         BigDecimal discountableAmount = result.getBaseSubtotal()
                 .add(result.getSurchargesTotal());
 
@@ -63,10 +51,6 @@ public class PromotionStep implements PricingStep {
         return discount;
     }
 
-    /**
-     * Chia đều discount theo từng vé, vé cuối chịu phần dư của phép chia.
-     * Đảm bảo tổng discount phân bổ = totalDiscount chính xác.
-     */
     private void distributeDiscount(List<CalculationRequest.SeatInfo> seats,
                                     CalculationResult result,
                                     BigDecimal totalDiscount) {
@@ -80,7 +64,7 @@ public class PromotionStep implements PricingStep {
             String seatId = seats.get(i).seatId();
 
             BigDecimal ticketDiscount = (i == seats.size() - 1)
-                    ? totalDiscount.subtract(accumulated)   // Vé cuối gánh phần dư rounding
+                    ? totalDiscount.subtract(accumulated)
                     : perTicket;
             accumulated = accumulated.add(ticketDiscount);
 

@@ -5,12 +5,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * ════════════════════════════════════════════════════════════
- *  DESIGN PATTERN: OBSERVER — ConcreteSubject (GoF)
- * ════════════════════════════════════════════════════════════
- * Nắm giữ State danh sách Observer và kích hoạt Notification.
- */
 @Component
 public class BookingPaymentSubject implements IBookingSubject {
 

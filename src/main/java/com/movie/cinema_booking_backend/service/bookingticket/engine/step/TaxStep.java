@@ -10,17 +10,6 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * ─── Trạm 4: VAT ──────────────────────────────────────────
- * Tính thuế VAT trên phần taxable:
- *   taxable = baseSubtotal - promotionDiscount + surchargesTotal (≥ 0)
- *
- * Extras (đồ ăn/uống) KHÔNG chịu thuế – chúng đã có giá lẻ bao gồm VAT.
- *
- * Cấu hình qua application.properties:
- *   booking.tax.vat-percent=10    (mặc định 10%)
- *   booking.tax.vat-percent=0     (để tắt nếu giá đã bao gồm VAT)
- */
 @Component
 @Order(5)
 public class TaxStep implements PricingStep {

@@ -4,22 +4,6 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * ═══════════════════════════════════════════════════════════
- *  DESIGN PATTERN: VALUE OBJECT (Mutable accumulator)
- * ═══════════════════════════════════════════════════════════
- *
- * Được các PricingStep điền vào tuần tự qua Pipeline.
- * Sau khi Engine chạy xong, Builder đọc kết quả này để tạo
- * Booking entity và danh sách Ticket với giá chính xác.
- *
- * Cấu trúc tách biệt:
- *   baseSubtotal      – chỉ base price (từng vé × số ghế)
- *   surchargesTotal   – phụ thu ghế VIP/Sweetbox
- *   promotionDiscount – discount tính trên (baseSubtotal + surchargesTotal)
- *   taxAmount         – VAT 10% tính trên (base + surcharge - discount)
- *   extrasTotal       – đồ ăn/uống (không thuế, không giảm giá)
- */
 public class CalculationResult {
 
     private BigDecimal baseSubtotal      = BigDecimal.ZERO;
@@ -28,16 +12,8 @@ public class CalculationResult {
     private BigDecimal taxAmount         = BigDecimal.ZERO;
     private BigDecimal extrasTotal       = BigDecimal.ZERO;
 
-    /**
-     * Map: seatId → giá vé cuối cùng (đã bao gồm surcharge, đã trừ discount một phần).
-     * Builder sẽ đọc map này để tạo từng Ticket.
-     */
     private final Map<String, BigDecimal> ticketPrices = new LinkedHashMap<>();
 
-    /**
-     * Tổng tiền thanh toán cuối cùng.
-     * Công thức: (base - discount + surcharge + tax) + extras ≥ 0
-     */
     public BigDecimal getFinalTotal() {
         return baseSubtotal
                 .subtract(promotionDiscount)
@@ -46,8 +22,6 @@ public class CalculationResult {
                 .add(extrasTotal)
                 .max(BigDecimal.ZERO);
     }
-
-    // ─── Getters & Setters ────────────────────────────────────────────────────
 
     public BigDecimal getBaseSubtotal()      { return baseSubtotal; }
     public void setBaseSubtotal(BigDecimal v) { this.baseSubtotal = v; }

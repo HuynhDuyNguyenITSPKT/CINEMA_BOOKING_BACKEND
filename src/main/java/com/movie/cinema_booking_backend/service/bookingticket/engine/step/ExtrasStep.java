@@ -8,13 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
-/**
- * ─── Trạm 5: Extras ───────────────────────────────────────
- * Cộng tổng tiền đồ ăn / thức uống (bắp nước, combo...).
- *
- * Extras không được giảm giá và không chịu thêm thuế VAT
- * (giá retail đã bao gồm VAT theo quy định).
- */
 @Component
 @Order(6)
 public class ExtrasStep implements PricingStep {
@@ -29,7 +22,6 @@ public class ExtrasStep implements PricingStep {
                             .multiply(BigDecimal.valueOf(item.quantity()))
             );
         }
-
         result.setExtrasTotal(total);
     }
 }
