@@ -88,6 +88,12 @@ public class SeatLockRegistry {
         return !entry.userId().equals(userId);
     }
 
+    public boolean isLockedByUser(String showtimeId, String seatId, String userId) {
+        String key = buildKey(showtimeId, seatId);
+        SeatLockEntry entry = lockMap.computeIfPresent(key, (k, current) -> current.isExpired() ? null : current);
+        return entry != null && entry.userId().equals(userId);
+    }
+
     public boolean isLocked(String showtimeId, String seatId){
         String key = buildKey(showtimeId, seatId);
         SeatLockEntry entry = lockMap.computeIfPresent(key, (k, current) -> current.isExpired() ? null : current);

@@ -63,23 +63,30 @@ public class SeatValidationProxy implements ISeatService {
         return seats.stream()
                 .map(seat -> {
                     if ("BOOKED".equals(seat.getStatus())) {
-                        return seat;
+                        return copySeatWithState(seat, seat.getStatus(), false);
                     }
                     if (lockRegistry.isLockedByOther(showtimeId, seat.getId(), currentUserId)) {
-                        return SeatResponse.builder()
-                                .id(seat.getId())
-                                .name(seat.getName())
-                                .rowIndex(seat.getRowIndex())
-                                .columnIndex(seat.getColumnIndex())
-                                .seatTypeId(seat.getSeatTypeId())
-                                .seatTypeName(seat.getSeatTypeName())
-                                .seatTypeSurcharge(seat.getSeatTypeSurcharge())
-                                .status("LOCKED") // ✅ Proxy adds this status
-                                .build();
+                        return copySeatWithState(seat, "LOCKED", false);
                     }
-                    return seat;
+
+                    boolean lockedByCurrentUser = lockRegistry.isLockedByUser(showtimeId, seat.getId(), currentUserId);
+                    return copySeatWithState(seat, seat.getStatus(), lockedByCurrentUser);
                 })
                 .collect(Collectors.toList());
+    }
+
+    private SeatResponse copySeatWithState(SeatResponse seat, String status, boolean lockedByCurrentUser) {
+        return SeatResponse.builder()
+                .id(seat.getId())
+                .name(seat.getName())
+                .rowIndex(seat.getRowIndex())
+                .columnIndex(seat.getColumnIndex())
+                .seatTypeId(seat.getSeatTypeId())
+                .seatTypeName(seat.getSeatTypeName())
+                .seatTypeSurcharge(seat.getSeatTypeSurcharge())
+                .status(status)
+                .lockedByCurrentUser(lockedByCurrentUser)
+                .build();
     }
 
     private record CacheEntry<T>(T value, long expireAt) {

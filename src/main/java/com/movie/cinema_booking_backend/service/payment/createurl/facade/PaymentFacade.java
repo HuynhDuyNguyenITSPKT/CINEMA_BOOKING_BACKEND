@@ -3,9 +3,12 @@ package com.movie.cinema_booking_backend.service.payment.createurl.facade;
 import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.movie.cinema_booking_backend.service.bookingticket.observer.BookingEventPublisher;
+import com.movie.cinema_booking_backend.service.ISeatLockService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,7 +18,6 @@ import com.movie.cinema_booking_backend.entity.Booking;
 import com.movie.cinema_booking_backend.entity.Payment;
 import com.movie.cinema_booking_backend.enums.BookingStatus;
 import com.movie.cinema_booking_backend.enums.PaymentMethod;
-import com.movie.cinema_booking_backend.enums.TicketStatus;
 import com.movie.cinema_booking_backend.exception.AppException;
 import com.movie.cinema_booking_backend.exception.ErrorCode;
 import com.movie.cinema_booking_backend.repository.BookingRepository;
@@ -36,6 +38,7 @@ public class PaymentFacade {
     private final MoMoService moMoService;
     private final IEmailService emailService;
     private final BookingEventPublisher bookingEventPublisher;
+    private final ISeatLockService seatLockService;
     private final Map<String, String> creatorEmailByBookingId = new ConcurrentHashMap<>();
 
     public PaymentFacade(
@@ -44,13 +47,15 @@ public class PaymentFacade {
             VNPayService vnPayService,
             MoMoService moMoService,
             IEmailService emailService,
-            BookingEventPublisher bookingEventPublisher) {
+            BookingEventPublisher bookingEventPublisher,
+            ISeatLockService seatLockService) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.vnPayService = vnPayService;
         this.moMoService = moMoService;
         this.emailService = emailService;
         this.bookingEventPublisher = bookingEventPublisher;
+        this.seatLockService = seatLockService;
     }
 
     // API tạo payment record trước khi gọi gateway tạo link.
@@ -134,6 +139,7 @@ public class PaymentFacade {
         } else {
             booking.cancel();
             booking.getTickets().forEach(t -> t.cancel());
+            forceUnlockSeatsAfterPaymentFailure(booking);
         }
         bookingRepository.save(booking);
 
@@ -152,6 +158,29 @@ public class PaymentFacade {
         result.put("method", normalizedMethod);
         result.put("gatewayCode", gatewayCode);
         return result;
+    }
+
+    private void forceUnlockSeatsAfterPaymentFailure(Booking booking) {
+        if (booking.getTickets() == null || booking.getTickets().isEmpty()) {
+            return;
+        }
+
+        String showtimeId = booking.getTickets().get(0).getShowtime() != null
+                ? booking.getTickets().get(0).getShowtime().getId()
+                : null;
+        if (showtimeId == null || showtimeId.isBlank()) {
+            return;
+        }
+
+        List<String> seatIds = booking.getTickets().stream()
+                .map(t -> t.getSeat() != null ? t.getSeat().getId() : null)
+                .filter(Objects::nonNull)
+                .toList();
+        if (seatIds.isEmpty()) {
+            return;
+        }
+
+        seatLockService.forceUnlockSeats(showtimeId, seatIds);
     }
 
     // Map verified + gatewayCode thành trạng thái nghiệp vụ thống nhất.

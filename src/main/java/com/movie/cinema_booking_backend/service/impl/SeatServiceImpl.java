@@ -68,6 +68,7 @@ public class SeatServiceImpl implements ISeatService {
                 .seatTypeName(seat.getSeatType() != null ? seat.getSeatType().getName() : null)
                 .seatTypeSurcharge(seat.getSeatType() != null ? seat.getSeatType().getSurchargeAmount() : 0f)
                 .status(null)
+                .lockedByCurrentUser(false)
                 .build();
     }
     private SeatResponse toResponseWithStatus(Seat seat, String status) {
@@ -80,6 +81,7 @@ public class SeatServiceImpl implements ISeatService {
                 .seatTypeName(seat.getSeatType() != null ? seat.getSeatType().getName() : null)
                 .seatTypeSurcharge(seat.getSeatType() != null ? seat.getSeatType().getSurchargeAmount() : 0f)
                 .status(status)
+                .lockedByCurrentUser(false)
                 .build();
     }
 }

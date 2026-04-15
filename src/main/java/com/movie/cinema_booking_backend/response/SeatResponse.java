@@ -29,4 +29,10 @@ public class SeatResponse {
      * Phase 1: luôn null. Phase 2 Proxy sẽ enrich giá trị này.
      */
     private String status;
+
+    /**
+     * true nếu ghế đang được giữ bởi chính user hiện tại.
+     * Frontend dùng cờ này để đồng bộ selectedIds theo lock thực từ backend.
+     */
+    private Boolean lockedByCurrentUser;
 }
