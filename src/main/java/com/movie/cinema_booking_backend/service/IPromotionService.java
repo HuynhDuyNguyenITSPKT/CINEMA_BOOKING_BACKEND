@@ -17,4 +17,6 @@ public interface IPromotionService {
     void deletePromotion(String id);
 
     PromotionResponse getPromotionByCode(String Code);
+
+    boolean decrementUsage(String code);
 }

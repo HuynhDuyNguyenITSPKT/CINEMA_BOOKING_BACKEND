@@ -11,6 +11,7 @@ import com.movie.cinema_booking_backend.service.IPayment;
 import com.movie.cinema_booking_backend.service.ISeatLockService;
 import com.movie.cinema_booking_backend.service.bookingticket.proxy.SeatValidationProxy;
 import com.movie.cinema_booking_backend.service.bookingticket.singleton.SeatLockRegistry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,11 +37,11 @@ public class BookingFacade {
 
     private final ISeatLockService seatLockService;
     private final IBookingService bookingService;
-    private final IPayment paymentProxy; // Bean IPayment từ teammates
+    private final IPayment paymentProxy;
 
     public BookingFacade(ISeatLockService seatLockService,
                          IBookingService bookingService,
-                         @org.springframework.beans.factory.annotation.Qualifier("paymentProxy") IPayment paymentProxy) {
+                         @Qualifier("paymentProxy") IPayment paymentProxy) {
         this.seatLockService = seatLockService;
         this.bookingService = bookingService;
         this.paymentProxy = paymentProxy;
@@ -133,4 +134,5 @@ public class BookingFacade {
         }
         return response;
     }
+
 }

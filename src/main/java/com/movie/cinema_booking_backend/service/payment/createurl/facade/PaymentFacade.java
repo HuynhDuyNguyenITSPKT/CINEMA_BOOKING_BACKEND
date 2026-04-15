@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.movie.cinema_booking_backend.service.bookingticket.observer.BookingEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class PaymentFacade {
     private final VNPayService vnPayService;
     private final MoMoService moMoService;
     private final IEmailService emailService;
+    private final BookingEventPublisher bookingEventPublisher;
     private final Map<String, String> creatorEmailByBookingId = new ConcurrentHashMap<>();
 
     public PaymentFacade(
@@ -41,12 +43,14 @@ public class PaymentFacade {
             BookingRepository bookingRepository,
             VNPayService vnPayService,
             MoMoService moMoService,
-            IEmailService emailService) {
+            IEmailService emailService,
+            BookingEventPublisher bookingEventPublisher) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.vnPayService = vnPayService;
         this.moMoService = moMoService;
         this.emailService = emailService;
+        this.bookingEventPublisher = bookingEventPublisher;
     }
 
     // API tạo payment record trước khi gọi gateway tạo link.
@@ -126,6 +130,7 @@ public class PaymentFacade {
         if ("THANH_TOAN_THANH_CONG".equals(paymentState)) {
             booking.pay();
             booking.getTickets().forEach(t -> t.confirmPayment());
+            bookingEventPublisher.publishSuccess(booking);
         } else {
             booking.cancel();
             booking.getTickets().forEach(t -> t.cancel());

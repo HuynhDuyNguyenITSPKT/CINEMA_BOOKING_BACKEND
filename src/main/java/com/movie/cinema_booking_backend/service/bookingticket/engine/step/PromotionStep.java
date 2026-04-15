@@ -13,12 +13,13 @@ import java.util.List;
 
 /**
  * ─── Trạm 3: Promotion & Discount ─────────────────────────
- * (1) Hỏi PolicyFactory lấy đúng Policy theo bookingType.
- * (2) Policy tính discount CHỈ trên baseSubtotal.
+ * (1) Tính discountableAmount = baseSubtotal + surchargesTotal
+ *     (nhất quán với giá hiển thị "Tiền Vé" trên giao diện người dùng).
+ * (2) Tính discount trên discountableAmount theo loại PERCENTAGE hoặc FIXED_AMOUNT.
  * (3) Phân bổ discount xuống từng vé (fix rounding: vé cuối chịu phần dư).
  *
- * Nhờ PolicyFactory, trạm này không cần biết là Group hay Standard.
- * Thêm loại mới chỉ cần thêm Policy + đăng ký vào Factory.
+ * Lý do đưa surcharges vào base discount: Người dùng thấy tổng giá vé là
+ * base + surcharges → họ kỳ vọng % giảm áp dụng trên con số đó.
  */
 @Component
 @Order(3)
@@ -30,10 +31,12 @@ public class PromotionStep implements PricingStep {
             return; // No promo, do nothing
         }
 
-        BigDecimal baseSubtotal = result.getBaseSubtotal();
-        
-        // Vì đã bỏ PolicyFactory (để đưa validate vào Builder), ta tính discount trực tiếp ở đây:
-        BigDecimal discount = calculateDiscount(baseSubtotal, request.promotion());
+        // Áp dụng discount trên TỔNG giá vé (base + surcharges) để nhất quán
+        // với số tiền "Tiền Vé" hiển thị trên giao diện người dùng.
+        BigDecimal discountableAmount = result.getBaseSubtotal()
+                .add(result.getSurchargesTotal());
+
+        BigDecimal discount = calculateDiscount(discountableAmount, request.promotion());
 
         result.setPromotionDiscount(discount);
         distributeDiscount(request.seats(), result, discount);

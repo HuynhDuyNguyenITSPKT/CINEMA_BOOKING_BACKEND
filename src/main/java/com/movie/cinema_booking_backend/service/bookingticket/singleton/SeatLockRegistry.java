@@ -70,6 +70,15 @@ public class SeatLockRegistry {
     public void unlockAll(String showtimeId, List<String> seatIds, String userId){
         seatIds.forEach(seatId -> unlock(showtimeId, seatId, userId));
     }
+
+    public void unlockForce(String showtimeId, String seatId) {
+        lockMap.remove(buildKey(showtimeId, seatId));
+    }
+
+    public void unlockAllForce(String showtimeId, List<String> seatIds) {
+        seatIds.forEach(seatId -> unlockForce(showtimeId, seatId));
+    }
+
     public boolean isLockedByOther(String showtimeId, String seatId, String userId){
         String key = buildKey(showtimeId, seatId);
         SeatLockEntry entry = lockMap.computeIfPresent(key, (k, current) -> current.isExpired() ? null : current);
