@@ -1,10 +1,10 @@
 package com.movie.cinema_booking_backend.controller;
 
+import com.movie.cinema_booking_backend.config.SeatLockProperties;
 import com.movie.cinema_booking_backend.request.SeatLockRequest;
 import com.movie.cinema_booking_backend.response.ApiResponse;
 import com.movie.cinema_booking_backend.service.ISeatLockService;
 import com.movie.cinema_booking_backend.service.ISeatService;
-import com.movie.cinema_booking_backend.service.bookingticket.singleton.SeatLockRegistry;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ public class SeatMapController {
 
     private final ISeatService seatService;
     private final ISeatLockService seatLockService;
+    private final SeatLockProperties seatLockProperties;
 
 
     /**
@@ -60,12 +61,11 @@ public class SeatMapController {
                                     @Valid @RequestBody SeatLockRequest request,
                                     Authentication authentication) {
         String userId = authentication.getName();
-        seatLockService.lockSeats(id, request.getSeatIds(), userId,
-                SeatLockRegistry.DEFAULT_TTL);
+        seatLockService.lockSeats(id, request.getSeatIds(), userId, seatLockProperties.getTtlDuration());
         return new ApiResponse.Builder<>()
                 .success(true)
                 .message("Lock ghế thành công. Giữ chỗ trong " +
-                        SeatLockRegistry.DEFAULT_TTL.toMinutes() + " phút.")
+                        seatLockProperties.getTtlMinutes() + " phút.")
                 .build();
     }
 

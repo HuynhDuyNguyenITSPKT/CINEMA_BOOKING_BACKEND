@@ -12,18 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.math.BigDecimal;
 
-/**
- * ═══════════════════════════════════════════════════════════
- *  DESIGN PATTERN: BUILDER (GoF - Abstract Builder)
- * ═══════════════════════════════════════════════════════════
- *
- * Chứa code dùng chung cho mọi luồng Booking (Database loading,
- * giao tiếp với Pricing Engine).
- * Các Concrete class (Standard, Couple, Group) sẽ kế thừa
- * class này và cung cấp riêng logic validateRules() / buildEntities().
- *
- * (Lưu ý: Không đặt @Component ở đây)
- */
 public abstract class AbstractBookingBuilder implements BookingBuilder {
 
     // ─── State ───────────────────────────────────────────
@@ -66,7 +54,6 @@ public abstract class AbstractBookingBuilder implements BookingBuilder {
         this.calcResult = engine.calculate(buildCalculationRequest());
     }
 
-    // Giao cho con tự build Booking với status tương ứng (RESERVED hoặc PENDING_APPROVAL)
     @Override
     public abstract void buildEntities();
 
@@ -78,7 +65,6 @@ public abstract class AbstractBookingBuilder implements BookingBuilder {
         return booking;
     }
 
-    /** Dùng cho constructPreview(): Đọc kết quả tính giá không qua buildEntities. */
     public com.movie.cinema_booking_backend.service.bookingticket.engine.dto.CalculationResult getCalcResult() {
         if (calcResult == null) {
             throw new IllegalStateException("Chưa chạy runPricing(). Gọi constructPreview() trước.");

@@ -9,14 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * ════════════════════════════════════════════════════════════
- *  DESIGN PATTERN: OBSERVER — ConcreteObserver (GoF)
- * ════════════════════════════════════════════════════════════
- * Phản ứng khi có sự kiện thanh toán thành công:
- * Tiến hành giải phóng ghế khỏi RAM (nhờ xóa Lock). Tối ưu hóa bộ nhớ
- * và giải tỏa ghế để hệ thống UI chuyển đổi thành ghế Đã Bán.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,7 +19,6 @@ public class SeatUnlockObserver implements IBookingObserver {
     @Override
     public void update(IBookingSubject subject) {
         if (subject instanceof BookingPaymentSubject concreteSubject) {
-            // PULL Mode
             BookingSuccessEvent event = concreteSubject.getState();
             
             if (event.showtimeId() == null || event.seatIds() == null || event.seatIds().isEmpty()) {

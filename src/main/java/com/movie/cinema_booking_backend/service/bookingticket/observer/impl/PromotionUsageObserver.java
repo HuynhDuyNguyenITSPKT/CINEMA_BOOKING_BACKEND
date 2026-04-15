@@ -9,13 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * ════════════════════════════════════════════════════════════
- *  DESIGN PATTERN: OBSERVER — ConcreteObserver (GoF)
- * ════════════════════════════════════════════════════════════
- * Phản ứng khi có sự kiện thanh toán thành công:
- * Tiến hành trừ số lượng (Usage) của mã khuyến mãi.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

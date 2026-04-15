@@ -48,9 +48,6 @@ public class Promotion {
     @Builder.Default
     private BigDecimal minOrderValue = BigDecimal.ZERO;
 
-    // private String requiredSeatType; (Chỉ áp dụng ghế COUPLE)
-    // private String requiredPaymentMethod; (Chỉ áp dụng khi thanh toán MOMO)
-
     @Column(nullable = false)
     private LocalDateTime startDate;
 

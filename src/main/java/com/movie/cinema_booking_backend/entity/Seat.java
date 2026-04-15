@@ -26,12 +26,6 @@ public class Seat {
     @Column(nullable = false)
     private Integer columnIndex;
 
-    /**
-     * Trạng thái ghế được persist vào DB.
-     * AVAILABLE: ghế trống.
-     * BOOKED: đã có Ticket BOOKED trong DB.
-     * LOCKED không lưu DB — chỉ tồn tại trong SeatLockRegistry (Phase 2).
-     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -45,7 +39,7 @@ public class Seat {
     private Auditorium auditorium;
 
     @ManyToOne
-    @JoinColumn(name = "seat_type_id")
+    @JoinColumn(name = "seat_type_id", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private SeatType seatType;

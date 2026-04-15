@@ -8,12 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
-/**
- * ─── Trạm 1: Base Price ───────────────────────────────────
- * Tính tổng giá gốc: baseTicketPrice × số ghế.
- * Kết quả lưu vào result.baseSubtotal – đây là phần DUY NHẤT
- * mà Promotion được phép giảm giá.
- */
 @Component
 @Order(1)
 public class BasePriceStep implements PricingStep {

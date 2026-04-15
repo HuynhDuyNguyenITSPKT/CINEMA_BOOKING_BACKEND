@@ -10,13 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-/**
- * ════════════════════════════════════════════════════════════
- *  DESIGN PATTERN: OBSERVER — ConcreteObserver (GoF)
- * ════════════════════════════════════════════════════════════
- * Phản ứng khi có sự kiện thanh toán thành công:
- * Tiến hành chạy Asynchronous gửi email có chứa QR vé xe/phim.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,23 +18,18 @@ public class EmailTicketObserver implements IBookingObserver {
     private final IEmailService emailService;
 
     @Override
-    @Async // Không chờ gửi xong Mail, chạy ngầm để Response cho User bay về ngay lập tức
+    @Async
     public void update(IBookingSubject subject) {
-        // 1. Kiểm tra chính xác Subject ném ra sự kiện có phải BookingPaymentSubject không
         if (subject instanceof BookingPaymentSubject concreteSubject) {
-            // 2. PULL: Moi móc (Kéo) đúng Data mình cần dùng
             BookingSuccessEvent event = concreteSubject.getState();
-            
             if (event.userEmail() == null) {
                 log.warn("[EmailTicketObserver] Khách hàng chưa có Email, bỏ qua.");
                 return;
             }
-
             if (event.ticketIds() == null || event.ticketIds().isEmpty()) {
                 log.warn("[EmailTicketObserver] Booking {} khong co ticketId de tao QR.", event.bookingId());
                 return;
             }
-
             log.info("[EmailTicketObserver] Bắt đầu gửi Email chứa mã QR vé tới: {}", event.userEmail());
             try {
                 emailService.sendTicketQrEmail(

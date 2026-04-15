@@ -39,26 +39,6 @@ public class Ticket {
     @Column(nullable = false)
     private TicketStatus status;
 
-    // Khi set status bằng tay (ví dụ lúc tạo)
-    public void setStatus(TicketStatus status) {
-        this.status = status;
-    }
-
-    /** Uỷ quyền hành động xác nhận thanh toán cho State Enum hiện tại */
-    public void confirmPayment() {
-        this.status = this.status.confirmPayment();
-    }
-
-    /** Uỷ quyền hành động check-in cho State Enum hiện tại */
-    public void checkIn() {
-        this.status = this.status.checkIn();
-    }
-
-    /** Uỷ quyền hành động huỷ vé cho State Enum hiện tại */
-    public void cancel() {
-        this.status = this.status.cancel();
-    }
-
     @Column(length = 500)
     private String qrCodeUrl;
 
@@ -87,5 +67,21 @@ public class Ticket {
             this.promotion.setTicket(null);
             this.promotion = null;
         }
+    }
+
+    public void setStatus(TicketStatus status) {
+        this.status = status;
+    }
+
+    public void confirmPayment() {
+        this.status = this.status.confirmPayment();
+    }
+
+    public void checkIn() {
+        this.status = this.status.checkIn();
+    }
+
+    public void cancel() {
+        this.status = this.status.cancel();
     }
 }

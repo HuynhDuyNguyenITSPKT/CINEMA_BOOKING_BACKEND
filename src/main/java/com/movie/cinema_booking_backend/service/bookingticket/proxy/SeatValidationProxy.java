@@ -13,19 +13,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-/**
- * ═══════════════════════════════════════════════════════════
- * DESIGN PATTERN: PROXY (GoF Classic Implementation)
- * ═══════════════════════════════════════════════════════════
- *
- * Subject Interface : ISeatService
- * Real Subject : SeatServiceImpl
- * Proxy : SeatValidationProxy (this class, @Primary)
- *
- * Proxy types combined:
- * • Virtual Proxy : Cache seat-map results (5s TTL)
- * • Smart Proxy : Enrich with real-time lock status from RAM
- */
 @Primary
 @Service
 @RequiredArgsConstructor
@@ -42,22 +29,17 @@ public class SeatValidationProxy implements ISeatService {
 
     @Override
     public List<SeatResponse> getSeatMapByShowtime(String showtimeId, String currentUserId) {
-        // 1. Check cache
         String cacheKey = buildCacheKey(showtimeId, currentUserId);
         List<SeatResponse> cached = getCachedSeatMap(cacheKey);
 
         if (cached != null) {
-            // Cache hit → enrich with lock status and return
             return enrichWithLockStatus(cached, showtimeId, currentUserId);
         }
 
-        // 2. Cache miss → delegate to RealSubject
         List<SeatResponse> seats = realSeatService.getSeatMapByShowtime(showtimeId, currentUserId);
 
-        // 3. Update cache
         seatMapCache.put(cacheKey, new CacheEntry<>(seats, System.currentTimeMillis() + SEAT_MAP_CACHE_TTL_MILLIS));
 
-        // 4. Enrich with real-time lock status (Smart Proxy)
         return enrichWithLockStatus(seats, showtimeId, currentUserId);
     }
 
@@ -80,11 +62,9 @@ public class SeatValidationProxy implements ISeatService {
             String currentUserId) {
         return seats.stream()
                 .map(seat -> {
-                    // BOOKED from DB takes priority
                     if ("BOOKED".equals(seat.getStatus())) {
                         return seat;
                     }
-                    // Check if locked by another user (real-time RAM check)
                     if (lockRegistry.isLockedByOther(showtimeId, seat.getId(), currentUserId)) {
                         return SeatResponse.builder()
                                 .id(seat.getId())
