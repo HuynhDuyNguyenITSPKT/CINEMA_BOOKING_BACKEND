@@ -16,13 +16,11 @@ public class Adapter_VNPAY implements IAdapterPay {
     }
 
     @Override
-    // Khai báo type để PaymentService map strategy.
     public String getType() {
         return "vnpay";
     }
 
     @Override
-    // Delegate tạo URL thanh toán cho VNPayService.
     public String createPaymentUrl(PaymentRequest request) {
         return vnPayService.createPaymentUrl(request);
     }

@@ -40,7 +40,6 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
     @Value("${payment.vnpay.command:pay}")
     private String command;
 
-    // Giữ tương thích với call site cũ: tự lấy HttpServletRequest từ context.
     public String createPaymentUrl(PaymentRequest request) {
         HttpServletRequest currentRequest = null;
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -50,7 +49,6 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
         return createPaymentUrl(request, currentRequest);
     }
 
-    // Build đầy đủ tham số VNPay, ký vnp_SecureHash và trả URL redirect.
     public String createPaymentUrl(PaymentRequest request,HttpServletRequest httpRequest) {
         validateRequest(request);
 
@@ -77,7 +75,6 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
         return buildUrl(params);
     }
 
-    // Validate request trước khi tạo URL thanh toán.
     private void validateRequest(PaymentRequest request) {
         if (request == null || request.getAmount() == null || request.getAmount() <= 0) {
             throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
@@ -87,7 +84,6 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
         }
     }
 
-    // Chuẩn hóa mã booking theo giới hạn/định dạng VNPay.
     private String sanitizeTxnRef(String bookingId) {
         String normalized = bookingId.trim().replaceAll("[^A-Za-z0-9]", "");
         if (normalized.isEmpty()) {
@@ -96,7 +92,6 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
         return normalized.length() > 40 ? normalized.substring(0, 40) : normalized;
     }
 
-    // Chuẩn hóa orderInfo, bỏ ký tự đặc biệt và giới hạn độ dài.
     private String sanitizeOrderInfo(String description) {
         if (description == null || description.trim().isEmpty()) {
             return "Thanh toan ve xem phim";
@@ -112,7 +107,6 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
         return normalized.length() > 255 ? normalized.substring(0, 255) : normalized;
     }
 
-    // Sort + encode params để tạo query string cuối cùng.
     public String buildUrl(Map<String, String> params) {
         try {
             List<String> fieldNames = new ArrayList<>(params.keySet());
@@ -138,18 +132,15 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
         }
     }
 
-    // Public wrapper cho template sign.
     public String hash(Map<String, String> params) {
         return signRequest(params);
     }
 
-    // Public wrapper cho template verify callback.
     public boolean verify(Map<String, String> params) {
         return verifyCallback(params);
     }
 
     @Override
-    // Dựng raw data theo đúng quy tắc ký của VNPay.
     protected String buildRawDataForSigning(Map<String, String> params) {
         try {
             List<String> fieldNames = new ArrayList<>(params.keySet());
@@ -181,25 +172,21 @@ public class VNPayService extends AbstractPaymentSignatureTemplate {
     }
 
     @Override
-    // Verify callback dùng cùng format raw data như lúc ký.
     protected String buildRawDataForVerification(Map<String, String> params) {
         return buildRawDataForSigning(params);
     }
 
     @Override
-    // Lấy chữ ký callback VNPay gửi về.
     protected String extractReceivedSignature(Map<String, String> params) {
         return params.get("vnp_SecureHash");
     }
 
     @Override
-    // Trả secret key cấu hình cho VNPay.
     protected String getSecretKey() {
         return secretKey;
     }
 
     @Override
-    // Thuật toán HMAC VNPay yêu cầu.
     protected String getHmacAlgorithm() {
         return "HmacSHA512";
     }

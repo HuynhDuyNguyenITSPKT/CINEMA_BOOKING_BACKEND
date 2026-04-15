@@ -58,13 +58,11 @@ public class PaymentFacade {
         this.seatLockService = seatLockService;
     }
 
-    // API tạo payment record trước khi gọi gateway tạo link.
     @Transactional
     public int createPayment(String paymentMethod, String message , String bookingId) {
         return addBookingToPayment(paymentMethod, message, bookingId);
     }
 
-    // Lưu email người khởi tạo để ưu tiên gửi thông báo callback đúng người.
     public void rememberPaymentCreator(String bookingId, String creatorEmail) {
         if (bookingId == null || bookingId.isBlank() || creatorEmail == null || creatorEmail.isBlank()) {
             return;
@@ -72,7 +70,6 @@ public class PaymentFacade {
         creatorEmailByBookingId.put(bookingId, creatorEmail);
     }
 
-    // Tạo bản ghi payment và chuyển booking sang PENDING.
     @Transactional
     public int addBookingToPayment(String paymentMethod, String message, String bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -94,8 +91,7 @@ public class PaymentFacade {
                 .build();
         
         paymentRepository.save(payment);
-        
-        // Không ghi đè trạng thái nếu đây là vé Khách Đoàn chờ duyệt
+
         if (booking.getStatus() != BookingStatus.PENDING_APPROVAL) {
             booking.initiatePayment();
             bookingRepository.save(booking);
@@ -104,7 +100,6 @@ public class PaymentFacade {
         return 1;
     }
 
-    // Xử lý callback tổng: verify chữ ký, cập nhật trạng thái và dựng response.
     public PaymentCallbackResponse processPaymentCallback(String method, Map<String, String> params) {
         String normalizedMethod = method == null ? "" : method.trim().toLowerCase();
         boolean verified = verifyByMethod(normalizedMethod, params);
@@ -120,7 +115,6 @@ public class PaymentFacade {
                 .build();
     }
 
-    // Áp trạng thái callback vào booking/ticket/payment và trả dữ liệu redirect.
     @Transactional
     public Map<String, String> handlePaymentCallback(String method, Map<String, String> params, boolean verified) {
         String normalizedMethod = method == null ? "" : method.trim().toLowerCase();
@@ -212,7 +206,6 @@ public class PaymentFacade {
         throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
     }
 
-    // Chọn service verify chữ ký tương ứng với từng method.
     private boolean verifyByMethod(String method, Map<String, String> params) {
         switch (method) {
             case "vnpay":
@@ -224,7 +217,6 @@ public class PaymentFacade {
         }
     }
 
-    // Đổi trạng thái nghiệp vụ sang message hiển thị cho frontend.
     private String resolveMessage(String paymentStatus) {
         switch (paymentStatus) {
             case "THANH_TOAN_THANH_CONG":
@@ -236,12 +228,10 @@ public class PaymentFacade {
         }
     }
 
-    // Trích bookingId từ callback theo từng gateway.
     private String extractBookingId(String method, Map<String, String> params) {
         if ("vnpay".equals(method)) {
             String bookingId = params.getOrDefault("vnp_TxnRef", "").trim();
             if (!bookingId.isEmpty()) {
-                // Khôi phục lại dấu gạch nối cho UUID nếu VNPay trả về chuỗi 32 ký tự alphanumeric
                 if (bookingId.length() == 32 && bookingId.matches("^[0-9a-fA-F]{32}$")) {
                     bookingId = bookingId.replaceFirst(
                         "^([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})$",
@@ -262,7 +252,6 @@ public class PaymentFacade {
         throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
     }
 
-    // Trích mã kết quả trả về từ gateway để map trạng thái.
     private String extractGatewayCode(String method, Map<String, String> params) {
         if ("vnpay".equals(method)) {
             String transactionStatus = params.getOrDefault("vnp_TransactionStatus", "").trim();
@@ -279,17 +268,14 @@ public class PaymentFacade {
         throw new AppException(ErrorCode.PAYMENT_INVALID_REQUEST);
     }
 
-    // Utility đọc payment theo id.
     public Payment getPaymentById(Long id) {
         return paymentRepository.findById(id).orElse(null);
     }
 
-    // Utility xóa payment theo id.
     public void deletePaymentById(Long id) {
         paymentRepository.deleteById(id);
     }
 
-    // Gửi email kết quả thanh toán, fallback email theo booking nếu cần.
     private void sendPaymentResultEmail(String creatorEmail, Booking booking, String paymentState, String paymentMethod, String gatewayCode) {
         String to = creatorEmail;
         if (to == null || to.isBlank()) {
