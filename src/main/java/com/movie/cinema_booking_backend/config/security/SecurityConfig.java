@@ -30,10 +30,20 @@ public class SecurityConfig {
     private static final String[] ADMIN_ENDPOINTS = {
         "/api/users",
         "/api/users/**",
+        "/api/tickets",
+        "/api/tickets/**",
         "/api/admin/promotions",
         "/api/admin/promotions/**",
         "/api/admin/uploads",
         "/api/admin/uploads/**",
+        "/api/admin/auditoriums",
+        "/api/admin/auditoriums/**",
+        "/api/admin/seat-types",
+        "/api/admin/seat-types/**",
+        "/api/admin/bookings",
+        "/api/admin/bookings/**",
+        "/api/admin/dashboard",
+        "/api/admin/dashboard/**",
         "/api/admin/extra-services",
         "/api/admin/extra-services/**",
         "/api/admin/payment/**",
@@ -53,13 +63,21 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
         "/api/auth/**", "/api/extra-services/**", "/api/payment/**", "/api/public/cinema/**",
         "/api/genres",
+        "/api/auditoriums",
+        "/api/auditoriums/**",
+        "/api/seat-types",
+        "/api/seat-types/**",
         "/api/public/promotions",
         "/google4213d9ec89513d14.html", "/robots.txt", "/sitemap.xml", "/favicon.ico"
     };
 
 
     private static final String[] USER_ENDPOINTS = {
-        "/api/users/profile", "/api/users/me/**"
+        "/api/users/profile", "/api/users/me/**",
+        "/api/bookings", "/api/bookings/**",
+        "/api/reviews", "/api/reviews/**",
+        "/api/showtimes", "/api/showtimes/**",
+        "/api/user/promotion/check/**"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
