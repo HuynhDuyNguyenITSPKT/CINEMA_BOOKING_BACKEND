@@ -100,7 +100,8 @@ public class SecurityConfig {
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 .requestMatchers(USER_ENDPOINTS).hasAnyRole("USER", "ADMIN")
                 .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
-                .anyRequest().authenticated()
+                .requestMatchers("/api/**").authenticated()
+                .anyRequest().permitAll()
             )
             .cors(Customizer.withDefaults())
             .oauth2ResourceServer(oauth2 -> oauth2
